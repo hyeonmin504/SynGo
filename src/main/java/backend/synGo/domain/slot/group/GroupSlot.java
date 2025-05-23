@@ -1,6 +1,6 @@
 package backend.synGo.domain.slot.group;
 
-import backend.synGo.domain.schedule.group.GroupSchedule;
+import backend.synGo.domain.schedule.group.GroupScheduler;
 import backend.synGo.domain.slot.Status;
 import backend.synGo.domain.slot.user.UserSlot;
 import jakarta.persistence.*;
@@ -37,8 +37,8 @@ public class GroupSlot {
     private String location;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_schedule_id")
-    private GroupSchedule groupSchedule;
+    @JoinColumn(name = "group_scheduler_id")
+    private GroupScheduler groupScheduler;
 
     @OneToMany(mappedBy = "groupSlot", cascade = CascadeType.ALL)
     private List<SlotMember> slotMember = new ArrayList<>();

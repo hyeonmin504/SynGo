@@ -15,7 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GroupSchedule {
+public class GroupScheduler {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_schedule_id")
@@ -29,7 +29,7 @@ public class GroupSchedule {
     @JoinColumn(name = "group_id")
     private Group group;
 
-    @OneToMany(mappedBy = "groupSchedule", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "groupScheduler", cascade = CascadeType.ALL)
     private List<GroupSlot> groupSlot = new ArrayList<>();
 
 

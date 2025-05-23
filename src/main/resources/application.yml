@@ -1,17 +1,36 @@
+server:
+  port: 8080
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: update
-      show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
   datasource:
-    hikari:
-      idle-timeout: 600000
-      connection-timeout: 65000
+    driver-class-name: ${DRIVER_NAME}
     url: ${DB_URL}
     username: ${USER_NAME}
     password: ${PASSWORD}
-    driver-class-name: ${DRIVER_NAME}
+  jpa:
+    hibernate:
+      ddl_auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        query:
+          in_clause_parameter_padding: true
+    open-in-view: false
+  redis:
+    host: localhost
+    port: 6379
+    password:
+
+
+logging:
+  level:
+    root: INFO
+
+security:
+  jwt:
+    secret-key: ${SECRET_KEY}
+    access-token:
+      expiration: ${ACCESS_TOKEN_EXPIRATION} # 30 min
+    refresh-token:
+      expiration: ${REFRESH_TOKEN_EXPIRATION} # 7day

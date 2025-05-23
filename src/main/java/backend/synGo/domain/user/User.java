@@ -1,6 +1,6 @@
 package backend.synGo.domain.user;
 
-import backend.synGo.domain.schedule.user.UserSchedule;
+import backend.synGo.domain.schedule.user.UserScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -28,15 +28,27 @@ public class User {
     private String password;
     private LocalDateTime joinDate;
     private LocalDateTime lastDate;
-    private String recentAccessIp;
     private String lastAccessIp;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserSchedule userSchedule;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_scheduler_id")
+    private UserScheduler userScheduler;
 
     @OneToMany(mappedBy = "user")
     private List<UserGroup> userGroups = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "reminder_id")
     private Reminder reminder;
+
+    // redis 추출 유저 데이터
+    public User( String name, String userIp) {
+        this.name = name;
+        this.lastAccessIp = userIp;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

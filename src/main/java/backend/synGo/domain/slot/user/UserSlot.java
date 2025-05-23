@@ -1,6 +1,6 @@
 package backend.synGo.domain.slot.user;
 
-import backend.synGo.domain.schedule.user.UserSchedule;
+import backend.synGo.domain.schedule.user.UserScheduler;
 import backend.synGo.domain.slot.Status;
 import backend.synGo.domain.slot.group.GroupSlot;
 import backend.synGo.domain.user.Reminder;
@@ -43,5 +43,5 @@ public class UserSlot {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_schedule_id")
-    private UserSchedule userSchedule;
+    private UserScheduler userScheduler;
 }

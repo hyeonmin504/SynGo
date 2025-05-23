@@ -15,7 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSchedule {
+public class UserScheduler {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "schedule_id")
     private Long id;
@@ -23,10 +23,9 @@ public class UserSchedule {
     @Enumerated(EnumType.STRING)
     private Theme theme;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne(mappedBy = "userScheduler")
     private User user;
 
-    @OneToMany(mappedBy = "userSchedule", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "userScheduler", cascade = CascadeType.ALL)
     private List<UserSlot> userSlot = new ArrayList<>();
 }

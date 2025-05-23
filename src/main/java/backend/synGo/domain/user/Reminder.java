@@ -24,7 +24,6 @@ public class Reminder {
     @JoinColumn(name = "user_slot_id")
     private UserSlot userSlot;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne(mappedBy = "reminder")
     private User user;
 }

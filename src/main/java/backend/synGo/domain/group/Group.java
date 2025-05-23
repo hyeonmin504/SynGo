@@ -1,6 +1,6 @@
 package backend.synGo.domain.group;
 
-import backend.synGo.domain.schedule.group.GroupSchedule;
+import backend.synGo.domain.schedule.group.GroupScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -32,5 +32,5 @@ public class Group {
     private List<UserGroup> userGroup = new ArrayList<>();
 
     @OneToOne(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private GroupSchedule groupSchedule;
+    private GroupScheduler groupScheduler;
 }
