@@ -43,7 +43,6 @@ public class User {
     private Reminder reminder;
 
     // redis 추출 유저 데이터
-
     @Builder
     public User(String name, String email, String password, String lastAccessIp) {
         this.name = name;

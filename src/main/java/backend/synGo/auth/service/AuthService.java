@@ -65,7 +65,7 @@ public class AuthService {
         if(form.getPassword().equals(form.getCheckPassword())) { // 패스워드 동일한지 체크
             if (isValid(form.getPassword())) { // 패스워드가 유효한지 체크
                 if (userRepository.existsUserByEmail(form.getEmail())) { // 가입된 이메일이 존재하는지 체크
-                    throw new ExistUserException("이미 존재하는 유저입니다");
+                    throw new ExistUserException("이미 존재하는 이메일입니다");
                 }
                 log.info("saveUser");
                 userRepository.save(
