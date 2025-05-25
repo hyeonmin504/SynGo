@@ -1,38 +1,43 @@
 package backend.synGo.config.jwt;
 
-import backend.synGo.auth.CustomUserDetails;
-import backend.synGo.auth.CustomUserDetailsService;
-import backend.synGo.domain.user.User;
+import backend.synGo.auth.form.CustomUserDetails;
+import backend.synGo.auth.form.TokenType;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Long.*;
+import static org.springframework.util.StringUtils.*;
+
 
 @Slf4j
 @Component
 public class JwtProvider{
+    //서명 키
     private final Key key;
     private final RedisTemplate<String, String> redisTemplate;
-    private final CustomUserDetailsService customUserDetailsService;
 
     @Value("${security.jwt.access-token.expiration}")
     private long accessTokenMinutes;
     @Value("${security.jwt.refresh-token.expiration}")
     private long refreshTokenDay;
 
-    public JwtProvider(@Value("${security.jwt.secret-key}") String secretKey, RedisTemplate<String,String> redisTemplate, CustomUserDetailsService customUserDetailsService) {
-        this.customUserDetailsService = customUserDetailsService;
+    public JwtProvider(
+            @Value("${security.jwt.secret-key}") String secretKey, //접속 키
+            RedisTemplate<String,String> redisTemplate) {
         //Base64로 디코딩
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         //HMAC-SHA256 방식으로 키 생성
@@ -42,35 +47,29 @@ public class JwtProvider{
     }
 
     // AccessToken 생성 메서드
-    public String createAccessToken(User user) {
+    public String createAccessToken(CustomUserDetails user) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + accessTokenMinutes * 60 * 1000);
         String accessToken = createToken(now, expiredAt, user);
 
         redisTemplate.opsForValue().set(
-                "AT:" + user.getId(),
-                accessToken,
+                "AT:" + user.getUserId(), //key=AT:userId
+                accessToken,    // value=token
                 Duration.ofMinutes(accessTokenMinutes).toMillis(),
                 TimeUnit.MILLISECONDS
         );
-
         return accessToken;
     }
 
     // RefreshToken 생성 메서드
-    public String createRefreshToken(User user) {
+    public String createRefreshToken(CustomUserDetails user) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + refreshTokenDay * 24 * 60 * 60 * 1000);
-        String refreshToken = Jwts.builder()
-                .setSubject(String.valueOf(user.getId()))
-                .setIssuedAt(now)
-                .setExpiration(expiredAt)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        String refreshToken = createToken(now, expiredAt, user);
 
-        //Redis에 저장 (key = RT:(user 이름), value = 토큰)
+        //Redis에 저장 (key = RT:userId, value = 토큰)
         redisTemplate.opsForValue().set(
-                "RT:" + user.getId(),     //토큰 관련 키를 쉽게 찾기 위함
+                "RT:" + user.getUserId(),     //토큰 관련 키를 쉽게 찾기 위함
                 refreshToken,
                 Duration.ofDays(refreshTokenDay).toMillis(),
                 TimeUnit.MILLISECONDS
@@ -80,32 +79,78 @@ public class JwtProvider{
     }
 
     // JWT 생성 공통 로직 (Access, Refresh)
-    private String createToken(Date now, Date expiredAt, User user) {
+    private String createToken(Date now, Date expiredAt, CustomUserDetails  user) {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE) //헤더 타입 명시
                 .setIssuer("SynGo") // 발급자
                 .setIssuedAt(now) // 발급 시간
                 .setExpiration(expiredAt) // 만료 시간
-                .setSubject(String.valueOf(user.getId())) // 주제(사용자 Id)
+                .setSubject(String.valueOf(user.getUserId())) // 주제(사용자 Id)
                 .claim("username", user.getName()) // 사용자 이름
                 .claim("user_ip", user.getLastAccessIp()) // 사용자 마지막 IP
                 .signWith(key, SignatureAlgorithm.HS256) // 서명
                 .compact();
     }
 
-    // JWT 유효성 검증
-    public boolean validateToken(String token) {
+    // JWT Token 타입 별 유효성 검증
+    public boolean validateToken(String token, TokenType tokenType) {
         try {
-            Jwts.parserBuilder()
+            // 기본 서명 검증
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(token); // 검증 및 파싱
-            return true;
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // 타입에 따라 Redis 검증 로직 추가
+            switch (tokenType) {
+                case BL -> { //black_list 로 저장된 token
+                    String isBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
+                    if (isBlacklisted.equals("logout")) {
+                        log.warn("블랙리스트에 등록된 토큰입니다.");
+                        return false;
+                    }
+                    return true;
+                }
+                case RT -> { //refresh_token 으로 저장된 토큰
+                    String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
+                    if (!hasText(storedRefreshToken)) {
+                        log.warn("Redis에 존재하지 않는 Refresh Token입니다.");
+                        return false;
+                    }
+                    return true;
+                }
+                case AT -> { //access_token 으로 저장된 토큰
+                    String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
+                    if (!hasText(storedAccessToken)) {
+                        log.warn("Redis에 존재하지 않는 Access Token입니다.");
+                        return false;
+                    }
+                    return true;
+                }
+                case TOKEN -> { //refresh,access 으로 저장된 토큰
+                    String storedBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
+                    String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
+                    String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
+                    if (hasText(storedAccessToken) || hasText(storedRefreshToken) || !hasText(storedBlacklisted)){
+                        return true;
+                    }
+                    log.warn("사용할 수 없는 토큰입니다.");
+                    return false;
+                }
+                default -> {
+                    log.warn("지원되지 않는 TokenType입니다: {}", tokenType);
+                    return false;
+                }
+            }
         } catch (ExpiredJwtException e) {
-            log.warn("JWT 만료={}", e.getMessage());
+            log.warn("JWT 만료됨: {}", e.getMessage());
         } catch (JwtException e) {
-            log.warn("JWT 검증 실패={}", e.getMessage());
+            log.warn("JWT 검증 실패: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("JWT 유효성 검증 중 알 수 없는 오류 발생", e);
         }
+        log.info("validateToken=false");
         return false;
     }
 
@@ -122,26 +167,27 @@ public class JwtProvider{
     public Authentication getAuthentication(String token) {
         // 1. 토큰에서 Claims(클레임) 정보를 꺼낸다
         Claims claims = getClaims(token);
-        // 2. 클레임에서 "user_name"이라는 키로 저장된 사용자 이름을 문자열로 추출
-        String userId = claims.getSubject(); // userId 추출
-        // 3. Spring Security에서 제공하는 UserDetails 구현체를 생성
-        //    - username: 방금 꺼낸 사용자 이름
-        //    - password: 빈 문자열("") (여기선 비밀번호가 필요 없으므로 빈 문자열)
-        //          cf) JWT 토큰 자체가 인증된 증거(token)이므로, 이 시점에서 비밀번호는 필요하지 않습니다.
-        //    - authorities(권한): 빈 리스트 (List.of()) — 권한이 없다고 가정
-        //          ex) ROLE_USER, ROLE_ADMIN
-        CustomUserDetails userDetails =
-                customUserDetailsService.loadUserByUsername(userId);
 
-        if (!userDetails.getUserLastAccessIp().equals(claims.get("user_ip",String.class))){
-            //todo: ip 접속 환경이 다를 경우 어떻게 처리 할 것인지.
-        }
-
-        // 4. UserDetails를 바탕으로 인증 토큰 생성
+        // 2. token을 통해 userDtails 생성
+        CustomUserDetails userDetails = new CustomUserDetails(
+                parseLong(claims.getSubject()),
+                claims.get("username", String.class),
+                claims.get("user_ip", String.class)
+        );
+        // 3. UserDetails를 바탕으로 인증 토큰 생성
         //    - principal: userDetails (인증된 사용자 정보)
         //    - credentials: 빈 문자열("") (비밀번호 같은 민감 정보는 토큰에 넣지 않음)
-        //    - authorities: userDetails.getAuthorities() (권한 목록)
+        //    - authorities: userDetails.getAuthorities() (권한 목록 "ROLE BASIC" 으로 설정)
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    // 헤더에서 토큰을 가져옴
+    public String resolveToken(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7).trim(); // 토큰의 "Bearer " 제거 후 반환
+        }
+        return null;
     }
 
     // Redis에서 RefreshToken 조회
@@ -149,8 +195,31 @@ public class JwtProvider{
         return redisTemplate.opsForValue().get("RT:" + userId);
     }
 
+    // Redis에서 RefreshToken 조회
+    public String getAccessToken(Long userId) {
+        return redisTemplate.opsForValue().get("AT:" + userId);
+    }
+
     // Redis에서 RefreshToken 삭제
     public void deleteRefreshToken(Long userId) {
         redisTemplate.delete("RT:" + userId);
+    }
+
+    // Redis에서 AccessToken 삭제
+    public void deleteAccessToken(Long userId) {
+        redisTemplate.delete("AT:" + userId);
+    }
+
+    // 블랙리스트 추가
+    public void blackListToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key) // this.key로 수정
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        long expiration = claims.getExpiration().getTime() - System.currentTimeMillis();
+        log.info("남은 expiration={}", expiration);
+        redisTemplate.opsForValue().set("BL:" + token, "logout", expiration, TimeUnit.MILLISECONDS);
     }
 }

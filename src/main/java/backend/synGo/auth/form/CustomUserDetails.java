@@ -1,6 +1,5 @@
-package backend.synGo.auth;
+package backend.synGo.auth.form;
 
-import backend.synGo.domain.user.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,7 +18,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(
+                () -> "ROLE_BASIC"
+        );
     }
 
     @Override

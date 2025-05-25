@@ -5,6 +5,7 @@ import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,7 +28,6 @@ public class User {
     private String email;
     private String password;
     private LocalDateTime joinDate;
-    private LocalDateTime lastDate;
     private String lastAccessIp;
 
 
@@ -43,12 +43,17 @@ public class User {
     private Reminder reminder;
 
     // redis 추출 유저 데이터
-    public User( String name, String userIp) {
+
+    @Builder
+    public User(String name, String email, String password, String lastAccessIp) {
         this.name = name;
-        this.lastAccessIp = userIp;
+        this.email = email;
+        this.password = password;
+        this.joinDate = LocalDateTime.now();
+        this.lastAccessIp = lastAccessIp;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setNewUserIp(String newUserIp) {
+        this.lastAccessIp = newUserIp;
     }
 }
