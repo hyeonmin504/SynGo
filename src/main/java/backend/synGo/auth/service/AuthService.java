@@ -7,6 +7,8 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.form.LoginResponseForm;
 import backend.synGo.auth.form.TokenType;
 import backend.synGo.config.jwt.JwtProvider;
+import backend.synGo.domain.schedule.Theme;
+import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.AuthenticationFailedException;
 import backend.synGo.exception.ExistUserException;
@@ -34,7 +36,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public LoginResponseForm login(LoginForm form, HttpServletRequest request) {
 
         User user = userRepository.findByEmail(form.getEmail()).orElseThrow(
@@ -68,14 +70,8 @@ public class AuthService {
                     throw new ExistUserException("이미 존재하는 이메일입니다");
                 }
                 log.info("saveUser");
-                userRepository.save(
-                    User.builder()
-                            .name(form.getName())
-                            .email(form.getEmail())
-                            .password(passwordEncoder.encode(form.getPassword()))
-                            .lastAccessIp(ClientIp.getClientIp(request))
-                            .build()
-                );
+                UserScheduler userScheduler = new UserScheduler(Theme.BLACK);
+                userRepository.save(new User(form.getName(),form.getEmail(),passwordEncoder.encode(form.getPassword()),ClientIp.getClientIp(request),userScheduler));
                 return ;
             }
             throw new NotValidException("패스워드가 유효하지 않습니다.");
@@ -106,15 +102,8 @@ public class AuthService {
     }
 
     public String reissue(HttpServletRequest request) {
-        // 1. Refresh Token 유효성 검사
-        String refreshToken = jwtProvider.resolveToken(request);
-        if (!jwtProvider.validateToken(refreshToken, TokenType.RT)) {
-            throw new AuthenticationFailedException("유효하지 않은 Refresh Token입니다.");
-        }
-
-        // 2. Claims 추출 (유저 정보)
-        Authentication authentication = jwtProvider.getAuthentication(refreshToken);
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        // 1. Refresh Token 유효성 검사, 유저 정보 추출
+        CustomUserDetails userDetails = readTokenAndReturnUserId(request, TokenType.RT);
         Long userId = userDetails.getUserId();
 
         //기본 accessToken을 블랙리스트에 올리기
@@ -136,5 +125,16 @@ public class AuthService {
         // redisTemplate.opsForValue().set("RT:" + userId, newRefreshToken, ...);
 
         return newAccessToken;
+    }
+
+    public CustomUserDetails readTokenAndReturnUserId(HttpServletRequest request, TokenType tokenType) {
+        String refreshToken = jwtProvider.resolveToken(request);
+        if (!jwtProvider.validateToken(refreshToken, tokenType)) {
+            return null;
+        }
+
+        // 2. Claims 추출 (유저 정보)
+        Authentication authentication = jwtProvider.getAuthentication(refreshToken);
+        return (CustomUserDetails)authentication.getPrincipal();
     }
 }

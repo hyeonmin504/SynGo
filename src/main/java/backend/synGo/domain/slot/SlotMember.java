@@ -1,6 +1,5 @@
-package backend.synGo.domain.slot.group;
+package backend.synGo.domain.slot;
 
-import backend.synGo.domain.userGroupData.SlotPermission;
 import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

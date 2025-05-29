@@ -1,6 +1,6 @@
 package backend.synGo.domain.group;
 
-import backend.synGo.domain.schedule.group.GroupScheduler;
+import backend.synGo.domain.schedule.GroupScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "group_basic")
+@Table(name = "group_basicwlw")
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

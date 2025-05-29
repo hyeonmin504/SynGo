@@ -1,6 +1,6 @@
 package backend.synGo.domain.user;
 
-import backend.synGo.domain.slot.user.UserSlot;
+import backend.synGo.domain.slot.UserSlot;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,6 +24,6 @@ public class Reminder {
     @JoinColumn(name = "user_slot_id")
     private UserSlot userSlot;
 
-    @OneToOne(mappedBy = "reminder")
+    @OneToOne(mappedBy = "reminder", fetch = FetchType.LAZY)
     private User user;
 }

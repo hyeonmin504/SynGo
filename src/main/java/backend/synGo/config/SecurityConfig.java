@@ -3,7 +3,6 @@ package backend.synGo.config;
 import backend.synGo.auth.util.CustomAuthenticationEntryPoint;
 import backend.synGo.config.jwt.JwtAuthenticationFilter;
 import backend.synGo.config.jwt.JwtProvider;
-import backend.synGo.exception.handler.GlobalExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -50,7 +49,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint))
                 //UsernamePasswordAuthenticationFilter 이전에 JWT 필터 삽입
                 .addFilterBefore(   //
-                        new JwtAuthenticationFilter(jwtProvider, permitUrls, new GlobalExceptionHandler()),
+                        new JwtAuthenticationFilter(jwtProvider, permitUrls),
                         UsernamePasswordAuthenticationFilter.class
                 )
                 .csrf(AbstractHttpConfigurer::disable) // csrf 보호 비활성화 (JWT 사용 시 비활성화)

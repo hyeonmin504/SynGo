@@ -2,7 +2,7 @@ package backend.synGo.domain.userGroupData;
 
 
 import backend.synGo.domain.group.Group;
-import backend.synGo.domain.slot.group.SlotMember;
+import backend.synGo.domain.slot.SlotMember;
 import backend.synGo.domain.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

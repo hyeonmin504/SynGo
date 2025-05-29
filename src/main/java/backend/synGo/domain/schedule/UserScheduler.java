@@ -1,9 +1,10 @@
-package backend.synGo.domain.schedule.user;
+package backend.synGo.domain.schedule;
 
-import backend.synGo.domain.schedule.Theme;
-import backend.synGo.domain.slot.user.UserSlot;
+import backend.synGo.domain.date.Date;
 import backend.synGo.domain.user.User;
+import backend.synGo.form.responseForm.MySchedulerForm;
 import jakarta.persistence.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,9 +24,23 @@ public class UserScheduler {
     @Enumerated(EnumType.STRING)
     private Theme theme;
 
-    @OneToOne(mappedBy = "userScheduler")
+    @OneToOne(mappedBy = "userScheduler", fetch = FetchType.LAZY)
     private User user;
 
     @OneToMany(mappedBy = "userScheduler", cascade = CascadeType.ALL)
-    private List<UserSlot> userSlot = new ArrayList<>();
+    private List<Date> date = new ArrayList<>();
+
+    public UserScheduler(Theme theme) {
+        this.lastUpdate = LocalDateTime.now();
+        this.theme = theme;
+    }
+
+
+    public void updateTheme(Theme theme){
+        this.theme = theme;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }

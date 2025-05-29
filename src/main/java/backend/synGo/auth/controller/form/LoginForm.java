@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
 public class LoginForm {
 
     @NotBlank

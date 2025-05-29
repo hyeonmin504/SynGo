@@ -1,13 +1,11 @@
 package backend.synGo.auth.controller;
 
 import backend.synGo.auth.controller.form.LoginForm;
-import backend.synGo.auth.controller.form.ResponseForm;
+import backend.synGo.form.ResponseForm;
 import backend.synGo.auth.controller.form.SignUpForm;
 import backend.synGo.auth.service.AuthService;
-import backend.synGo.exception.AuthenticationFailedException;
-import backend.synGo.exception.ExistUserException;
-import backend.synGo.exception.NotFoundUserException;
-import backend.synGo.exception.NotValidException;
+import backend.synGo.exception.*;
+import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -19,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static backend.synGo.auth.controller.form.ResponseForm.*;
+import static backend.synGo.form.ResponseForm.*;
 
 @RestController
 @Slf4j
@@ -68,7 +66,7 @@ public class AuthController {
         try {
             authService.logout(request);
             return ResponseEntity.ok().body(ResponseForm.success(null,"로그아웃 성공"));
-        } catch (Exception e) {
+        } catch (ExpiredTokenException | AuthenticationFailedException | JwtException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.OK).body(ResponseForm.unauthorizedResponse(null, e.getMessage()));
         }
@@ -84,7 +82,7 @@ public class AuthController {
         try {
             String newAccessToken = authService.reissue(request);
             return ResponseEntity.ok(ResponseForm.success(newAccessToken, "새로운 access token 발급 완료"));
-        } catch (AuthenticationFailedException e) {
+        } catch (ExpiredTokenException | AuthenticationFailedException | JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseForm.unauthorizedResponse(null, e.getMessage()));
         }
     }

@@ -2,6 +2,7 @@ package backend.synGo.config.jwt;
 
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.form.TokenType;
+import backend.synGo.exception.ExpiredTokenException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -12,7 +13,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.security.Key;
 import java.time.Duration;
@@ -132,7 +132,7 @@ public class JwtProvider{
                     String storedBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
                     String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
                     String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
-                    if (hasText(storedAccessToken) || hasText(storedRefreshToken) || !hasText(storedBlacklisted)){
+                    if ((hasText(storedAccessToken) || hasText(storedRefreshToken)) && !hasText(storedBlacklisted)){
                         return true;
                     }
                     log.warn("사용할 수 없는 토큰입니다.");
@@ -144,11 +144,9 @@ public class JwtProvider{
                 }
             }
         } catch (ExpiredJwtException e) {
-            log.warn("JWT 만료됨: {}", e.getMessage());
+            throw new ExpiredTokenException("토큰 만료");
         } catch (JwtException e) {
             log.warn("JWT 검증 실패: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("JWT 유효성 검증 중 알 수 없는 오류 발생", e);
         }
         log.info("validateToken=false");
         return false;

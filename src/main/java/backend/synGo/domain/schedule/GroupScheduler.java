@@ -1,8 +1,7 @@
-package backend.synGo.domain.schedule.group;
+package backend.synGo.domain.schedule;
 
+import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
-import backend.synGo.domain.schedule.Theme;
-import backend.synGo.domain.slot.group.GroupSlot;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,7 +29,6 @@ public class GroupScheduler {
     private Group group;
 
     @OneToMany(mappedBy = "groupScheduler", cascade = CascadeType.ALL)
-    private List<GroupSlot> groupSlot = new ArrayList<>();
-
+    private List<Date> date = new ArrayList<>();
 
 }

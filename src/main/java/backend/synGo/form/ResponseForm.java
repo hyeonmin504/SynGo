@@ -1,4 +1,4 @@
-package backend.synGo.auth.controller.form;
+package backend.synGo.form;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

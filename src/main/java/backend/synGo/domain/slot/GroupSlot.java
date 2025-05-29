@@ -1,8 +1,6 @@
-package backend.synGo.domain.slot.group;
+package backend.synGo.domain.slot;
 
-import backend.synGo.domain.schedule.group.GroupScheduler;
-import backend.synGo.domain.slot.Status;
-import backend.synGo.domain.slot.user.UserSlot;
+import backend.synGo.domain.date.Date;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -34,11 +32,12 @@ public class GroupSlot {
     private LocalDateTime endTime;
     @NotNull
     private LocalDateTime createDate;
-    private String location;
+    private String place;
+    private String updateUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_scheduler_id")
-    private GroupScheduler groupScheduler;
+    @JoinColumn(name = "date_id")
+    private Date date;
 
     @OneToMany(mappedBy = "groupSlot", cascade = CascadeType.ALL)
     private List<SlotMember> slotMember = new ArrayList<>();

@@ -1,4 +1,4 @@
-package backend.synGo.domain.userGroupData;
+package backend.synGo.domain.slot;
 
 import lombok.Getter;
 
