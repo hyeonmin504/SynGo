@@ -103,7 +103,7 @@ public class AuthService {
 
     public String reissue(HttpServletRequest request) {
         // 1. Refresh Token 유효성 검사, 유저 정보 추출
-        CustomUserDetails userDetails = readTokenAndReturnUserId(request, TokenType.RT);
+        CustomUserDetails userDetails = readTokenAndReturnUserId(request);
         Long userId = userDetails.getUserId();
 
         //기본 accessToken을 블랙리스트에 올리기
@@ -127,11 +127,8 @@ public class AuthService {
         return newAccessToken;
     }
 
-    public CustomUserDetails readTokenAndReturnUserId(HttpServletRequest request, TokenType tokenType) {
+    public CustomUserDetails readTokenAndReturnUserId(HttpServletRequest request) {
         String refreshToken = jwtProvider.resolveToken(request);
-        if (!jwtProvider.validateToken(refreshToken, tokenType)) {
-            return null;
-        }
 
         // 2. Claims 추출 (유저 정보)
         Authentication authentication = jwtProvider.getAuthentication(refreshToken);

@@ -20,8 +20,7 @@ public class Reminder {
     private String summary;
     private LocalDateTime startTime;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_slot_id")
+    @OneToOne(mappedBy = "reminder", fetch = FetchType.LAZY)
     private UserSlot userSlot;
 
     @OneToOne(mappedBy = "reminder", fetch = FetchType.LAZY)

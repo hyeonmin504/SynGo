@@ -25,7 +25,7 @@ public class UserService {
     }
 
     public User findUserByToken(HttpServletRequest request){
-        Long userId = authService.readTokenAndReturnUserId(request, TokenType.AT).getUserId();
+        Long userId = authService.readTokenAndReturnUserId(request).getUserId();
 
         return userRepository.findById(userId).orElseThrow(
                 () -> new NotFoundUserException("유저 정보 없음")

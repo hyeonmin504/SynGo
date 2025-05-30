@@ -42,7 +42,8 @@ public class UserSlot {
     @JoinColumn(name = "group_slot_id")
     private GroupSlot groupSlot;
 
-    @OneToOne(mappedBy = "userSlot", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "reminder_id")
     private Reminder reminder;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,8 +54,6 @@ public class UserSlot {
         this.date = date;
         date.getUserSlot().add(this);
     }
-
-
 
     public static UserSlot createUserSlot(Status status, String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance, Date date) {
         return new UserSlot(status,title,content,startTime,endTime,place,importance,date);

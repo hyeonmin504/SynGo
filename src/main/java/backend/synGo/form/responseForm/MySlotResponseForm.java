@@ -1,4 +1,4 @@
-package backend.synGo.form.requestForm;
+package backend.synGo.form.responseForm;
 
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.domain.slot.Status;
@@ -12,22 +12,17 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class MySlotForm {
-    private Status status;
-    @DateTimeRange(message = "날짜가 허용된 범위를 벗어났습니다.")
-    private LocalDateTime startDate;
-    @Nullable
-    @DateTimeRange(message = "날짜가 허용된 범위를 벗어났습니다.")
-    private LocalDateTime endDate;
-    @NotBlank
+public class MySlotResponseForm {
     private String title;
-    @Nullable
     private String content;
-    @Nullable
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime createDate;
     private String place;
-    private SlotImportance importance;
+    private String importance;
+    private String status;
 }

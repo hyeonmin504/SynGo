@@ -78,7 +78,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "토큰 문제로 인한 재발급 실패")
     })
     @GetMapping("reissue")
-    public ResponseEntity<?> reissue(HttpServletRequest request) {
+    public ResponseEntity<ResponseForm<?>> reissue(HttpServletRequest request) {
         try {
             String newAccessToken = authService.reissue(request);
             return ResponseEntity.ok(ResponseForm.success(newAccessToken, "새로운 access token 발급 완료"));
@@ -86,4 +86,5 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseForm.unauthorizedResponse(null, e.getMessage()));
         }
     }
+    
 }

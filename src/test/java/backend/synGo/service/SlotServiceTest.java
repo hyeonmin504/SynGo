@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class GenerateSlotServiceTest {
+class SlotServiceTest {
 
     private MySlotForm makeForm(LocalDateTime start, LocalDateTime end) {
         MySlotForm form = new MySlotForm();
@@ -29,7 +29,7 @@ class GenerateSlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         MySlotForm form = makeForm(now.plusDays(1), now);
 
-        assertTrue(GenerateSlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form));
     }
 
     @Test
@@ -38,7 +38,7 @@ class GenerateSlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         MySlotForm form = makeForm(now.minusDays(1), now.plusDays(1));
 
-        assertTrue(GenerateSlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form));
     }
 
     @Test
@@ -47,7 +47,7 @@ class GenerateSlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         MySlotForm form = makeForm(now.plusHours(1), now.minusDays(1));
 
-        assertTrue(GenerateSlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form));
     }
 
     @Test
@@ -56,7 +56,7 @@ class GenerateSlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         MySlotForm form = makeForm(now.plusHours(1), now.plusHours(2));
 
-        assertFalse(GenerateSlotService.validDateTime(form));
+        assertFalse(SlotService.validDateTime(form));
     }
 
     @Test
@@ -65,7 +65,7 @@ class GenerateSlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         MySlotForm form = makeForm(now.plusDays(1), null);
 
-        assertFalse(GenerateSlotService.validDateTime(form));
+        assertFalse(SlotService.validDateTime(form));
     }
 
 }

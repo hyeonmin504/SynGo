@@ -1,10 +1,15 @@
 package backend.synGo.service;
 
+import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
+import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.NotFoundDataException;
+import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.requestForm.MySlotForm;
+import backend.synGo.form.responseForm.MySlotResponseForm;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.UserSlotRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +26,11 @@ import static backend.synGo.domain.slot.UserSlot.createUserSlot;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GenerateSlotService {
+public class SlotService {
 
+    private final UserService userService;
     private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
-    private final UserService userService;
     private final DateService dateService;
 
 
@@ -34,14 +39,14 @@ public class GenerateSlotService {
      * @param mySlotForm
      */
     @Transactional
-    public void generateMySlot(MySlotForm mySlotForm) {
+    public Long createMySlot(MySlotForm mySlotForm, CustomUserDetails userDetails) {
         if (validDateTime(mySlotForm))
             throw new NotValidException("날자를 확인해주세요.");
         else if (mySlotForm.getEndDate() != null && mySlotForm.getStartDate().isEqual(mySlotForm.getEndDate()))
             mySlotForm.setEndDate(null);
 
-        //유저 정보를 받아옵니다
-        User user = userService.findUserById(Long.parseLong(mySlotForm.getUserId()));
+        //user data 찾기
+        User user = userService.findUserById(userDetails.getUserId());
 
         //date에 저장 용도로 LocalDateTime -> LocalDate 변환
         LocalDate startDate = mySlotForm.getStartDate().toLocalDate();
@@ -66,6 +71,46 @@ public class GenerateSlotService {
         // cascade로 전부 저장 전파
         if (updatedDate.getSlotCount() == 1) dateRepository.save(date);
         else userSlotRepository.save(userSlot);
+        return userSlot.getId();
+    }
+
+    /**
+     * 개인 슬롯을 검색하는 서비스
+     * @param slotId
+     * @param userId
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public MySlotResponseForm findMySlot(Long slotId, Long userId) {
+        //데이터의 주인 Id 값 가져오기
+        Optional<Long> userIdByUserSlotId = userSlotRepository.findUserIdByUserSlotId(slotId);
+
+        if (userIdByUserSlotId.isPresent()) { //date 테이블에 userId 값이 존재하는지 확인
+            if (userIdByUserSlotId.get().equals(userId)) { // 요청자와 슬롯의 주인이 동일 인물인지 확인
+                log.info("its okay");
+                //슬롯 가져오기
+                UserSlot userSlot = userSlotRepository.findById(slotId).orElseThrow(
+                        () -> new NotFoundDataException("슬롯이 존재하지 않습니다")
+                );
+                log.info("its okay2");
+                return createMySlotResponseForm(userSlot);
+            }
+            throw new AccessDeniedException("다른 사용자의 슬롯입니다");
+        }
+        throw new NotFoundUserException("해당 date에 user id가 할당되지 않았습니다");
+    }
+
+    private static MySlotResponseForm createMySlotResponseForm(UserSlot userSlot) {
+        return MySlotResponseForm.builder()
+                .title(userSlot.getTitle())
+                .content(userSlot.getContent())
+                .startDate(userSlot.getStartTime())
+                .endDate(userSlot.getEndTime())
+                .createDate(userSlot.getCreateDate())
+                .place(userSlot.getPlace())
+                .status(userSlot.getStatus().getStatus())
+                .importance(userSlot.getImportance().getLabel())
+                .build();
     }
 
     public static boolean validDateTime(MySlotForm mySlotForm) {
