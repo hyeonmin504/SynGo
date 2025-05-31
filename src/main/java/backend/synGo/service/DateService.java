@@ -18,6 +18,14 @@ public class DateService {
 
     private final UserSlotRepository userSlotRepository;
 
+
+
+    /**
+     * user이 생성한 date의 SlotCount, summary를 업데이트
+     * @param date
+     * @param userSlot
+     * @return
+     */
     public Date updateDateInfo(Date date, UserSlot userSlot) {
         //첫 슬롯 생성이 아닌 경우 새로 생성한 슬롯과 더불어 중요도가 높은 2개의 슬롯을 뽑아 date의 요약에 넣는다
         if (date.getSlotCount() != 0){

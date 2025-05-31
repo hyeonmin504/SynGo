@@ -47,8 +47,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint))
-                //UsernamePasswordAuthenticationFilter 이전에 JWT 필터 삽입
-                .addFilterBefore(   //
+                .addFilterBefore(   //UsernamePasswordAuthenticationFilter 이전에 JWT 필터 삽입
                         new JwtAuthenticationFilter(jwtProvider, permitUrls),
                         UsernamePasswordAuthenticationFilter.class
                 )

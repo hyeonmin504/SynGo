@@ -29,7 +29,7 @@ public class SwaggerConfig {
         return new Info()
                 .title("SynGo") // API의 제목
                 .description("syngo swagger") // API에 대한 설명
-                .version("1.0.0"); // API의 버전
+                .version("2.3.1"); // API의 버전
     }
 
 }

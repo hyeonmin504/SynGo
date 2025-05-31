@@ -13,6 +13,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        default_batch_fetch_size: 100
         use_sql_comments: true
         query:
           in_clause_parameter_padding: true
@@ -26,6 +27,9 @@ spring:
 logging:
   level:
     root: INFO
+    org.springframework.web: DEBUG
+    org.spring-doc: DEBUG
+    org.springframework.boot.autoconfigure: DEBUG
 
 security:
   jwt:

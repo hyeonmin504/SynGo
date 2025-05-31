@@ -39,14 +39,14 @@ public class SlotService {
      * @param mySlotForm
      */
     @Transactional
-    public Long createMySlot(MySlotForm mySlotForm, CustomUserDetails userDetails) {
+    public Long createMySlot(MySlotForm mySlotForm, Long userId) {
         if (validDateTime(mySlotForm))
             throw new NotValidException("날자를 확인해주세요.");
         else if (mySlotForm.getEndDate() != null && mySlotForm.getStartDate().isEqual(mySlotForm.getEndDate()))
             mySlotForm.setEndDate(null);
 
         //user data 찾기
-        User user = userService.findUserById(userDetails.getUserId());
+        User user = userService.findUserById(userId);
 
         //date에 저장 용도로 LocalDateTime -> LocalDate 변환
         LocalDate startDate = mySlotForm.getStartDate().toLocalDate();

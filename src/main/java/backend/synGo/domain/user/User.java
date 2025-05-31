@@ -32,7 +32,7 @@ public class User {
     private String lastAccessIp;
 
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_scheduler_id")
     private UserScheduler userScheduler;
 
@@ -56,13 +56,6 @@ public class User {
         setUserScheduler(scheduler);
     }
 
-    public User(String email, String name, String lastAccessIp, String password) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.lastAccessIp = lastAccessIp;
-    }
-
     private void setUserScheduler(UserScheduler scheduler) {
         this.userScheduler = scheduler;
         scheduler.setUser(this);
@@ -70,5 +63,11 @@ public class User {
 
     public void setNewUserIp(String newUserIp) {
         this.lastAccessIp = newUserIp;
+    }
+
+    //Mock test 위한 생성자
+    @Builder
+    public User(Long id) {
+        this.id = id;
     }
 }

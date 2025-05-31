@@ -18,7 +18,7 @@ public class SlotMember {
     @Enumerated(EnumType.STRING)
     private SlotPermission slotPermission;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, orphanRemoval = true)
     @JoinColumn(name = "user_group_id")
     private UserGroup userGroup;
 

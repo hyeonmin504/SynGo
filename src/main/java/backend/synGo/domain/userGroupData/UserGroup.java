@@ -38,4 +38,27 @@ public class UserGroup {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private Group group;
+
+    public UserGroup(String nickname, User user, Group group, Role role) {
+        this.nickname = nickname;
+        setUser(user);
+        setGroup(group);
+        this.joinGroupDate = LocalDateTime.now();
+        this.role = role;
+    }
+
+    private void setUser(User user) {
+        this.user = user;
+        user.getUserGroups().add(this);
+    }
+
+    private void setGroup(Group group) {
+        this.group = group;
+        user.getUserGroups().add(this);
+    }
+
+    //테스트용 생성자
+    public UserGroup(Long id) {
+        this.id = id;
+    }
 }

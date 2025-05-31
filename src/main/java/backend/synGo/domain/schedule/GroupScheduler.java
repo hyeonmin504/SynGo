@@ -24,11 +24,15 @@ public class GroupScheduler {
     @Enumerated(EnumType.STRING)
     private Theme theme;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
+    @OneToOne(mappedBy = "groupScheduler", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Group group;
 
     @OneToMany(mappedBy = "groupScheduler", cascade = CascadeType.ALL)
     private List<Date> date = new ArrayList<>();
 
+    public GroupScheduler(Group group) {
+        this.lastDeploy = LocalDateTime.now();
+        this.theme = Theme.BLACK;
+        this.group = group;
+    }
 }

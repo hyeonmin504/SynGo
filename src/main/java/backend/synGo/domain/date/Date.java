@@ -29,10 +29,10 @@ public class Date {
     private String summary;
     private LocalDate startDate;
 
-    @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<UserSlot> userSlot = new ArrayList<>();
 
-    @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<GroupSlot> groupSlot = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

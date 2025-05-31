@@ -42,7 +42,7 @@ public class UserSlot {
     @JoinColumn(name = "group_slot_id")
     private GroupSlot groupSlot;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "reminder_id")
     private Reminder reminder;
 

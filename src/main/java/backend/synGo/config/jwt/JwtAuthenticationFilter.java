@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         PathPatternParser parser = new PathPatternParser();
 
+        //jwt 인증 url 검증
         if (permitAll.stream().anyMatch(pattern ->
                 parser.parse(pattern).matches(PathContainer.parsePath(request.getRequestURI())))) {
             filterChain.doFilter(request, response);

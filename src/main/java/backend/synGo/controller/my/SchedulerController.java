@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Slf4j
-@RequestMapping("/api/my")
+@RequestMapping("/api/my/scheduler")
 @RequiredArgsConstructor
 public class SchedulerController {
 
@@ -29,7 +29,7 @@ public class SchedulerController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "기본 토큰 삭제 및 access Token만 재발급"),
     })
-    @GetMapping("/scheduler")
+    @GetMapping("/")
     public ResponseEntity<ResponseForm<?>> getMyScheduler(HttpServletRequest request) {
         try {
             MySchedulerForm myScheduler = userSchedulerService.getMyScheduler(request);

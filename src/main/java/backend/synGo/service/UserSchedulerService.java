@@ -1,5 +1,6 @@
 package backend.synGo.service;
 
+import backend.synGo.domain.schedule.Theme;
 import backend.synGo.domain.user.User;
 import backend.synGo.form.responseForm.MySchedulerForm;
 import backend.synGo.repository.UserSchedulerRepository;
