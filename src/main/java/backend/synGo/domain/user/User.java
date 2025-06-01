@@ -67,7 +67,12 @@ public class User {
 
     //Mock test 위한 생성자
     @Builder
-    public User(Long id) {
+    public User(Long id, String name) {
         this.id = id;
+        this.name = name;
+    }
+    @Builder
+    public User(String name) {
+        this.name = name;
     }
 }

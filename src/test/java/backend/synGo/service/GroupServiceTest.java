@@ -4,132 +4,172 @@ import backend.synGo.domain.group.Group;
 import backend.synGo.domain.group.GroupType;
 import backend.synGo.domain.user.User;
 import backend.synGo.domain.userGroupData.Role;
-import backend.synGo.domain.userGroupData.UserGroup; // ✅ 추가: UserGroup import
+import backend.synGo.domain.userGroupData.UserGroup;
+import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.requestForm.GroupRequestForm;
+import backend.synGo.form.requestForm.JoinGroupForm;
 import backend.synGo.repository.GroupRepository;
-import org.junit.jupiter.api.Assertions;
+import backend.synGo.repository.UserGroupRepository;
+import backend.synGo.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@Transactional
 class GroupServiceTest {
 
-    @InjectMocks
-    private GroupService groupService;
+    @Autowired GroupService groupService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    GroupRepository groupRepository;
+    @Autowired
+    UserGroupRepository userGroupRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
-    @Mock
-    private GroupRepository groupRepository;
+    private User user;
 
-    @Mock
-    private UserGroupService userGroupService;
-
-    @Mock
-    private UserService userService;
-
-    @Mock
-    private GroupSchedulerService groupSchedulerService;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
+    @BeforeEach
+    void setUp() {
+        user = new User("테스터");
+        userRepository.save(user);
+    }
     @Test
     void 공개_그룹_생성_성공() {
-        GroupRequestForm publicForm = GroupRequestForm.builder()
+        // given
+        GroupRequestForm form = GroupRequestForm.builder()
                 .groupName("스터디 그룹")
                 .nickname("홍길동")
-                .info("자바 스터디")
+                .info("설명")
                 .groupType(GroupType.BASIC)
                 .build();
 
-        User mockUser = new User(1L);
+        User user = new User("테스터");
+        userRepository.save(user); // 실제 저장
 
-        when(userService.findUserById(anyLong())).thenReturn(mockUser);
+        // when
+        Long userGroupId = groupService.createGroupAndReturnUserGroupId(form, user.getId());
 
-        // ✅ groupRepository.save() Mock 설정
-        when(groupRepository.save(any(Group.class))).thenAnswer(invocation -> {
-            Group group = invocation.getArgument(0);
-            group.setId(1L);
-            return group;
-        });
-
-        // ✅ 변경된 반환값 처리: saveUserGroupData()가 UserGroup 반환
-        when(userGroupService.saveUserGroupData(any(), any(), any(), eq(Role.LEADER)))
-                .thenAnswer(invocation -> {
-                    UserGroup ug = new UserGroup(100L);
-                    return ug;
-                });
-
-        // ✅ 반환값 변수명 수정: groupId → userGroupId
-        Long userGroupId = groupService.createGroupAndReturnUserGroupId(publicForm, 1L);
-
-        // ✅ 예상 반환값 검증
-        Assertions.assertEquals(100L, userGroupId, "리턴된 userGroupId는 100이어야 한다.");
-
-        verify(groupRepository).save(any(Group.class));
-        verify(userGroupService).saveUserGroupData(any(), any(), any(), eq(Role.LEADER));
-        verify(groupSchedulerService).createScheduler(any());
+        // then
+        assertThat(userGroupId).isNotNull();
     }
 
     @Test
     void 비공개_그룹_생성_성공() {
-        GroupRequestForm privateForm = GroupRequestForm.builder()
-                .groupName("비밀 스터디")
-                .nickname("홍길동")
-                .info("비공개 스터디입니다")
+        // given
+        GroupRequestForm form = GroupRequestForm.builder()
+                .groupName("비공개 스터디")
+                .nickname("닉네임")
+                .info("소개")
                 .password("1234")
                 .checkPassword("1234")
                 .groupType(GroupType.BASIC)
                 .build();
 
-        User mockUser = new User(1L);
+        User user = new User("테스터");
+        userRepository.save(user);
 
-        when(userService.findUserById(anyLong())).thenReturn(mockUser);
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        // when
+        Long userGroupId = groupService.createGroupAndReturnUserGroupId(form, user.getId());
 
-        when(groupRepository.save(any(Group.class))).thenAnswer(invocation -> {
-            Group group = invocation.getArgument(0);
-            group.setId(2L);
-            return group;
-        });
-
-        // ✅ 반환값 UserGroup ID로 설정
-        when(userGroupService.saveUserGroupData(any(), any(), any(), eq(Role.LEADER)))
-                .thenAnswer(invocation -> {
-                    UserGroup ug = new UserGroup(200L);
-                    return ug;
-                });
-
-        Long userGroupId = groupService.createGroupAndReturnUserGroupId(privateForm, 1L);
-
-        // ✅ 예상 반환값 검증
-        Assertions.assertEquals(200L, userGroupId, "리턴된 userGroupId는 200이어야 한다.");
-
-        verify(groupRepository).save(any(Group.class));
-        verify(userGroupService).saveUserGroupData(any(), any(), any(), eq(Role.LEADER));
-        verify(groupSchedulerService).createScheduler(any());
+        // then
+        assertThat(userGroupId).isNotNull();
     }
 
     @Test
-    void 비밀번호_불일치_시_예외발생() {
-        GroupRequestForm invalidForm = GroupRequestForm.builder()
-                .groupName("비밀번호 불일치")
+    void 비밀번호_불일치_예외() {
+        // given
+        GroupRequestForm form = GroupRequestForm.builder()
+                .groupName("실패 케이스")
                 .nickname("홍길동")
-                .info("실패 케이스")
+                .info("소개")
                 .password("1234")
-                .checkPassword("abcd")
+                .checkPassword("abcd") // 불일치
                 .groupType(GroupType.BASIC)
                 .build();
 
-        Assertions.assertThrows(NotValidException.class, () -> {
-            groupService.createGroupAndReturnUserGroupId(invalidForm, 1L);
-        });
+        // then
+        assertThatThrownBy(() ->
+                groupService.createGroupAndReturnUserGroupId(form, 1L))
+                .isInstanceOf(NotValidException.class);
+    }
+
+    @Test
+    void 공개_그룹_참여_성공() {
+        Group group = new Group(GroupType.BASIC, "공개 그룹", "설명");
+        groupRepository.save(group);
+
+        UserGroup leader = new UserGroup("방장", user, group, Role.LEADER);
+        userGroupRepository.save(leader);
+
+        User otherUser = new User("신규유저");
+        userRepository.save(otherUser);
+
+        groupService.joinGroup(leader.getId(), new JoinGroupForm(null), otherUser.getId());
+
+        assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
+    }
+
+    @Test
+    void 비공개_그룹_참여_성공() {
+        String rawPassword = "group1234";
+        Group group = new Group(passwordEncoder.encode(rawPassword), GroupType.BASIC, "비공개", "소개");
+        groupRepository.save(group);
+
+        UserGroup leader = new UserGroup("방장", user, group, Role.LEADER);
+        userGroupRepository.save(leader);
+
+        User otherUser = new User("참여자");
+        userRepository.save(otherUser);
+
+        groupService.joinGroup(leader.getId(), new JoinGroupForm(rawPassword), otherUser.getId());
+
+        assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
+    }
+
+    @Test
+    void 비공개_그룹_비밀번호_불일치_예외() {
+        Group group = new Group(passwordEncoder.encode("1234"), GroupType.BASIC, "비공개", "소개");
+        groupRepository.save(group);
+
+        UserGroup leader = new UserGroup("방장", user, group, Role.LEADER);
+        userGroupRepository.save(leader);
+
+        User otherUser = new User("참여자");
+        userRepository.save(otherUser);
+
+        assertThatThrownBy(() -> groupService.joinGroup(leader.getId(), new JoinGroupForm("wrong"), otherUser.getId()))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("패스워드가 다릅니다");
+    }
+
+    @Test
+    void 이미_가입된_사용자_예외() {
+        Group group = new Group(GroupType.BASIC, "공개", "소개");
+        groupRepository.save(group);
+
+        UserGroup leader = new UserGroup("방장", user, group, Role.LEADER);
+        userGroupRepository.save(leader);
+
+        assertThatThrownBy(() -> groupService.joinGroup(leader.getId(), new JoinGroupForm(null), user.getId()))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("이미 가입된 회원입니다");
+    }
+
+    @Test
+    void 존재하지_않는_그룹_예외() {
+        assertThatThrownBy(() -> groupService.joinGroup(9999L, new JoinGroupForm("1234"), user.getId()))
+                .isInstanceOf(NotFoundContentsException.class)
+                .hasMessageContaining("해당 그룹을 찾을 수 없습니다");
     }
 }
