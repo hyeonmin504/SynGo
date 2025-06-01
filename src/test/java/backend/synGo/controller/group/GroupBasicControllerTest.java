@@ -82,6 +82,6 @@ class GroupBasicControllerTest {
                         .content(objectMapper.writeValueAsString(requestForm)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("그룹 생성 성공"))
-                .andExpect(jsonPath("$.data.groupId").exists());
+                .andExpect(jsonPath("$.data.userGroupId").exists());
     }
 }

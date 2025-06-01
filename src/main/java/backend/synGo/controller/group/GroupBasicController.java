@@ -96,7 +96,7 @@ public class GroupBasicController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             groupService.joinGroup(userGroupId, joinGroupFrom, userDetails.getUserId());
-            return ResponseEntity.ok().body(ResponseForm.success(null, "정보 요청 성공"));
+            return ResponseEntity.ok().body(ResponseForm.success(null, "그룹 참여 성공"));
         } catch (AccessDeniedException e) {
             return ResponseEntity.ok().body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }

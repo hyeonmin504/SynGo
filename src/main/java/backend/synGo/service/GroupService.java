@@ -13,6 +13,7 @@ import backend.synGo.form.requestForm.JoinGroupForm;
 import backend.synGo.repository.GroupRepository;
 import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ import java.util.List;
 import static backend.synGo.controller.group.GroupBasicController.*;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class GroupService {
     private final GroupRepository groupRepository;
@@ -108,31 +110,26 @@ public class GroupService {
     @Transactional
     public void joinGroup(Long userGroupId, JoinGroupForm form, Long requestUserId) {
         //userGroup 조회
-        UserGroup userGroup = userGroupRepository.findById(userGroupId).orElseThrow(
-                () -> new NotFoundContentsException("해당 그룹을 찾을 수 없습니다.")
-        );
-        //LAZE를 통해 group 조회
+        UserGroup userGroup = userGroupRepository.findById(userGroupId)
+                .orElseThrow(() -> new NotFoundContentsException("해당 그룹을 찾을 수 없습니다."));
         Group group = userGroup.getGroup();
-        //group에서 다시 모든 userGroup을 검색
-        List<UserGroup> allJoinUser = userGroupRepository.findByGroup(group);
-        for (UserGroup joinUser : allJoinUser) {    //그룹에 가입된 모든 사용자
-            if (joinUser.getUser() != null) {   //가입된 사용자의 정보가 있는지 확인
-                if (joinUser.getUser().getId().equals(requestUserId)){  //가입된 사용자의 id와 가입 요청자의 id값이 같은지 확인
-                    throw new AccessDeniedException("이미 가입된 회원입니다.");
-                }
-            }
+        //요청자가 그룹에 이미 가입되어 있는지 확인
+        if (userGroupRepository.existsByGroupAndUserId(group, requestUserId)) {
+            throw new AccessDeniedException("이미 가입된 회원입니다.");
         }
         //데이터 요청자의 User 조회
         User requstUser = userService.findUserById(requestUserId);
-
         //공개 그룹인 경우
         if (group.getPassword() == null) {
             saveUserGroup(requstUser, group);
             return ;
         }
+        log.info(String.valueOf(StringUtils.hasText(form.getPassword())));
         //패스워드가 입력된 경우 && 비공개 그룹인 경우
-        if (!StringUtils.hasText(form.getPassword()) && passwordEncoder.matches(form.getPassword(), group.getPassword())) {
+        if (StringUtils.hasText(form.getPassword()) &&
+                passwordEncoder.matches(form.getPassword(), group.getPassword())) {
             saveUserGroup(requstUser, group);
+            return ;
         }
         throw new AccessDeniedException("패스워드가 다릅니다");
     }
