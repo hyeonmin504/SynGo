@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static backend.synGo.controller.group.GroupBasicController.*;
 
@@ -36,7 +38,6 @@ public class GroupService {
     private final UserGroupService userGroupService;
     private final GroupSchedulerService groupSchedulerService;
     private final UserGroupRepository userGroupRepository;
-    private final PasswordEncoder encoder;
 
     /**
      * 그룹 생성 -> userGroup, GroupScheduler 생성
@@ -86,10 +87,9 @@ public class GroupService {
      */
     @Transactional(readOnly = true)
     public GroupForm findGroupByGroupId(Long userGroupId) {
-        UserGroup userGroup = userGroupRepository.findById(userGroupId).orElseThrow(
-                () -> new NotFoundContentsException("해당 유저의 그룹을 찾을 수 없습니다")
-        );
+        UserGroup userGroup = userGroupService.findGroupByUserGropId(userGroupId);
         Group group = userGroup.getGroup();
+
         List<UserGroup> byGroup = userGroupRepository.findByGroup(group);
         return GroupForm.builder()
                 .userGroupId(userGroupId)
@@ -109,12 +109,10 @@ public class GroupService {
      */
     @Transactional
     public void joinGroup(Long userGroupId, JoinGroupForm form, Long requestUserId) {
-        //userGroup 조회
-        UserGroup userGroup = userGroupRepository.findById(userGroupId)
-                .orElseThrow(() -> new NotFoundContentsException("해당 그룹을 찾을 수 없습니다."));
-        Group group = userGroup.getGroup();
-        //요청자가 그룹에 이미 가입되어 있는지 확인
-        if (userGroupRepository.existsByGroupAndUserId(group, requestUserId)) {
+        //group 조회
+        Group group = userGroupService.findGroupByUserGropId(userGroupId).getGroup();
+        //그룹에 참여한 유저인지 확인
+        if (checkUserInGroup(requestUserId, group)){
             throw new AccessDeniedException("이미 가입된 회원입니다.");
         }
         //데이터 요청자의 User 조회
@@ -124,7 +122,6 @@ public class GroupService {
             saveUserGroup(requstUser, group);
             return ;
         }
-        log.info(String.valueOf(StringUtils.hasText(form.getPassword())));
         //패스워드가 입력된 경우 && 비공개 그룹인 경우
         if (StringUtils.hasText(form.getPassword()) &&
                 passwordEncoder.matches(form.getPassword(), group.getPassword())) {
@@ -132,6 +129,86 @@ public class GroupService {
             return ;
         }
         throw new AccessDeniedException("패스워드가 다릅니다");
+    }
+
+    /**
+     * 그룹 내 역할을 조회
+     * @param userGroupId
+     * @param requestUserId
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<UserGroupRoleSummary> getMemberRole(Long userGroupId, Long requestUserId) {
+        //group 조회
+        Group group = userGroupService.findGroupByUserGropId(userGroupId).getGroup();
+        //그룹 내 회원인지 체크
+        if (checkUserInGroup(requestUserId, group)) {
+            return userGroupRepository.findByGroup(group).stream().map(
+                    userGroup -> new UserGroupRoleSummary(userGroup.getId(), userGroup.getNickname(), userGroup.getRole())
+            ).toList();
+        }
+        throw new AccessDeniedException("접근이 불가능한 정보입니다.");
+    }
+
+    /**
+     * 그룹 내 유저의 역할을 업데이트
+     * @param userGroupId
+     * @param userGroupRoleSummaries
+     * @param requestUserId
+     * @return
+     */
+    @Transactional
+    public List<UserGroupRoleSummary> updateMembersRole(Long userGroupId, List<UserGroupRoleSummary> userGroupRoleSummaries, Long requestUserId) {
+        //group 조회
+        log.info("== [1st Query] userGroupId로 그룹 조회");
+        Group group = userGroupService.findGroupByUserGropId(userGroupId).getGroup();
+        //요청자가 그룹에 속하는지 확인
+        log.info("== [2nd Query] 그룹 내 요청자 유효성 검사");
+        UserGroup requestUserGroup = userGroupRepository.findByGroupAndUserId(group, requestUserId)
+                .orElseThrow(() -> new AccessDeniedException("그룹에 속한 사용자가 아닙니다."));
+        //요청자의 Role이 LEADER 혹은 MANAGER인지 체크
+        Role requesterRole = requestUserGroup.getRole();
+        if (!(requesterRole == Role.LEADER || requesterRole == Role.MANAGER)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
+        log.info("== [3rd Query] LAZY 로딩으로 group 정보 접근");
+        List<UserGroup> userGroups = group.getUserGroup();
+        log.info("== [4th Query] batch fetch로 전체 UserGroup 조회 및 매핑");
+        Map<Long, UserGroup> userGroupMap = userGroups.stream()
+                .collect(Collectors.toMap(UserGroup::getId, ug -> ug)); //id → UserGroup 매핑
+        log.info("4th query after");
+        // 역할을 업데이트, batch size를 통해 n+1 문제를 해결
+        for (UserGroupRoleSummary summary : userGroupRoleSummaries) {
+            UserGroup targetUserGroup = userGroupMap.get(summary.getId());
+
+            if (targetUserGroup == null) continue; // 없는 ID 건너뛰기
+
+            Role currentRole = targetUserGroup.getRole();
+            Role newRole = summary.getRole();
+
+            // 리더는 건들 수 없음
+            if (currentRole == Role.LEADER) continue;
+
+            // 매니저를 매니저가 바꾸려 하면 불가
+            if (currentRole == Role.MANAGER && requesterRole != Role.LEADER) continue;
+
+            // 요청자가 LEADER이고 다른 유저를 LEADER로 바꾸려면 본인 권한은 MEMBER로 강등
+            if (requesterRole == Role.LEADER && newRole == Role.LEADER) {
+                requestUserGroup.setRole(Role.MEMBER);
+            }
+
+            targetUserGroup.setRole(newRole);
+        }
+        log.info("== [5th/6th Query] 역할 수정 후 전체 조회 및 DTO 반환");
+        // 수정된 결과 반환
+        return userGroupRepository.findByGroup(group).stream()
+                .map(ug -> new UserGroupRoleSummary(ug.getId(), ug.getNickname(), ug.getRole()))
+                .toList();
+    }
+
+    private boolean checkUserInGroup(Long requestUserId, Group group) {
+        //요청자가 그룹에 이미 가입되어 있는지 확인
+        return userGroupRepository.existsByGroupAndUserId(group, requestUserId);
     }
 
     /**

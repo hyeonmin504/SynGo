@@ -1,6 +1,7 @@
 package backend.synGo.controller.group;
 
 import backend.synGo.auth.form.CustomUserDetails;
+import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotValidException;
@@ -98,7 +99,42 @@ public class GroupBasicController {
             groupService.joinGroup(userGroupId, joinGroupFrom, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(null, "그룹 참여 성공"));
         } catch (AccessDeniedException e) {
-            return ResponseEntity.ok().body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "그룹 역할 조회 api", description = "그룹원이 그룹원들의 역할을 조회하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 역할 조회 성공"),
+            @ApiResponse(responseCode = "406", description = "그룹 역할 조회 실패")
+    })
+    @GetMapping("/{userGroupId}/role")
+    public ResponseEntity<ResponseForm<?>> getMembersRole(
+            @PathVariable Long userGroupId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            List<UserGroupRoleSummary> membersRole = groupService.getMemberRole(userGroupId, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(membersRole, "그룹 역할 조회 성공"));
+        } catch (AccessDeniedException | NotFoundContentsException e){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "그룹 역할 조회 api", description = "그룹원이 그룹원들의 역할을 조회하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 역할 조회 성공"),
+            @ApiResponse(responseCode = "406", description = "그룹 역할 조회 실패")
+    })
+    @PostMapping("/{userGroupId}/role")
+    public ResponseEntity<ResponseForm<?>> updateMembersRole(
+            @PathVariable Long userGroupId,
+            @RequestBody List<UserGroupRoleSummary> membersRole,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            List<UserGroupRoleSummary> memberRole = groupService.updateMembersRole(userGroupId, membersRole, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(memberRole, "그룹 역할 수정 성공"));
+        } catch (AccessDeniedException | NotFoundContentsException e){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
 
@@ -126,5 +162,20 @@ public class GroupBasicController {
         private String information;
         private String nickname;
         private int count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class UserGroupRoleSummary {
+        private Long id;
+        private String nickname;
+        private Role role;
+
+        public UserGroupRoleSummary updateRole(Role role) {
+            this.role = role;
+            return this;
+        }
     }
 }

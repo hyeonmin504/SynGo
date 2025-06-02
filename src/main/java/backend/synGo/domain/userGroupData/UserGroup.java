@@ -32,7 +32,8 @@ public class UserGroup {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToOne(mappedBy = "userGroup", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "slot_member_id")
     private SlotMember slotMember;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,6 +56,10 @@ public class UserGroup {
     private void setGroup(Group group) {
         this.group = group;
         user.getUserGroups().add(this);
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     //테스트용 생성자

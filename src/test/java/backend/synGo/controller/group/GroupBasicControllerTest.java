@@ -174,6 +174,4 @@ class GroupBasicControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("이미 가입된 회원입니다."));
     }
-
-
 }
