@@ -7,12 +7,10 @@ import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,14 +46,12 @@ public class Date {
     public Date(User user, LocalDate startDate) {
         setUser(user);
         this.startDate = startDate;
-        setUserScheduler(user.getUserScheduler());
         slotCount = 0;
     }
 
-    public Date updateSlotCountAndSummary(String summary){
+    public void addSlotCountAndSummary(String summary){
         this.slotCount ++;
         this.summary = summary;
-        return this;
     }
 
     // 양방향 연관 관계

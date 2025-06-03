@@ -3,13 +3,14 @@ package backend.synGo.controller.group;
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.ExistUserException;
 import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.GroupsPagingForm;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.GroupRequestForm;
 import backend.synGo.form.requestForm.JoinGroupForm;
-import backend.synGo.form.responseForm.UserGroupResponseForm;
+import backend.synGo.form.responseForm.GroupIdResponseForm;
 import backend.synGo.service.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +31,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/groups")
-public class GroupBasicController {
+public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
 
     private final GroupService groupService;
 
@@ -44,8 +45,8 @@ public class GroupBasicController {
             @Validated @RequestBody GroupRequestForm requestForm,
             @AuthenticationPrincipal CustomUserDetails userDetails){
         try {
-            Long userGroupId =  groupService.createGroupAndReturnUserGroupId(requestForm, userDetails.getUserId());
-            return ResponseEntity.ok().body(ResponseForm.success(new UserGroupResponseForm(userGroupId), "그룹 생성 성공"));
+            Long groupId =  groupService.createGroupAndReturnUserGroupId(requestForm, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(new GroupIdResponseForm(groupId), "그룹 생성 성공"));
         } catch (NotValidException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
@@ -76,10 +77,10 @@ public class GroupBasicController {
             @ApiResponse(responseCode = "200", description = "그룹 요청 성공"),
             @ApiResponse(responseCode = "404", description = "해당 유저의 그룹이 없습니다")
     })
-    @GetMapping("/{userGroupId}")
-    public ResponseEntity<ResponseForm<?>> getGroup(@PathVariable Long userGroupId) {
+    @GetMapping("/{groupId}")
+    public ResponseEntity<ResponseForm<?>> getGroup(@PathVariable Long groupId) {
         try {
-            return ResponseEntity.ok().body(ResponseForm.success(groupService.findGroupByGroupId(userGroupId), "정보 요청 성공"));
+            return ResponseEntity.ok().body(ResponseForm.success(groupService.findGroupByGroupId(groupId), "정보 요청 성공"));
         } catch (NotFoundContentsException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
         }
@@ -90,15 +91,15 @@ public class GroupBasicController {
             @ApiResponse(responseCode = "200", description = "그룹 생성 성공"),
             @ApiResponse(responseCode = "406", description = "패스워드 문제로 인한 에러")
     })
-    @PostMapping("/{userGroupId}")
+    @PostMapping("/{groupId}")
     public ResponseEntity<ResponseForm<?>> joinGroup(
-            @PathVariable Long userGroupId,
+            @PathVariable Long groupId,
             @RequestBody JoinGroupForm joinGroupFrom,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            groupService.joinGroup(userGroupId, joinGroupFrom, userDetails.getUserId());
+            groupService.joinGroup(groupId, joinGroupFrom, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(null, "그룹 참여 성공"));
-        } catch (AccessDeniedException e) {
+        } catch (ExistUserException | NotFoundContentsException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
@@ -108,31 +109,31 @@ public class GroupBasicController {
             @ApiResponse(responseCode = "200", description = "그룹 역할 조회 성공"),
             @ApiResponse(responseCode = "406", description = "그룹 역할 조회 실패")
     })
-    @GetMapping("/{userGroupId}/role")
+    @GetMapping("/{groupId}/role")
     public ResponseEntity<ResponseForm<?>> getMembersRole(
-            @PathVariable Long userGroupId,
+            @PathVariable Long groupId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            List<UserGroupRoleSummary> membersRole = groupService.getMemberRole(userGroupId, userDetails.getUserId());
+            List<UserGroupRoleSummary> membersRole = groupService.getMemberRole(groupId, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(membersRole, "그룹 역할 조회 성공"));
         } catch (AccessDeniedException | NotFoundContentsException e){
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
 
-    @Operation(summary = "그룹 역할 조회 api", description = "그룹원이 그룹원들의 역할을 조회하는 api")
+    @Operation(summary = "그룹 역할 수정 api", description = "특정 그룹원이 그룹원들의 역할을 수정하는 api")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "그룹 역할 조회 성공"),
-            @ApiResponse(responseCode = "406", description = "그룹 역할 조회 실패")
+            @ApiResponse(responseCode = "200", description = "그룹 역할 수정 성공"),
+            @ApiResponse(responseCode = "406", description = "그룹 역할 수정 실패")
     })
-    @PostMapping("/{userGroupId}/role")
+    @PostMapping("/{groupId}/role")
     public ResponseEntity<ResponseForm<?>> updateMembersRole(
-            @PathVariable Long userGroupId,
+            @PathVariable Long groupId,
             @RequestBody List<UserGroupRoleSummary> membersRole,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            List<UserGroupRoleSummary> memberRole = groupService.updateMembersRole(userGroupId, membersRole, userDetails.getUserId());
-            return ResponseEntity.ok().body(ResponseForm.success(memberRole, "그룹 역할 수정 성공"));
+            GroupIdResponseForm form = groupService.updateMembersRole(groupId, membersRole, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(form, "그룹 역할 수정 성공")); //todo: 반환은 groupId로 수정
         } catch (AccessDeniedException | NotFoundContentsException e){
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
@@ -156,7 +157,7 @@ public class GroupBasicController {
     @NoArgsConstructor
     @Builder
     public static class GroupForm {
-        private Long userGroupId;
+        private Long groupId;
         private LocalDateTime createDate;
         private String name;
         private String information;

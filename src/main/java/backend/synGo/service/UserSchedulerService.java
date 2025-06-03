@@ -1,6 +1,7 @@
 package backend.synGo.service;
 
 import backend.synGo.domain.schedule.Theme;
+import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.user.User;
 import backend.synGo.form.responseForm.MySchedulerForm;
 import backend.synGo.repository.UserSchedulerRepository;
@@ -17,10 +18,10 @@ public class UserSchedulerService {
     private final UserSchedulerRepository userSchedulerRepository;
 
     @Transactional(readOnly = true)
-    public MySchedulerForm getMyScheduler(HttpServletRequest request) {
-        User user = userService.findUserByToken(request);
+    public MySchedulerForm getMyScheduler(Long userId) {
+        UserScheduler userScheduler = userSchedulerRepository.findSchedulerAndUserByUserId(userId);
         return MySchedulerForm.builder()
-                .theme(user.getUserScheduler().getTheme())
+                .theme(userScheduler.getTheme())
                 .build();
     }
 }

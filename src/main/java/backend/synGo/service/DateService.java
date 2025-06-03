@@ -26,10 +26,10 @@ public class DateService {
      * @param userSlot
      * @return
      */
-    public Date updateDateInfo(Date date, UserSlot userSlot) {
+    public void updateDateInfo(Date date, UserSlot userSlot) {
         //첫 슬롯 생성이 아닌 경우 새로 생성한 슬롯과 더불어 중요도가 높은 2개의 슬롯을 뽑아 date의 요약에 넣는다
         if (date.getSlotCount() != 0){
-            List<UserSlot> allSlot = userSlotRepository.findByDate(date);
+            List<UserSlot> allSlot = date.getUserSlot();
             allSlot.add(userSlot);
             //중요도로 내림차순 정렬한다
             allSlot.sort(Comparator.comparingInt((UserSlot s) -> s.getImportance().getPriority()).reversed());
@@ -40,9 +40,9 @@ public class DateService {
                     .map(UserSlot::getTitle)
                     .collect(Collectors.joining(","));
 
-            return date.updateSlotCountAndSummary(summary);
+            date.addSlotCountAndSummary(summary);
         }
         else
-            return date.updateSlotCountAndSummary(userSlot.getTitle());
+            date.addSlotCountAndSummary(userSlot.getTitle());
     }
 }

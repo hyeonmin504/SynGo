@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserGroupResponseForm {
+public class GroupIdResponseForm {
 
-    private Long userGroupId;
+    private Long groupId;
 }
