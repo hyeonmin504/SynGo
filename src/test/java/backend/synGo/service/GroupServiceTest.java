@@ -6,6 +6,7 @@ import backend.synGo.domain.user.User;
 import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.domain.userGroupData.UserGroup;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.ExistUserException;
 import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.requestForm.GroupRequestForm;
@@ -13,6 +14,7 @@ import backend.synGo.form.requestForm.JoinGroupForm;
 import backend.synGo.repository.GroupRepository;
 import backend.synGo.repository.UserGroupRepository;
 import backend.synGo.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,8 @@ class GroupServiceTest {
     @Autowired
     UserGroupRepository userGroupRepository;
     @Autowired
+    private EntityManager em;
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     private User user;
@@ -43,6 +47,8 @@ class GroupServiceTest {
     void setUp() {
         user = new User("테스터");
         userRepository.save(user);
+        em.flush();
+        em.clear();
     }
     @Test
     void 공개_그룹_생성_성공() {
@@ -115,7 +121,10 @@ class GroupServiceTest {
         User otherUser = new User("신규유저");
         userRepository.save(otherUser);
 
-        groupService.joinGroup(leader.getId(), new JoinGroupForm(null), otherUser.getId());
+        em.flush();
+        em.clear();
+
+        groupService.joinGroup(group.getId(), new JoinGroupForm(null), otherUser.getId());
 
         assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
     }
@@ -132,7 +141,10 @@ class GroupServiceTest {
         User otherUser = new User("참여자");
         userRepository.save(otherUser);
 
-        groupService.joinGroup(leader.getId(), new JoinGroupForm(rawPassword), otherUser.getId());
+        em.flush();
+        em.clear();
+
+        groupService.joinGroup(group.getId(), new JoinGroupForm(rawPassword), otherUser.getId());
 
         assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
     }
@@ -148,7 +160,10 @@ class GroupServiceTest {
         User otherUser = new User("참여자");
         userRepository.save(otherUser);
 
-        assertThatThrownBy(() -> groupService.joinGroup(leader.getId(), new JoinGroupForm("wrong"), otherUser.getId()))
+        em.flush();
+        em.clear();
+
+        assertThatThrownBy(() -> groupService.joinGroup(group.getId(), new JoinGroupForm("wrong"), otherUser.getId()))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("패스워드가 다릅니다");
     }
@@ -161,8 +176,11 @@ class GroupServiceTest {
         UserGroup leader = new UserGroup("방장", user, group, Role.LEADER);
         userGroupRepository.save(leader);
 
-        assertThatThrownBy(() -> groupService.joinGroup(leader.getId(), new JoinGroupForm(null), user.getId()))
-                .isInstanceOf(AccessDeniedException.class)
+        em.flush();
+        em.clear();
+
+        assertThatThrownBy(() -> groupService.joinGroup(group.getId(), new JoinGroupForm(null), user.getId()))
+                .isInstanceOf(ExistUserException.class)
                 .hasMessageContaining("이미 가입된 회원입니다");
     }
 
@@ -170,6 +188,6 @@ class GroupServiceTest {
     void 존재하지_않는_그룹_예외() {
         assertThatThrownBy(() -> groupService.joinGroup(9999L, new JoinGroupForm("1234"), user.getId()))
                 .isInstanceOf(NotFoundContentsException.class)
-                .hasMessageContaining("해당 그룹을 찾을 수 없습니다");
+                .hasMessageContaining("그룹 정보가 없습니다");
     }
 }

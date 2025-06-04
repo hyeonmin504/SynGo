@@ -55,11 +55,11 @@ public class GroupService {
         //group 저장
         Group savedGroup = groupRepository.save(group);
         //UserGroup 생성및 저장
-        UserGroup userGroup = userGroupService.saveUserGroupData(requestForm.getNickname(), userService.findUserById(userId), savedGroup, Role.LEADER);
+        userGroupService.saveUserGroupData(requestForm.getNickname(), userService.findUserById(userId), savedGroup, Role.LEADER);
         //groupScheduler 생성및 저장
         groupSchedulerService.createScheduler(savedGroup);
 
-        return userGroup.getId();
+        return group.getId();
     }
 
     /**
@@ -111,7 +111,7 @@ public class GroupService {
      * @param requestUserId
      */
     @Transactional
-    public void joinGroup(Long groupId, JoinGroupForm form, Long requestUserId) {
+    public GroupIdResponseForm joinGroup(Long groupId, JoinGroupForm form, Long requestUserId) {
         //group 조회
         Group group = groupRepository.findUserAndUserGroupAndGroupByid(groupId).orElseThrow(
                 () -> new NotFoundContentsException("그룹 정보가 없습니다.")
@@ -126,13 +126,13 @@ public class GroupService {
         //공개 그룹인 경우
         if (group.getPassword() == null) {
             saveUserGroup(requstUser, group);
-            return ;
+            return new GroupIdResponseForm(group.getId());
         }
         //패스워드가 입력된 경우 && 비공개 그룹인 경우
         if (StringUtils.hasText(form.getPassword()) &&
                 passwordEncoder.matches(form.getPassword(), group.getPassword())) {
             saveUserGroup(requstUser, group);
-            return ;
+            return new GroupIdResponseForm(group.getId());
         }
         throw new AccessDeniedException("패스워드가 다릅니다");
     }
@@ -171,24 +171,22 @@ public class GroupService {
         log.info("== [fetch Query] user, userGroup, group 조회");
         Group group = groupRepository.findUserAndUserGroupAndGroupByid(groupId)
                 .orElseThrow(() -> new NotFoundContentsException("그룹 정보가 없습니다."));
-
         List<UserGroup> userGroups = group.getUserGroup();
-
         // 요청자 UserGroup 찾기 및 권한 체크
         UserGroup requestUserGroup = findRoleByRequestUserId(requestUserId, userGroups);
         Role requesterRole = requestUserGroup.getRole();
-
         if (!(requesterRole == Role.LEADER || requesterRole == Role.MANAGER)) {
             throw new AccessDeniedException("권한이 없습니다.");
         }
 
+        //
         Map<Long, UserGroup> userGroupMap = userGroups.stream()
                 .collect(Collectors.toMap(UserGroup::getId, Function.identity()));
-
         // Role 별로 변경할 UserGroup ID 목록을 담을 Map
         Map<Role, List<Long>> roleToUserGroupIds = new EnumMap<>(Role.class);
 
         boolean newLeaderAssigned = false;
+
 
         for (UserGroupRoleSummary summary : userGroupRoleSummaries) {
             UserGroup target = userGroupMap.get(summary.getId());
@@ -198,14 +196,13 @@ public class GroupService {
             Role newRole = summary.getRole();
             // 변경 필요 없으면 skip
             if (currentRole == newRole) continue;
-            // 리더는 건들 수 없음
-            if (currentRole == Role.LEADER) continue;
-            // 매니저 역할 변경 권한 체크
-            if (currentRole == Role.MANAGER && requesterRole != Role.LEADER) continue;
+            // 매니저는 리더 매니저의 권한을 변경할 수 없다.
+            if (requesterRole == Role.MANAGER && (currentRole == Role.LEADER || currentRole == Role.MANAGER ))
+                throw new NotAllowException("매니저 권한 밖 입니다");
             // 새 리더 중복 체크 및 기존 리더 강등
             if (requesterRole == Role.LEADER && newRole == Role.LEADER) {
                 if (newLeaderAssigned) {
-                    throw new ExistUserException("이미 새 리더가 존재합니다.");
+                    throw new ExistUserException("이미 새 리더가 존재합니다");
                 }
                 userGroupRepository.updateUserGroupRole(requestUserGroup.getId(), Role.MEMBER);
                 newLeaderAssigned = true;

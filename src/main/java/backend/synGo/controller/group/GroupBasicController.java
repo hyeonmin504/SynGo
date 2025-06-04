@@ -2,10 +2,7 @@ package backend.synGo.controller.group;
 
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.userGroupData.Role;
-import backend.synGo.exception.AccessDeniedException;
-import backend.synGo.exception.ExistUserException;
-import backend.synGo.exception.NotFoundContentsException;
-import backend.synGo.exception.NotValidException;
+import backend.synGo.exception.*;
 import backend.synGo.form.GroupsPagingForm;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.GroupRequestForm;
@@ -97,8 +94,8 @@ public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
             @RequestBody JoinGroupForm joinGroupFrom,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            groupService.joinGroup(groupId, joinGroupFrom, userDetails.getUserId());
-            return ResponseEntity.ok().body(ResponseForm.success(null, "그룹 참여 성공"));
+            GroupIdResponseForm form = groupService.joinGroup(groupId, joinGroupFrom, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(form, "그룹 참여 성공"));
         } catch (ExistUserException | NotFoundContentsException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
@@ -134,7 +131,7 @@ public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
         try {
             GroupIdResponseForm form = groupService.updateMembersRole(groupId, membersRole, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(form, "그룹 역할 수정 성공")); //todo: 반환은 groupId로 수정
-        } catch (AccessDeniedException | NotFoundContentsException e){
+        } catch (AccessDeniedException | NotFoundContentsException | ExistUserException | NotAllowException e){
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
