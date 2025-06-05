@@ -6,7 +6,7 @@ import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.domain.slot.Status;
 import backend.synGo.domain.user.User;
-import backend.synGo.form.requestForm.MySlotForm;
+import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSchedulerRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,7 +74,7 @@ public class MySlotControllerTest {
     @Test
     @DisplayName("슬롯 생성 실패 - 날짜 유효성 실패")
     void generateSlotFail_dueToInvalidDate() throws Exception {
-        MySlotForm invalidForm = MySlotForm.builder()
+        SlotForm invalidForm = SlotForm.builder()
                 .startDate(LocalDateTime.now().plusDays(2)) // 시작일이 종료일보다 늦음
                 .endDate(LocalDateTime.now().plusDays(1))
                 .status(Status.PLAN)
@@ -84,7 +84,7 @@ public class MySlotControllerTest {
                 .importance(SlotImportance.MEDIUM)
                 .build();
 
-        mockMvc.perform(post("/api/my/scheduler/slots/")
+        mockMvc.perform(post("/api/my/slots")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + accessToken)
                         .content(objectMapper.writeValueAsString(invalidForm)))
@@ -95,7 +95,7 @@ public class MySlotControllerTest {
     @Test
     @DisplayName("슬롯 생성 성공")
     void generateSlotSuccess() throws Exception {
-        MySlotForm validForm = MySlotForm.builder()
+        SlotForm validForm = SlotForm.builder()
                 .startDate(LocalDateTime.now().plusDays(1))
                 .endDate(LocalDateTime.now().plusDays(2))
                 .status(Status.DELAY)
@@ -105,7 +105,7 @@ public class MySlotControllerTest {
                 .importance(SlotImportance.HIGH)
                 .build();
 
-        mockMvc.perform(post("/api/my/scheduler/slots/")
+        mockMvc.perform(post("/api/my/slots")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + accessToken)
                         .content(objectMapper.writeValueAsString(validForm)))

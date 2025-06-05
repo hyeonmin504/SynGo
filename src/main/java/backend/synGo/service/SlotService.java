@@ -4,7 +4,7 @@ import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.*;
-import backend.synGo.form.requestForm.MySlotForm;
+import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.MySlotResponseForm;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.UserRepository;
@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static backend.synGo.domain.slot.UserSlot.createUserSlot;
 
@@ -35,36 +34,35 @@ public class SlotService {
 
     /**
      * 개인 슬롯을 생성하는 서비스
-     * @param mySlotForm
+     * @param slotForm
      */
     @Transactional
-    public Long createMySlot(MySlotForm mySlotForm, Long userId) {
-        if (validDateTime(mySlotForm))
+    public Long createMySlot(SlotForm slotForm, Long userId) {
+        if (validDateTime(slotForm))
             throw new NotValidException("날자를 확인해주세요.");
-        else if (mySlotForm.getEndDate() != null && mySlotForm.getStartDate().isEqual(mySlotForm.getEndDate()))
-            mySlotForm.setEndDate(null);
+        else if (slotForm.getEndDate() != null && slotForm.getStartDate().isEqual(slotForm.getEndDate()))
+            slotForm.setEndDate(null);
 
-        LocalDate startDate = mySlotForm.getStartDate().toLocalDate();
+        LocalDate startDate = slotForm.getStartDate().toLocalDate();
         Date date = dateRepository.findDateAndUserSlotByStartDateAndUserId(startDate, userId)   //fetch join
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundUserException("유저 정보 없음"));
                     return new Date(user, startDate);
-                }
-        );
+                });
         //userSlot 생성
         UserSlot userSlot = createUserSlot(
-                mySlotForm.getStatus(),
-                mySlotForm.getTitle(),
-                mySlotForm.getContent(),
-                mySlotForm.getStartDate(),
-                mySlotForm.getEndDate(),
-                mySlotForm.getPlace(),
-                mySlotForm.getImportance(),
+                slotForm.getStatus(),
+                slotForm.getTitle(),
+                slotForm.getContent(),
+                slotForm.getStartDate(),
+                slotForm.getEndDate(),
+                slotForm.getPlace(),
+                slotForm.getImportance(),
                 date);
         //date의 SlotCount, summary를 업데이트
         dateService.updateDateInfo(date, userSlot);
         // cascade로 전부 저장 전파
-        dateRepository.save(date);
+        userSlotRepository.save(userSlot);
         return userSlot.getId();
     }
 
@@ -101,11 +99,11 @@ public class SlotService {
                 .build();
     }
 
-    public static boolean validDateTime(MySlotForm mySlotForm) {
-        return mySlotForm.getEndDate() != null && (
-                mySlotForm.getStartDate().isAfter(mySlotForm.getEndDate()) ||
-                mySlotForm.getStartDate().isBefore(LocalDateTime.now()) ||
-                mySlotForm.getEndDate().isBefore(LocalDateTime.now())
+    public static boolean validDateTime(SlotForm slotForm) {
+        return slotForm.getEndDate() != null && (
+                slotForm.getStartDate().isAfter(slotForm.getEndDate()) ||
+                slotForm.getStartDate().isBefore(LocalDateTime.now()) ||
+                slotForm.getEndDate().isBefore(LocalDateTime.now())
         );
     }
 }

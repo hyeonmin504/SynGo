@@ -17,4 +17,7 @@ public interface DateRepository extends JpaRepository<Date, Long>, DateRepositor
 
     @Query("select d from Date d join fetch d.userSlot where d.user.id=:userId AND d.startDate=:startDate")
     Optional<Date> findDateAndUserSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("userId") Long userId);
+
+    @Query("select d from Date d join fetch d.groupSlot where d.group.id=:groupId AND d.startDate=:startDate")
+    Optional<Date> findDateAndGroupSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("groupId") Long groupId);
 }

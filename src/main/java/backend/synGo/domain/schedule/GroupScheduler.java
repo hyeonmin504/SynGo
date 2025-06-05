@@ -1,6 +1,5 @@
 package backend.synGo.domain.schedule;
 
-import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -26,9 +23,6 @@ public class GroupScheduler {
 
     @OneToOne(mappedBy = "groupScheduler", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Group group;
-
-    @OneToMany(mappedBy = "groupScheduler", cascade = CascadeType.ALL)
-    private List<Date> date = new ArrayList<>();
 
     public GroupScheduler(Group group) {
         this.lastDeploy = LocalDateTime.now();

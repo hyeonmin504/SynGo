@@ -37,7 +37,7 @@ public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
             @ApiResponse(responseCode = "200", description = "그룹 생성 성공"),
             @ApiResponse(responseCode = "406", description = "패스워드 문제로 인한 에러")
     })
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<ResponseForm<?>> createGroup(
             @Validated @RequestBody GroupRequestForm requestForm,
             @AuthenticationPrincipal CustomUserDetails userDetails){
@@ -54,7 +54,7 @@ public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
             @ApiResponse(responseCode = "200", description = "그룹 데이터 요청 성공"),
             @ApiResponse(responseCode = "200", description = "그룹 데이터 없음")
     })
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<ResponseForm<?>> getAllGroup(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "id") String sort,

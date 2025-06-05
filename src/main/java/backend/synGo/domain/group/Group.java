@@ -1,5 +1,6 @@
 package backend.synGo.domain.group;
 
+import backend.synGo.domain.date.Date;
 import backend.synGo.domain.schedule.GroupScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
 import jakarta.annotation.Nullable;
@@ -37,6 +38,9 @@ public class Group {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "group_scheduler_id")
     private GroupScheduler groupScheduler;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
+    private List<Date> date = new ArrayList<>();
 
     public Group( GroupType groupType, String name, String information) {
         this.createDate = LocalDateTime.now();

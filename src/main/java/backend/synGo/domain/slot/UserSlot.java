@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSlot {
+public class UserSlot{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_slot_id")
@@ -37,10 +37,6 @@ public class UserSlot {
 
     @Enumerated(EnumType.STRING)
     private SlotImportance importance;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_slot_id")
-    private GroupSlot groupSlot;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "reminder_id")

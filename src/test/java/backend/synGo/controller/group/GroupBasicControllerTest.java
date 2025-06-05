@@ -89,7 +89,7 @@ class GroupBasicControllerTest {
                 .groupType(GroupType.BASIC)
                 .build();
 
-        String groupResponse = mockMvc.perform(post("/api/groups/")
+        String groupResponse = mockMvc.perform(post("/api/groups")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestForm)))
@@ -98,7 +98,7 @@ class GroupBasicControllerTest {
                 .andExpect(jsonPath("$.data.groupId").exists())
                 .andReturn().getResponse().getContentAsString();
 
-        String publicGroupResponse = mockMvc.perform(post("/api/groups/")
+        String publicGroupResponse = mockMvc.perform(post("/api/groups")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(publicRequestForm)))
@@ -131,7 +131,7 @@ class GroupBasicControllerTest {
                 .groupType(GroupType.BASIC)
                 .build();
 
-        mockMvc.perform(post("/api/groups/")
+        mockMvc.perform(post("/api/groups")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestForm)))

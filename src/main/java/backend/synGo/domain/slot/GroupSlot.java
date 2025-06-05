@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.awt.image.PixelGrabber;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ public class GroupSlot {
     @Column(name = "group_slot_id")
     private Long id;
 
-    @NotNull
+    @NotNull(message = "status을 null로 할 수 없습니다")
     @Enumerated(EnumType.STRING)
     private Status status;
     @NotNull
@@ -34,6 +35,7 @@ public class GroupSlot {
     private LocalDateTime createDate;
     private String place;
     private String updateUser;
+    private SlotImportance importance;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "date_id")
@@ -42,6 +44,25 @@ public class GroupSlot {
     @OneToMany(mappedBy = "groupSlot", cascade = CascadeType.ALL)
     private List<SlotMember> slotMember = new ArrayList<>();
 
-    @OneToOne(mappedBy = "groupSlot", fetch = FetchType.LAZY)
-    private UserSlot userSlot;
+    public static GroupSlot createGroupSlot(Status status, String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance, Date date) {
+        return new GroupSlot(status,title,content,startTime,endTime,place,importance,date);
+    }
+
+    public GroupSlot(Status status,String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance, Date date) {
+        this.status = status;
+        this.title = title;
+        this.content = content;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.createDate = LocalDateTime.now();
+        this.place = place;
+        this.importance = importance;
+        this.updateUser = "Leader";
+        setDate(date);
+    }
+
+    private void setDate(Date date) {
+        this.date = date;
+        date.getGroupSlot().add(this);
+    }
 }

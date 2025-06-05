@@ -5,8 +5,9 @@ import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
-import backend.synGo.form.requestForm.MySlotForm;
+import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.MySlotResponseForm;
+import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.service.SlotService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,7 +26,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @Slf4j
-@RequestMapping("/api/my/scheduler/slots")
+@RequestMapping("/api/my/slots")
 @RequiredArgsConstructor
 public class MySlotController {
 
@@ -37,20 +38,21 @@ public class MySlotController {
     @Operation(summary = "slot 생성 api", description = "개인 slot을 생성하고 date에 맵핑하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "슬롯 생성 성공"),
-            @ApiResponse(responseCode = "406", description = "날자 오류로 인한 에러")
+            @ApiResponse(responseCode = "200", description = "날자 오류로 인한 에러"),
+            @ApiResponse(responseCode = "404", description = "유저 정보 없음")
     })
-    @PostMapping("/")
-    public ResponseEntity<ResponseForm<?>> createMySlot(@Validated @RequestBody MySlotForm mySlotForm, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    @PostMapping
+    public ResponseEntity<ResponseForm<?>> createMySlot(@Validated @RequestBody SlotForm slotForm, @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             //slot을 생성합니다
-            Long mySlotId = slotService.createMySlot(mySlotForm, userDetails.getUserId());
+            Long mySlotId = slotService.createMySlot(slotForm, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(new SlotIdResponse(mySlotId),"슬롯 생성 성공"));
         } catch (NotValidException e){
             log.error(e.getMessage());
             return ResponseEntity.ok().body(ResponseForm.notAcceptResponse(null,e.getMessage()));
         } catch (NotFoundUserException e){
             log.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseForm.success(null,e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notAcceptResponse(null,e.getMessage()));
         }
     }
 
@@ -75,12 +77,6 @@ public class MySlotController {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notAcceptResponse(null,e.getMessage()));
         }
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class SlotIdResponse {
-        private Long slotId;
     }
 
     @Schema(description = "슬롯 요청 성공 응답 래퍼")

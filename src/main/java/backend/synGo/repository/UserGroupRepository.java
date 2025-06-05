@@ -16,7 +16,8 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
 
     // UserGroupRepository.java
     boolean existsByGroupAndUserId(Group group, Long userId);
-    Optional<UserGroup> findByGroupAndUserId(Group group, Long userId);
+    @Query("select ug from UserGroup ug where ug.user.id=:userId And ug.group.id=:groupId")
+    Optional<UserGroup> findByGroupIdAndUserId(@Param("userId") Long userId, @Param("groupId") Long groupId);
 
     @Query("select ug from UserGroup ug join fetch ug.group g where g.id=:groupId")
     List<UserGroup> findAllUserGroupByGroupId(@Param("groupId") Long groupId);

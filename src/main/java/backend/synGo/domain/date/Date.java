@@ -1,5 +1,6 @@
 package backend.synGo.domain.date;
 
+import backend.synGo.domain.group.Group;
 import backend.synGo.domain.schedule.GroupScheduler;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.slot.GroupSlot;
@@ -40,11 +41,17 @@ public class Date {
     @JoinColumn(name = "user_scheduler_id")
     private UserScheduler userScheduler;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_scheduler_id")
-    private GroupScheduler groupScheduler;
+    @JoinColumn(name = "group_id")
+    private Group group;
 
     public Date(User user, LocalDate startDate) {
         setUser(user);
+        this.startDate = startDate;
+        slotCount = 0;
+    }
+
+    public Date(Group group, LocalDate startDate) {
+        setGroup(group);
         this.startDate = startDate;
         slotCount = 0;
     }
@@ -58,6 +65,11 @@ public class Date {
     public void setUser(User user){
         this.user = user;
         user.getDate().add(this);
+    }
+
+    public void setGroup(Group group){
+        this.group = group;
+        group.getDate().add(this);
     }
 
     public void setUserScheduler(UserScheduler userScheduler){
