@@ -6,11 +6,9 @@ import backend.synGo.domain.slot.SlotPermission;
 import backend.synGo.domain.userGroupData.UserGroup;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.exception.NotFoundContentsException;
-import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.repository.GroupSlotRepository;
-import backend.synGo.repository.SlotMemberRepository;
 import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static backend.synGo.controller.group.SlotMemberController.*;
@@ -32,7 +29,6 @@ public class SlotMemberService {
     private final GroupSlotRepository groupSlotRepository;
     private final UserGroupService userGroupService;
     private final UserGroupRepository userGroupRepository;
-    private final SlotMemberRepository slotMemberRepository;
 
     @Transactional
     public SlotIdResponse registerGroupSlotMember(Long groupId, Long userId, Long slotId, List<JoinMemberRequestForm> form) {
@@ -78,6 +74,18 @@ public class SlotMemberService {
         // SlotMember는 Cascade로 저장됨
         groupSlotRepository.save(groupSlot);
         return new SlotIdResponse(groupSlot.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<JoinMemberRequestForm> getGroupSlotMember(Long groupId, Long requesterUserId, Long slotId) {
+        if (userGroupRepository.existsByGroupIdAndUserId(groupId,requesterUserId)){
+            GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
+                    .orElseThrow(() -> new NotFoundContentsException("슬롯이 존재하지 않습니다"));
+            return groupSlot.getSlotMember().stream()
+                    .map(sm -> new JoinMemberRequestForm(sm.getUserGroup().getId(), sm.getUserGroup().getNickname(), sm.getSlotPermission()))
+                    .collect(Collectors.toList());
+        }
+        throw new AccessDeniedException("그룹원 외 접근 불가");
     }
 
     private static boolean isAlreadyRegistered(JoinMemberRequestForm request, GroupSlot groupSlot) {

@@ -13,8 +13,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,24 @@ import java.util.List;
 public class SlotMemberController {
 
     private final SlotMemberService slotMemberService;
+
+    @Operation(summary = "그룹 슬롯 맴버 조회 api", description = "그룹 슬롯의 맴버를 조회하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 슬롯의 맴버 등록 성공"),
+            @ApiResponse(responseCode = "406", description = "그룹원 외 유저 접근 실패")
+    })
+    @GetMapping("/{groupId}/slots/{slotId}/members")
+    public ResponseEntity<ResponseForm<?>> getGroupSlotMember(
+            @PathVariable Long groupId,
+            @PathVariable Long slotId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            List<JoinMemberRequestForm> joinMembersRequestForm = slotMemberService.getGroupSlotMember(groupId, userDetails.getUserId(), slotId);
+            return ResponseEntity.ok().body(ResponseForm.success(joinMembersRequestForm, "슬롯 맴버 조회 성공"));
+        } catch (NotFoundContentsException | AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+        }
+    }
 
     @Operation(summary = "그룹 슬롯 맴버 등록 api", description = "그룹 슬롯의 맴버를 등록하는 api")
     @ApiResponses(value = {
@@ -57,10 +77,19 @@ public class SlotMemberController {
     @Data
     @AllArgsConstructor
     public static class JoinMemberRequestForm {
-        @NotBlank
+        @NotNull
         public Long userGroupId;
+        public String nickname;
         @NotBlank
         public SlotPermission permission;
+
+        public JoinMemberRequestForm() {
+        }
+
+        public JoinMemberRequestForm(Long userGroupId, SlotPermission permission) {
+            this.userGroupId = userGroupId;
+            this.permission = permission;
+        }
     }
 
     @Data

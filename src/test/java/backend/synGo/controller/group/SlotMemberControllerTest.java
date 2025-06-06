@@ -104,6 +104,28 @@ class SlotMemberControllerTest {
     }
 
     @Test
+    @DisplayName("슬롯 멤버 조회 성공 - 그룹원 접근 가능")
+    void getSlotMember_success() throws Exception {
+        // 1. 슬롯 멤버 등록
+        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, SlotPermission.BASIC);
+        mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId + "/members")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(List.of(form))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("슬롯 맴버 등록 성공"));
+
+        // 2. 그룹원이 슬롯 멤버 조회
+        mockMvc.perform(get("/api/groups/" + groupId + "/slots/" + slotId + "/members")
+                        .header("Authorization", "Bearer " + leaderToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("슬롯 맴버 조회 성공"))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].nickname").exists())
+                .andExpect(jsonPath("$.data[0].permission").exists());
+    }
+
+    @Test
     @DisplayName("그룹 전체 정보 맴버 조회")
     void getMemberInGroup_success() throws Exception {
         mockMvc.perform(get("/api/groups/" + groupId + "/member")
