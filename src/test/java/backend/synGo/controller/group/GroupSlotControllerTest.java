@@ -22,7 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
+import static backend.synGo.controller.group.SlotMemberController.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -203,4 +206,54 @@ public class GroupSlotControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("그룹원 외 접근 불가"));
     }
+
+    @Test
+    @DisplayName("슬롯 상태 수정 성공 - 에디터 권한")
+    void updateSlotStatus_success_editor() throws Exception {
+        // 그룹장이 멤버를 SLOT 에디터로 지정
+        Long userGroupId = getUserGroupId(memberToken);
+        mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId + "/members")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[{\"userGroupId\":" + userGroupId + ",\"permission\":\"EDITOR\"}]"))
+                .andExpect(status().isOk());
+
+        GroupSlotStatusForm form = new GroupSlotStatusForm();
+        form.status = Status.DELAY;
+
+        mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId)
+                        .header("Authorization", "Bearer " + memberToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("슬롯 상태 업데이트 성공"));
+    }
+
+    @Test
+    @DisplayName("슬롯 상태 수정 실패 - BASIC 권한")
+    void updateSlotStatus_fail_basic() throws Exception {
+        GroupSlotStatusForm form = new GroupSlotStatusForm();
+        form.status = Status.PLAN;
+
+        mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId)
+                        .header("Authorization", "Bearer " + memberToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.message").value("변경 권한이 없습니다"));
+    }
+
+    private Long getUserGroupId(String token) throws Exception {
+        String response = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/groups/" + groupId + "/role")
+                        .header("Authorization", "Bearer " + token))
+                .andReturn().getResponse().getContentAsString();
+        List<Map<String, Object>> members = JsonPath.read(response, "$.data");
+        for (Map<String, Object> m : members) {
+            if (!"LEADER".equals(m.get("role"))) {
+                return ((Number) m.get("id")).longValue();
+            }
+        }
+        return null;
+    }
+
 }
