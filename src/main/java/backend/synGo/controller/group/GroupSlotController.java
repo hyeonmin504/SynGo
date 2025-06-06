@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static backend.synGo.controller.group.SlotMemberController.*;
 import static backend.synGo.form.responseForm.SlotResponseForm.*;
 
 @RestController
@@ -96,9 +97,29 @@ public class GroupSlotController {
         try {
             SlotIdResponse slotIdResponse = groupSlotService.updateSlotData(groupId, slotId, userDetails.getUserId(), form);
             return ResponseEntity.ok().body(ResponseForm.success(slotIdResponse, "슬롯 업데이트 성공"));
-        } catch (NotFoundContentsException | NotFoundUserException e) {
+        } catch (NotFoundContentsException | NotFoundUserException | AccessDeniedException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "슬롯 진행 상태 저장 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 수정하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 슬롯 상태 변경 성공"),
+            @ApiResponse(responseCode = "406", description = "유저 권한 부족")
+    })
+    @PostMapping("/{groupId}/slots/{slotId}")
+    public ResponseEntity<ResponseForm<?>> updateGroupSlotStatusData (
+            @PathVariable Long groupId,
+            @PathVariable Long slotId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody GroupSlotStatusForm form) {
+        try {
+            SlotIdResponse slotIdResponse = groupSlotService.updateSlotStatus(groupId, slotId, userDetails.getUserId(), form);
+            return ResponseEntity.ok().body(ResponseForm.success(slotIdResponse, "슬롯 상태 업데이트 성공"));
+        } catch (AccessDeniedException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
 

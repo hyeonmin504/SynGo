@@ -72,6 +72,11 @@ public class GroupSlot {
         return this;
     }
 
+    public void updateStatus(Status status,String updater) {
+        this.status = status;
+        this.updateUser = updater;
+    }
+
     private void setDate(Date date) {
         this.date = date;
         date.getGroupSlot().add(this);

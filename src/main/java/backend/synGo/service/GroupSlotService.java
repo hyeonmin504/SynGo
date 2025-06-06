@@ -5,6 +5,7 @@ import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.SlotMember;
+import backend.synGo.domain.slot.SlotPermission;
 import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.domain.userGroupData.UserGroup;
 import backend.synGo.exception.AccessDeniedException;
@@ -23,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static backend.synGo.controller.group.SlotMemberController.*;
 import static backend.synGo.form.responseForm.SlotResponseForm.*;
 import static backend.synGo.service.SlotService.validDateTime;
 
@@ -94,6 +97,30 @@ public class GroupSlotService {
             return new SlotIdResponse(updatedSlot.getId());
         }
         throw new AccessDeniedException("권한 부족");
+    }
+
+    @Transactional
+    public SlotIdResponse updateSlotStatus(Long groupId, Long slotId, Long requesterUserId, GroupSlotStatusForm form) {
+        //요청자의 유저그룹 조회
+        UserGroup requesterUserGroup = userGroupRepository.findByGroupIdAndUserId(requesterUserId, groupId)
+                .orElseThrow(() -> new NotFoundUserException("그룹에 속한 유저가 아닙니다"));
+        //현재 슬롯 기준 slotMember, UserGroup 페치 조인
+        GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
+                .orElseThrow(() -> new NotFoundContentsException("슬롯이 존재하지 않습니다"));
+        //슬롯에서 시작해 모든 슬롯맴버들의 userGroupId 중에 요청자의 userGroup.id와 매칭되는 값을 찾음
+        Optional<SlotMember> requesterSlotMember = groupSlot.getSlotMember().stream().filter(sm -> sm.getUserGroup().getId().equals(requesterUserGroup.getId()))
+                .findFirst();
+        if ( requesterUserGroup.getRole().equals(Role.LEADER) ){
+            log.info("리더의 슬롯 생태 변경 요청");
+            groupSlot.updateStatus(form.getStatus(), requesterUserGroup.getNickname());
+            return new SlotIdResponse(slotId);
+        }
+        if ( requesterSlotMember.isPresent() && requesterSlotMember.get().getSlotPermission().equals(SlotPermission.EDITOR )) {
+            log.info("에디터의 슬롯 생태 변경 요청");
+            groupSlot.updateStatus(form.getStatus(), requesterUserGroup.getNickname());
+            return new SlotIdResponse(slotId);
+        }
+        throw new AccessDeniedException("변경 권한이 없습니다");
     }
 
     private static GroupSlot setGroupSlot(GroupSlotController.SlotUpdateForm form, GroupSlot groupSlot, UserGroup requesterUserGroup) {

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static backend.synGo.controller.group.SlotMemberController.*;
@@ -31,6 +32,7 @@ public class SlotMemberService {
     private final GroupSlotRepository groupSlotRepository;
     private final UserGroupService userGroupService;
     private final UserGroupRepository userGroupRepository;
+    private final SlotMemberRepository slotMemberRepository;
 
     @Transactional
     public SlotIdResponse registerGroupSlotMember(Long groupId, Long userId, Long slotId, List<JoinMemberRequestForm> form) {

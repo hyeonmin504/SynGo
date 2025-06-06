@@ -5,12 +5,14 @@ import backend.synGo.domain.user.User;
 import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.domain.userGroupData.UserGroup;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static backend.synGo.controller.group.UserGroupController.*;
@@ -33,6 +35,13 @@ public class UserGroupService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public UserGroup findLeader(Long groupId) {
+        return userGroupRepository.joinUserGroupAndGroupFindAllUserGroupByGroupId(groupId)
+                .stream().filter(userGroup -> userGroup.getRole().equals(Role.LEADER))
+                .findFirst()
+                .orElseThrow( () -> new NotFoundUserException("리더가 없습니다"));
+    }
 
     @Transactional(readOnly = true)
     public List<UserInGroupData> getMember(Long groupId, Long userId) {

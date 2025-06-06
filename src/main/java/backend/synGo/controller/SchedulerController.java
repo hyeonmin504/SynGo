@@ -1,4 +1,4 @@
-package backend.synGo.controller.my;
+package backend.synGo.controller;
 
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.schedule.UserScheduler;

@@ -53,22 +53,6 @@ public class SlotMemberController {
         }
     }
 
-//    @Operation(summary = "슬롯 상태 변경 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 변경하는 api")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "그룹 슬롯 상태 변경 성공"),
-//            @ApiResponse(responseCode = "403", description = "유저 권한 부족")
-//    })
-//    @PutMapping("/{groupId}/slots/{slotId}/members")
-//    public ResponseEntity<ResponseForm<?>> updateGroupSlotStatusData(
-//            @PathVariable Long groupId,
-//            @PathVariable Long slotId,
-//            @AuthenticationPrincipal CustomUserDetails userDetails,
-//            @RequestBody  GroupSlotStatusForm form) {
-//        try {
-//
-//        }
-//    }
-
 
     @Data
     @AllArgsConstructor
@@ -81,7 +65,6 @@ public class SlotMemberController {
 
     @Data
     public static class GroupSlotStatusForm {
-        public Long slotId;
         public Status status;
     }
 }

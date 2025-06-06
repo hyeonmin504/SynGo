@@ -112,7 +112,7 @@ public class GroupService {
     @Transactional
     public GroupIdResponseForm joinGroup(Long groupId, JoinGroupForm form, Long requestUserId) {
         //group 조회
-        Group group = groupRepository.findUserAndUserGroupAndGroupByid(groupId).orElseThrow(
+        Group group = groupRepository.joinUserGroupAndUserByGroupId(groupId).orElseThrow(
                 () -> new NotFoundContentsException("그룹 정보가 없습니다.")
         );
         List<UserGroup> userGroup = group.getUserGroup();
@@ -145,7 +145,7 @@ public class GroupService {
     @Transactional(readOnly = true)
     public List<UserGroupRoleSummary> getMemberRole(Long groupId, Long requestUserId) {
         //group 조회
-        Group group = groupRepository.findUserAndUserGroupAndGroupByid(groupId).orElseThrow(
+        Group group = groupRepository.joinUserGroupAndUserByGroupId(groupId).orElseThrow(
                 () -> new NotFoundContentsException("그룹 정보가 없습니다.")
         );
         List<UserGroup> userGroup = group.getUserGroup();
@@ -168,7 +168,7 @@ public class GroupService {
     @Transactional
     public GroupIdResponseForm updateMembersRole(Long groupId, List<UserGroupRoleSummary> userGroupRoleSummaries, Long requestUserId) {
         log.info("== [fetch Query] user, userGroup, group 조회");
-        Group group = groupRepository.findUserAndUserGroupAndGroupByid(groupId)
+        Group group = groupRepository.joinUserGroupAndUserByGroupId(groupId)
                 .orElseThrow(() -> new NotFoundContentsException("그룹 정보가 없습니다."));
         List<UserGroup> userGroups = group.getUserGroup();
         // 요청자 UserGroup 찾기 및 권한 체크

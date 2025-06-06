@@ -19,6 +19,9 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
     @Query("select ug from UserGroup ug where ug.user.id=:userId And ug.group.id=:groupId")
     Optional<UserGroup> findByGroupIdAndUserId(@Param("userId") Long userId, @Param("groupId") Long groupId);
 
+    @Query("select ug from UserGroup ug join fetch ug.slotMember sm where ug.user.id=:userId And ug.group.id=:groupId")
+    Optional<UserGroup> joinSlotMemberFindByGroupIdAndUserId(@Param("userId") Long userId, @Param("groupId") Long groupId);
+
     @Query("select ug from UserGroup ug join fetch ug.group g where g.id=:groupId")
     List<UserGroup> joinUserGroupAndGroupFindAllUserGroupByGroupId(@Param("groupId") Long groupId);
 

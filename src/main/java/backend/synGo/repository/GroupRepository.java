@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface GroupRepository extends JpaRepository<Group, Long> , GroupRepositoryQuery {
     @Query("select distinct g from GroupBasic g join fetch g.userGroup ug join fetch ug.user u where g.id=:groupId")
-    Optional<Group> findUserAndUserGroupAndGroupByid(@Param("groupId") Long groupId);
+    Optional<Group> joinUserGroupAndUserByGroupId(@Param("groupId") Long groupId);
 
 
 }
