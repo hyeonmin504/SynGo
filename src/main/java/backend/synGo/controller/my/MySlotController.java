@@ -6,7 +6,7 @@ import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.SlotForm;
-import backend.synGo.form.responseForm.MySlotResponseForm;
+import backend.synGo.form.responseForm.SlotResponseForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.service.SlotService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,7 +68,7 @@ public class MySlotController {
     @GetMapping("/{slotId}")
     public ResponseEntity<ResponseForm<?>> getMySlot(@PathVariable Long slotId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            MySlotResponseForm responseForm = slotService.findMySlot(slotId, userDetails.getUserId());
+            SlotResponseForm responseForm = slotService.findMySlot(slotId, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(responseForm,"슬롯 요청 성공"));
         } catch (AccessDeniedException e) {
             log.error(e.getMessage());
@@ -80,9 +80,9 @@ public class MySlotController {
     }
 
     @Schema(description = "슬롯 요청 성공 응답 래퍼")
-    public static class MySlotResponseWrapper extends ResponseForm<MySlotResponseForm> {
+    public static class MySlotResponseWrapper extends ResponseForm<SlotResponseForm> {
         public MySlotResponseWrapper() {
-            super(HttpStatus.OK.value(), new MySlotResponseForm(
+            super(HttpStatus.OK.value(), new SlotResponseForm(
                     "스터디 일정",
                     "자바 스터디 모임",
                     LocalDateTime.now().plusHours(1),

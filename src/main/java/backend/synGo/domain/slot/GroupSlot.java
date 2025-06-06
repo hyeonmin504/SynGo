@@ -61,6 +61,17 @@ public class GroupSlot {
         setDate(date);
     }
 
+    public GroupSlot updateSlot(String updateUser,String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance) {
+        this.updateUser = updateUser;
+        this.title = title;
+        this.content = content;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.place = place;
+        this.importance = importance;
+        return this;
+    }
+
     private void setDate(Date date) {
         this.date = date;
         date.getGroupSlot().add(this);

@@ -14,5 +14,5 @@ public interface UserSlotRepository extends JpaRepository<UserSlot,Long> {
     List<UserSlot> findByDate(Date date);
 
     @Query("select us from UserSlot us join fetch us.date d WHERE us.id = :slotId")
-    Optional<UserSlot> findUserIdByUserSlotId(@Param("slotId") Long slotId);
+    Optional<UserSlot> findDateAndUserSlotByUserSlotId(@Param("slotId") Long slotId);
 }

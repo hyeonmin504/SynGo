@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class SignUpForm {
 
     @NotBlank
-    @Size(min = 3, max = 16, message = "이름은 3~16글자로 지어 주세요")
+    @Size(min = 1, max = 16, message = "이름은 1~16글자로 지어 주세요")
     private String name;
     @NotBlank
     @Email

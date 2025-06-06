@@ -5,7 +5,7 @@ import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.*;
 import backend.synGo.form.requestForm.SlotForm;
-import backend.synGo.form.responseForm.MySlotResponseForm;
+import backend.synGo.form.responseForm.SlotResponseForm;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSlotRepository;
@@ -73,9 +73,9 @@ public class SlotService {
      * @return
      */
     @Transactional(readOnly = true)
-    public MySlotResponseForm findMySlot(Long slotId, Long userId) {
+    public SlotResponseForm findMySlot(Long slotId, Long userId) {
         //fetch join으로 date, userslot 조회
-        Optional<UserSlot> userIdByUserSlotId = userSlotRepository.findUserIdByUserSlotId(slotId);
+        Optional<UserSlot> userIdByUserSlotId = userSlotRepository.findDateAndUserSlotByUserSlotId(slotId);
 
         if (userIdByUserSlotId.isPresent()) { //date 테이블에 userId 값이 존재하는지 확인
             if (userIdByUserSlotId.get().getDate().getUser().getId().equals(userId)) { // 요청자와 슬롯의 주인이 동일 인물인지 확인
@@ -86,8 +86,9 @@ public class SlotService {
         throw new NotFoundDataException("슬롯이 존재하지 않습니다");
     }
 
-    private static MySlotResponseForm createMySlotResponseForm(UserSlot userSlot) {
-        return MySlotResponseForm.builder()
+    private static SlotResponseForm createMySlotResponseForm(UserSlot userSlot) {
+        return SlotResponseForm.builder()
+                .slotId(userSlot.getId())
                 .title(userSlot.getTitle())
                 .content(userSlot.getContent())
                 .startDate(userSlot.getStartTime())

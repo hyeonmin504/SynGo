@@ -18,10 +18,27 @@ public class SlotMember {
     @Enumerated(EnumType.STRING)
     private SlotPermission slotPermission;
 
-    @OneToOne(mappedBy = "slotMember", fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_group_id")
     private UserGroup userGroup;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_slot_id")
     private GroupSlot groupSlot;
+
+    public SlotMember(SlotPermission slotPermission, UserGroup userGroup, GroupSlot groupSlot) {
+        this.slotPermission = slotPermission;
+        setUserGroup(userGroup);
+        setGroupSlot(groupSlot);
+    }
+
+    public void setUserGroup(UserGroup userGroup) {
+        this.userGroup = userGroup;
+        userGroup.getSlotMember().add(this);
+    }
+
+    public void setGroupSlot(GroupSlot groupSlot) {
+        this.groupSlot = groupSlot;
+        groupSlot.getSlotMember().add(this);
+    }
 }

@@ -16,6 +16,7 @@ import backend.synGo.repository.UserGroupRepository;
 import backend.synGo.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +52,7 @@ class GroupServiceTest {
         em.clear();
     }
     @Test
+    @DisplayName("공개_그룹_생성_성공")
     void 공개_그룹_생성_성공() {
         // given
         GroupRequestForm form = GroupRequestForm.builder()
@@ -71,6 +73,7 @@ class GroupServiceTest {
     }
 
     @Test
+    @DisplayName("비공개_그룹_생성_성공")
     void 비공개_그룹_생성_성공() {
         // given
         GroupRequestForm form = GroupRequestForm.builder()
@@ -93,6 +96,7 @@ class GroupServiceTest {
     }
 
     @Test
+    @DisplayName("비밀번호_불일치_예외")
     void 비밀번호_불일치_예외() {
         // given
         GroupRequestForm form = GroupRequestForm.builder()
@@ -111,6 +115,7 @@ class GroupServiceTest {
     }
 
     @Test
+    @DisplayName("공개_그룹_참여_성공")
     void 공개_그룹_참여_성공() {
         Group group = new Group(GroupType.BASIC, "공개 그룹", "설명");
         groupRepository.save(group);
@@ -126,10 +131,11 @@ class GroupServiceTest {
 
         groupService.joinGroup(group.getId(), new JoinGroupForm(null), otherUser.getId());
 
-        assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
+        assertThat(userGroupRepository.existsByGroupIdAndUserId(group.getId(), otherUser.getId())).isTrue();
     }
 
     @Test
+    @DisplayName("비공개_그룹_참여_성공")
     void 비공개_그룹_참여_성공() {
         String rawPassword = "group1234";
         Group group = new Group(passwordEncoder.encode(rawPassword), GroupType.BASIC, "비공개", "소개");
@@ -146,10 +152,11 @@ class GroupServiceTest {
 
         groupService.joinGroup(group.getId(), new JoinGroupForm(rawPassword), otherUser.getId());
 
-        assertThat(userGroupRepository.existsByGroupAndUserId(group, otherUser.getId())).isTrue();
+        assertThat(userGroupRepository.existsByGroupIdAndUserId(group.getId(), otherUser.getId())).isTrue();
     }
 
     @Test
+    @DisplayName("비공개_그룹_비밀번호_불일치_예외")
     void 비공개_그룹_비밀번호_불일치_예외() {
         Group group = new Group(passwordEncoder.encode("1234"), GroupType.BASIC, "비공개", "소개");
         groupRepository.save(group);
@@ -169,6 +176,7 @@ class GroupServiceTest {
     }
 
     @Test
+    @DisplayName("이미_가입된_사용자_예외")
     void 이미_가입된_사용자_예외() {
         Group group = new Group(GroupType.BASIC, "공개", "소개");
         groupRepository.save(group);

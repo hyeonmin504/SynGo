@@ -130,7 +130,7 @@ class GroupRoleControllerTest {
 
     @Test
     @DisplayName("LEADER가 LEADER를 중복 지정하면 예외 발생")
-    void duplicateLeaderThrowsException() throws Exception {
+    void updateMembersRole_Duplicate_fail() throws Exception {
         List<GroupBasicController.UserGroupRoleSummary> updateList = List.of(
                 new GroupBasicController.UserGroupRoleSummary(memberUserGroupId, "멤버", Role.LEADER),
                 new GroupBasicController.UserGroupRoleSummary(memberUserGroupId, "멤버", Role.LEADER)
@@ -146,7 +146,7 @@ class GroupRoleControllerTest {
 
     @Test
     @DisplayName("MANAGER가 LEADER로 역할 변경 시도 시 거부됨")
-    void managerCannotAssignLeader() throws Exception {
+    void updateMembersRole_manager_fail() throws Exception {
         // 우선 LEADER가 멤버를 MANAGER로 승격
         List<GroupBasicController.UserGroupRoleSummary> promote = List.of(
                 new GroupBasicController.UserGroupRoleSummary(memberUserGroupId, "멤버", Role.MANAGER)

@@ -28,7 +28,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/groups")
-public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
+public class GroupBasicController {
 
     private final GroupService groupService;
 
@@ -130,7 +130,7 @@ public class GroupBasicController { //todo: userGroupId -> groupId로 바꾸기
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             GroupIdResponseForm form = groupService.updateMembersRole(groupId, membersRole, userDetails.getUserId());
-            return ResponseEntity.ok().body(ResponseForm.success(form, "그룹 역할 수정 성공")); //todo: 반환은 groupId로 수정
+            return ResponseEntity.ok().body(ResponseForm.success(form, "그룹 역할 수정 성공"));
         } catch (AccessDeniedException | NotFoundContentsException | ExistUserException | NotAllowException e){
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }

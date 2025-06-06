@@ -15,12 +15,12 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
     List<UserGroup> findByGroup(Group group);
 
     // UserGroupRepository.java
-    boolean existsByGroupAndUserId(Group group, Long userId);
+    boolean existsByGroupIdAndUserId(Long groupId, Long userId);
     @Query("select ug from UserGroup ug where ug.user.id=:userId And ug.group.id=:groupId")
     Optional<UserGroup> findByGroupIdAndUserId(@Param("userId") Long userId, @Param("groupId") Long groupId);
 
     @Query("select ug from UserGroup ug join fetch ug.group g where g.id=:groupId")
-    List<UserGroup> findAllUserGroupByGroupId(@Param("groupId") Long groupId);
+    List<UserGroup> joinUserGroupAndGroupFindAllUserGroupByGroupId(@Param("groupId") Long groupId);
 
     @Modifying(clearAutomatically = true)
     @Query("update UserGroup ug set ug.role = :role where ug.id =:targetId")

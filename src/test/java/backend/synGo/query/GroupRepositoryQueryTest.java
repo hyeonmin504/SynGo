@@ -63,5 +63,4 @@ public class GroupRepositoryQueryTest {
         assertThat(result).isNotEmpty();
         assertThat(result.getContent()).anyMatch(g -> g.getName().equals("테스트 그룹"));
     }
-
 }

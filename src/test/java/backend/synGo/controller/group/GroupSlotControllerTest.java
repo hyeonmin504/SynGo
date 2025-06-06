@@ -41,6 +41,7 @@ public class GroupSlotControllerTest {
     private String leaderToken;
     private Long groupId;
     private String memberToken;
+    private Long slotId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -99,13 +100,33 @@ public class GroupSlotControllerTest {
                         .content(objectMapper.writeValueAsString(joinForm)))
                 .andExpect(status().isOk());
 
+        // 슬롯 생성
+        SlotForm validForm = SlotForm.builder()
+                .startDate(LocalDateTime.now().plusDays(1))
+                .endDate(LocalDateTime.now().plusDays(2))
+                .status(Status.PLAN)
+                .title("회의 준비")
+                .content("회의 자료 준비")
+                .place("회의실 B")
+                .importance(SlotImportance.MEDIUM)
+                .build();
+
+        String slotCreateResp = mockMvc.perform(post("/api/groups/"+ groupId + "/slots")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validForm)))
+                .andReturn().getResponse().getContentAsString();
+
+        Integer id2 = JsonPath.read(slotCreateResp, "$.data.slotId");
+        slotId = id2.longValue();
+
         em.flush();
         em.clear();
     }
 
     @Test
     @DisplayName("슬롯 생성 성공")
-    void generateSlotSuccess() throws Exception {
+    void createGroupSlot_success() throws Exception {
         SlotForm validForm = SlotForm.builder()
                 .startDate(LocalDateTime.now().plusDays(1))
                 .endDate(LocalDateTime.now().plusDays(2))
@@ -126,7 +147,7 @@ public class GroupSlotControllerTest {
 
     @Test
     @DisplayName("슬롯 생성 실패 - 권환 없는 유저 접근")
-    void generateSlotFail() throws Exception {
+    void createGroupSlot_auth_fail() throws Exception {
         SlotForm validForm = SlotForm.builder()
                 .startDate(LocalDateTime.now().plusDays(1))
                 .endDate(LocalDateTime.now().plusDays(2))
@@ -143,5 +164,43 @@ public class GroupSlotControllerTest {
                         .content(objectMapper.writeValueAsString(validForm)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("권한 부족"));
+    }
+
+    @Test
+    @DisplayName("슬롯 조회 성공 - 그룹원은 조회 가능")
+    void getGroupSlot_success() throws Exception {
+        // 생성한 슬롯을 그룹원이 조회
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/groups/" + groupId + "/slots/" + slotId)
+                                .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.slotId").value(slotId))
+                .andExpect(jsonPath("$.message").value("슬롯 요청 성공"));
+    }
+
+    @Test
+    @DisplayName("슬롯 조회 실패 - 그룹원이 아닌 유저는 조회 불가")
+    void getGroupSlot_notGroupMember() throws Exception {
+        // outsider 유저 생성 및 로그인
+        SignUpForm outsiderSignUp = new SignUpForm("비회원", "outsider@test.com", "Qwer1234!", "Qwer1234!");
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(outsiderSignUp)))
+                .andExpect(status().isOk());
+
+        LoginForm outsiderLogin = new LoginForm("Qwer1234!", "outsider@test.com");
+        String outsiderLoginResp = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(outsiderLogin)))
+                .andReturn().getResponse().getContentAsString();
+        String outsiderToken = JsonPath.read(outsiderLoginResp, "$.data.accessToken");
+
+        // outsider가 슬롯 조회 시도 → 실패
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/groups/" + groupId + "/slots/" + slotId)
+                                .header("Authorization", "Bearer " + outsiderToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("그룹원 외 접근 불가"));
     }
 }
