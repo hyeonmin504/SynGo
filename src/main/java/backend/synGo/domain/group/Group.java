@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name = "GroupBasic")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity(name = "GroupBasic")
 @Table(name = "group_basic")
 public class Group {
     @Id
@@ -63,3 +63,5 @@ public class Group {
         this.id = id;
     }
 }
+
+

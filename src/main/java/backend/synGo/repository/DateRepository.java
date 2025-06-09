@@ -11,13 +11,19 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-// DateRepository.java
 public interface DateRepository extends JpaRepository<Date, Long>, DateRepositoryQuery {
     Optional<Date> findByStartDateAndUser(LocalDate startDate, User user);
 
-    @Query("select d from Date d join fetch d.userSlot where d.user.id=:userId AND d.startDate=:startDate")
+    @Query("select d from scheduleDate d join fetch d.userSlot where d.user.id=:userId AND d.startDate=:startDate")
     Optional<Date> findDateAndUserSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("userId") Long userId);
 
-    @Query("select d from Date d join fetch d.groupSlot where d.group.id=:groupId AND d.startDate=:startDate")
+    @Query("select d from scheduleDate d join fetch d.groupSlot where d.group.id=:groupId AND d.startDate=:startDate")
     Optional<Date> findDateAndGroupSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("groupId") Long groupId);
+
+    @Query("select distinct d from scheduleDate d join fetch d.groupSlot gs where d.group.id = :groupId and d.startDate >= :startDate and d.startDate < :endDate")
+    List<Date> findScheduleDateWithSlotsByGroupAndDateRange(
+            @Param("groupId") Long groupId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

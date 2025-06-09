@@ -82,7 +82,6 @@ public class AuthService {
     public void logout(HttpServletRequest request) {
         String token = jwtProvider.resolveToken(request);
 
-
         if (token != null && jwtProvider.validateToken(token, TokenType.AT)) {
             // (Optional) AccessToken을 블랙리스트에 등록 (만료 시간까지)
             jwtProvider.blackListToken(token);

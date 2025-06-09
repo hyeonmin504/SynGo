@@ -8,6 +8,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,6 +29,7 @@ import static org.springframework.util.StringUtils.*;
 public class JwtProvider{
     //서명 키
     private final Key key;
+    @Qualifier("jwtRedisTemplate")
     private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${security.jwt.access-token.expiration}")
@@ -36,7 +38,7 @@ public class JwtProvider{
     private long refreshTokenDay;
 
     public JwtProvider(
-            @Value("${security.jwt.secret-key}") String secretKey, //접속 키
+            @Value("${security.secret-key}") String secretKey, //접속 키
             RedisTemplate<String,String> redisTemplate) {
         //Base64로 디코딩
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
@@ -74,7 +76,6 @@ public class JwtProvider{
                 Duration.ofDays(refreshTokenDay).toMillis(),
                 TimeUnit.MILLISECONDS
         );
-
         return refreshToken;
     }
 
@@ -193,7 +194,7 @@ public class JwtProvider{
         return redisTemplate.opsForValue().get("RT:" + userId);
     }
 
-    // Redis에서 RefreshToken 조회
+    // Redis에서 Access 조회
     public String getAccessToken(Long userId) {
         return redisTemplate.opsForValue().get("AT:" + userId);
     }

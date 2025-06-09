@@ -1,24 +1,90 @@
 package backend.synGo.service;
 
+import backend.synGo.config.scheduler.SchedulerProvider;
 import backend.synGo.domain.date.Date;
-import backend.synGo.domain.group.Group;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
-import backend.synGo.repository.UserSlotRepository;
+import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.repository.DateRepository;
+import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static backend.synGo.controller.date.DateSearchController.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DateService {
 
-    private final UserSlotRepository userSlotRepository;
+    private final SchedulerProvider schedulerProvider;
+    private final UserGroupRepository userGroupRepository;
+    private final DateRepository dateRepository;
+
+    @Transactional
+    public GetGroupDateInfo getDatesForMonthInGroup(Long groupId, int year, int month, Long requesterUserId) {
+        if(!userGroupRepository.existsByGroupIdAndUserId(groupId,requesterUserId)) {
+            throw new AccessDeniedException("그룹원 외 접근 불가");
+        }
+
+        boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
+        // 1. Redis 캐시 조회
+        Optional<GetGroupDateInfo> cachedSchedule = schedulerProvider.getSchedule(groupId);
+        if (isCurrentMonth && cachedSchedule.isPresent()) {
+            log.info("캐시 조회중");
+            return cachedSchedule.get();
+        }
+
+        // 2. DB 조회
+        List<Date> dateByMonth = findDateByMonth(year, month, groupId);
+        log.info("summary={}",dateByMonth.get(0).getSummary());
+
+        List<DateInfo> dateInfo = dateByMonth.stream()
+                .map(date -> DateInfo.builder()
+                        .dateId(date.getId())
+                        .slotCount(date.getSlotCount())
+                        .today(date.getStartDate())
+                        .slotInfo(
+                                date.getGroupSlot().stream()
+                                .map(groupSlot -> SlotInfo.builder()
+                                        .slotId(groupSlot.getId())
+                                        .title(groupSlot.getTitle())
+                                        .startTime(groupSlot.getStartTime())
+                                        .status(groupSlot.getStatus())
+                                        .importance(groupSlot.getImportance())
+                                        .build())
+                                .collect(Collectors.toList())
+                        )
+                        .build())
+                .collect(Collectors.toList());
+
+        GetGroupDateInfo getGroupDateInfo = new GetGroupDateInfo(groupId, dateInfo);
+        if (isCurrentMonth) {
+            schedulerProvider.saveGroupScheduler(groupId, getGroupDateInfo);
+            log.info("데이터 캐싱");
+            return getGroupDateInfo;
+        }
+        return getGroupDateInfo;
+    }
+
+    @Transactional
+    private List<Date> findDateByMonth(int year, int month, Long groupId) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1); // 해당 월의 첫째 날
+        LocalDate endDate = yearMonth.plusMonths(1).atDay(1); // 해당 월의 마지막 날
+
+        // 예시: 이 범위 내의 데이터를 조회
+        return dateRepository.findScheduleDateWithSlotsByGroupAndDateRange(groupId, startDate, endDate);
+    }
 
     /**
      * user이 생성한 date의 SlotCount, summary를 업데이트 todo: 그룹 슬롯과 유저 슬롯을 통합해서 summary를 결정하기

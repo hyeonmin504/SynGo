@@ -1,6 +1,12 @@
 package backend.synGo.config.redis;
 
+import backend.synGo.controller.date.DateSearchController;
+import backend.synGo.controller.date.DateSearchController.GetGroupDateInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -9,6 +15,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -21,24 +28,50 @@ public class RedisConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config =
-                new RedisStandaloneConfiguration(redisProperties.getHost(),redisProperties.getPort());
+                new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort());
         config.setPassword(redisProperties.getPassword());
         return new LettuceConnectionFactory(config);
     }
 
-    //redis 서버와 연결을 위한 팩토리 객체
+    // 기본 RedisTemplate (사용하지 않으면 제거 가능)
     @Bean
-    public RedisTemplate<String, String> redisTemplate() {
-        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory());
+    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        return template;
+    }
 
-        //key Serializer -> redis는 바이너리 형태로 저장하기 떄문에 key를 읽기 위해 serializer을 통해 직렬화(문자열화)한다
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        //value Serializer -> redis는 바이너리 형태로 저장하기 떄문에 value를 읽기 위해 serializer을 통해 직렬화(문자열화)한다
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
+    // JWT용 RedisTemplate
+    @Bean
+    @Qualifier("jwtRedisTemplate")
+    public RedisTemplate<String, String> jwtRedisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        return template;
+    }
 
-        return redisTemplate;
+    // 그룹 스케줄용 RedisTemplate
+    @Bean
+    @Qualifier("groupScheduleRedisTemplate") // ✅ 올바른 이름
+    public RedisTemplate<String, GetGroupDateInfo> groupScheduleRedisTemplate(RedisConnectionFactory factory){
+        RedisTemplate<String, GetGroupDateInfo> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        Jackson2JsonRedisSerializer<GetGroupDateInfo> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, GetGroupDateInfo.class);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        return template;
     }
 }

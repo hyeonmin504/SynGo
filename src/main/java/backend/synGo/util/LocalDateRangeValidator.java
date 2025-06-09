@@ -9,7 +9,7 @@ import java.time.LocalDate;
 public class LocalDateRangeValidator implements ConstraintValidator<DateTimeRange, LocalDate> {
 
     private final LocalDate min = LocalDate.of(2025, 5, 28);
-    private final LocalDate max = LocalDate.of(9999, 12, 31);
+    private final LocalDate max = LocalDate.of(2099, 12, 31);
 
     @Override
     public boolean isValid(LocalDate value, ConstraintValidatorContext context) {

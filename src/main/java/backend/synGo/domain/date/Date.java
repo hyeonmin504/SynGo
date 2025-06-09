@@ -15,9 +15,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity(name = "scheduleDate")
+@Table(name = "schedule_date")
 public class Date {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -12,7 +12,6 @@ import backend.synGo.form.requestForm.SlotForm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
-import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -135,7 +134,6 @@ class SlotMemberControllerTest {
     }
 
     // ======= 헬퍼 메서드 ========
-
     private void signUp(String email, String name) throws Exception {
         SignUpForm signUpForm = new SignUpForm(name, email, "Qwer1234!", "Qwer1234!");
         mockMvc.perform(post("/api/auth/signup")

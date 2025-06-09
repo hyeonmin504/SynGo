@@ -32,8 +32,8 @@ public class TestInitializer {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private EntityManager em;
 
-    public TestScenario createBasicScenario() throws Exception {
-        TestScenario scenario = new TestScenario();
+    public TestData createBasicScenario() throws Exception {
+        TestData scenario = new TestData();
 
         // 1. 리더 회원가입 및 로그인
         signUp("leader@test.com", "리더");

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class TestScenario {
+public class TestData {
     public String leaderToken;
     public String memberToken;
     public Long groupId;

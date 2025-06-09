@@ -26,14 +26,19 @@ spring:
 
 logging:
   level:
-    root: INFO
+    root: DEBUG
     #org.springframework.web: DEBUG
     #org.spring-doc: DEBUG
     #org.springframework.boot.autoconfigure: DEBUG
 
 security:
+  secret-key: ${SECRET_KEY}
+  scheduler:
+    user:
+      expiration: ${USER_TOKEN_EXPIRATION}
+    group:
+      expiration: ${GROUP_TOKEN_EXPIRATION}
   jwt:
-    secret-key: ${SECRET_KEY}
     access-token:
       expiration: ${ACCESS_TOKEN_EXPIRATION} # 30 min
     refresh-token:
