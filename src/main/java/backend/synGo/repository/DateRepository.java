@@ -20,7 +20,7 @@ public interface DateRepository extends JpaRepository<Date, Long>, DateRepositor
     @Query("select d from scheduleDate d join fetch d.groupSlot where d.group.id=:groupId AND d.startDate=:startDate")
     Optional<Date> findDateAndGroupSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("groupId") Long groupId);
 
-    @Query("select distinct d from scheduleDate d join fetch d.groupSlot gs where d.group.id = :groupId and d.startDate >= :startDate and d.startDate < :endDate")
+    @Query("select distinct d from scheduleDate d left join fetch d.groupSlot gs where d.group.id = :groupId and d.startDate >= :startDate and d.startDate < :endDate")
     List<Date> findScheduleDateWithSlotsByGroupAndDateRange(
             @Param("groupId") Long groupId,
             @Param("startDate") LocalDate startDate,

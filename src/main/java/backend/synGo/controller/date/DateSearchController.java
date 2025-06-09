@@ -8,13 +8,18 @@ import backend.synGo.service.DateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,10 +42,9 @@ public class DateSearchController {
     @GetMapping("/{groupId}/date")
     public ResponseEntity<ResponseForm<?>> getGroupDateData(
             @PathVariable Long groupId,
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) @Min(2000) @Max(2100) Integer year,
+            @RequestParam(required = false) @Min(1) @Max(12) Integer month,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         LocalDate now = LocalDate.now();
         int requestYear = (year != null) ? year : now.getYear();
         int requestMonth = (month != null) ? month : now.getMonthValue();
@@ -49,7 +53,7 @@ public class DateSearchController {
             log.info("date={},{}", requestYear, requestMonth);
             GetGroupDateInfo dates = dateService.getDatesForMonthInGroup(groupId, requestYear, requestMonth, userDetails.getUserId());
             return ResponseEntity.ok(ResponseForm.success(dates, "조회 성공"));
-        } catch (Exception e) {
+        } catch (DateTimeException e) {
             log.error("그룹 날짜 조회 오류: {}", e.getMessage(), e);
             return ResponseEntity.ok(ResponseForm.success(null, e.getMessage()));
         }
@@ -85,7 +89,6 @@ public class DateSearchController {
         Long slotId;
         String title;
         LocalDateTime startTime;
-        Status status;
         SlotImportance importance;
     }
 }

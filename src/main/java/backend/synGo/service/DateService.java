@@ -30,53 +30,39 @@ public class DateService {
     private final UserGroupRepository userGroupRepository;
     private final DateRepository dateRepository;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public GetGroupDateInfo getDatesForMonthInGroup(Long groupId, int year, int month, Long requesterUserId) {
         if(!userGroupRepository.existsByGroupIdAndUserId(groupId,requesterUserId)) {
             throw new AccessDeniedException("그룹원 외 접근 불가");
         }
-
+        //이번 달을 조회 한 경우
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
-        // 1. Redis 캐시 조회
-        Optional<GetGroupDateInfo> cachedSchedule = schedulerProvider.getSchedule(groupId);
-        if (isCurrentMonth && cachedSchedule.isPresent()) {
+        //다음 달을 조회 한 경우
+        boolean isNextMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue()+1;
+        //Redis 캐시 조회
+        Optional<GetGroupDateInfo> cachedSchedule = schedulerProvider.getSchedule(groupId, year, month);
+        //캐시 존재 && 이번 달 혹은 다음 달 인 경우
+        if ((isCurrentMonth || isNextMonth) && cachedSchedule.isPresent()) {
             log.info("캐시 조회중");
             return cachedSchedule.get();
         }
-
-        // 2. DB 조회
+        //DB 조회
         List<Date> dateByMonth = findDateByMonth(year, month, groupId);
-        log.info("summary={}",dateByMonth.get(0).getSummary());
-
+        //dto 작성
         List<DateInfo> dateInfo = dateByMonth.stream()
-                .map(date -> DateInfo.builder()
-                        .dateId(date.getId())
-                        .slotCount(date.getSlotCount())
-                        .today(date.getStartDate())
-                        .slotInfo(
-                                date.getGroupSlot().stream()
-                                .map(groupSlot -> SlotInfo.builder()
-                                        .slotId(groupSlot.getId())
-                                        .title(groupSlot.getTitle())
-                                        .startTime(groupSlot.getStartTime())
-                                        .status(groupSlot.getStatus())
-                                        .importance(groupSlot.getImportance())
-                                        .build())
-                                .collect(Collectors.toList())
-                        )
-                        .build())
+                .map(DateService::getDateInfoToDto)
                 .collect(Collectors.toList());
 
         GetGroupDateInfo getGroupDateInfo = new GetGroupDateInfo(groupId, dateInfo);
-        if (isCurrentMonth) {
-            schedulerProvider.saveGroupScheduler(groupId, getGroupDateInfo);
+        if (isCurrentMonth || isNextMonth) {
+            schedulerProvider.saveGroupScheduler(groupId, getGroupDateInfo, year, month);
             log.info("데이터 캐싱");
             return getGroupDateInfo;
         }
         return getGroupDateInfo;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     private List<Date> findDateByMonth(int year, int month, Long groupId) {
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1); // 해당 월의 첫째 날
@@ -139,5 +125,27 @@ public class DateService {
         }
         else
             date.addSlotCountAndSummary(groupSlot.getTitle());
+    }
+
+    private static DateInfo getDateInfoToDto(Date date) {
+        return DateInfo.builder()
+                .dateId(date.getId())
+                .slotCount(date.getSlotCount())
+                .today(date.getStartDate())
+                .slotInfo(
+                        date.getGroupSlot().stream()
+                                .map(DateService::getSlotInfoToDto)
+                                .collect(Collectors.toList())
+                )
+                .build();
+    }
+
+    private static SlotInfo getSlotInfoToDto(GroupSlot groupSlot) {
+        return SlotInfo.builder()
+                .slotId(groupSlot.getId())
+                .title(groupSlot.getTitle())
+                .startTime(groupSlot.getStartTime())
+                .importance(groupSlot.getImportance())
+                .build();
     }
 }

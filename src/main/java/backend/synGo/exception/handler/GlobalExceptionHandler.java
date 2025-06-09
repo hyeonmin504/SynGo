@@ -5,17 +5,20 @@ import backend.synGo.exception.AuthenticationFailedException;
 import backend.synGo.exception.NotFoundUserException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.UnexpectedTypeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -56,7 +59,9 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class,
             ConstraintViolationException.class,
             EmptyResultDataAccessException.class,
-            MethodArgumentNotValidException.class
+            MethodArgumentNotValidException.class,
+            UnexpectedTypeException.class,
+            HandlerMethodValidationException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ResponseForm<Map<String, Object>>> handleBadRequest(Exception ex, WebRequest request) {
@@ -73,7 +78,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             NoHandlerFoundException.class,
-            NoResourceFoundException.class
+            NoResourceFoundException.class,
+            HttpRequestMethodNotSupportedException.class
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ResponseForm<Map<String, Object>>> handleNotFound(Exception ex, WebRequest request) {

@@ -1,5 +1,6 @@
 package backend.synGo.service;
 
+import backend.synGo.config.scheduler.SchedulerProvider;
 import backend.synGo.controller.group.GroupSlotController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static backend.synGo.controller.group.GroupSlotController.*;
 import static backend.synGo.controller.group.SlotMemberController.*;
 import static backend.synGo.form.responseForm.SlotResponseForm.*;
 import static backend.synGo.service.SlotService.validDateTime;
@@ -41,6 +43,7 @@ public class GroupSlotService {
     private final DateRepository dateRepository;
     private final GroupRepository groupRepository;
     private final GroupSlotRepository groupSlotRepository;
+    private final SchedulerProvider schedulerProvider;
 
     @Transactional
     public Long createGroupSlot(Long groupId, SlotForm slotForm, Long userId) {
@@ -58,21 +61,14 @@ public class GroupSlotService {
                     Group group = groupRepository.findById(groupId).orElseThrow(() -> new NotFoundUserException("그룹 정보 없음"));
                     return new Date(group, startDate);
                 });
-        log.info("date={}", date);
-        log.info("slotForm: {}", slotForm);
         //groupSlot 생성
-        GroupSlot groupSlot = GroupSlot.createGroupSlot(
-                slotForm.getStatus(),
-                slotForm.getTitle(),
-                slotForm.getContent(),
-                slotForm.getStartDate(),
-                slotForm.getEndDate(),
-                slotForm.getPlace(),
-                slotForm.getImportance(),
-                date);
+        GroupSlot groupSlot = createGroupSlot(slotForm, date);
         //date의 SlotCount, summary를 업데이트
         dateService.updateGroupDateInfo(date, groupSlot);
         groupSlotRepository.save(groupSlot);
+
+        schedulerProvider.evictSchedule(groupId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
+        log.info("해당 날자 캐시 초기화={}.{}",slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
         return groupSlot.getId();
     }
 
@@ -88,12 +84,13 @@ public class GroupSlotService {
     }
 
     @Transactional
-    public SlotIdResponse updateSlotData(Long groupId, Long slotId, Long userId, GroupSlotController.SlotUpdateForm form) {
+    public SlotIdResponse updateSlotData(Long groupId, Long slotId, Long userId, SlotUpdateForm form) {
         UserGroup requesterUserGroup = userGroupService.findUserGroupByUserIdAndGroupId(userId, groupId);
         if (requesterUserGroup.getRole().equals(Role.LEADER) || requesterUserGroup.getRole().equals(Role.MANAGER)) {
             GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
                     .orElseThrow(() -> new NotFoundContentsException("슬롯 정보 없음"));
             GroupSlot updatedSlot = setGroupSlot(form, groupSlot, requesterUserGroup);
+            schedulerProvider.evictSchedule(groupId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
             return new SlotIdResponse(updatedSlot.getId());
         }
         throw new AccessDeniedException("권한 부족");
@@ -123,7 +120,19 @@ public class GroupSlotService {
         throw new AccessDeniedException("변경 권한이 없습니다");
     }
 
-    private static GroupSlot setGroupSlot(GroupSlotController.SlotUpdateForm form, GroupSlot groupSlot, UserGroup requesterUserGroup) {
+    private static GroupSlot createGroupSlot(SlotForm slotForm, Date date) {
+        return GroupSlot.createGroupSlot(
+                slotForm.getStatus(),
+                slotForm.getTitle(),
+                slotForm.getContent(),
+                slotForm.getStartDate(),
+                slotForm.getEndDate(),
+                slotForm.getPlace(),
+                slotForm.getImportance(),
+                date);
+    }
+
+    private static GroupSlot setGroupSlot(SlotUpdateForm form, GroupSlot groupSlot, UserGroup requesterUserGroup) {
         return groupSlot.updateSlot(requesterUserGroup.getNickname(), form.getTitle(), form.getContent(), form.getStartDate(), form.getEndDate(), form.getPlace(), form.getImportance());
     }
 
