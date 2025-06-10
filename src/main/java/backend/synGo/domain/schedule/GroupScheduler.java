@@ -24,9 +24,12 @@ public class GroupScheduler {
     @OneToOne(mappedBy = "groupScheduler", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Group group;
 
-    public GroupScheduler(Group group) {
+    public GroupScheduler(Theme theme) {
         this.lastDeploy = LocalDateTime.now();
-        this.theme = Theme.BLACK;
-        this.group = group;
+        this.theme = theme;
+    }
+
+    public void setGroup(Group group) {
+        this.group =group;
     }
 }

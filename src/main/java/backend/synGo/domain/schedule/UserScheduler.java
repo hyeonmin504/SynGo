@@ -2,9 +2,7 @@ package backend.synGo.domain.schedule;
 
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.user.User;
-import backend.synGo.form.responseForm.MySchedulerForm;
 import jakarta.persistence.*;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

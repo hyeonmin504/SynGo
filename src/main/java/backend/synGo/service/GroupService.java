@@ -1,6 +1,8 @@
 package backend.synGo.service;
 
 import backend.synGo.domain.group.Group;
+import backend.synGo.domain.schedule.GroupScheduler;
+import backend.synGo.domain.schedule.Theme;
 import backend.synGo.domain.user.User;
 import backend.synGo.domain.userGroupData.Role;
 import backend.synGo.domain.userGroupData.UserGroup;
@@ -49,15 +51,12 @@ public class GroupService {
      */
     @Transactional
     public Long createGroupAndReturnUserGroupId(GroupRequestForm requestForm, Long userId) {
-        //group 체크및 생성
+        //group 체크및 scheduler 생성
         Group group = buildGroupFromRequest(requestForm);
         //group 저장
         Group savedGroup = groupRepository.save(group);
         //UserGroup 생성및 저장
         userGroupService.saveUserGroupData(requestForm.getNickname(), userService.findUserById(userId), savedGroup, Role.LEADER);
-        //groupScheduler 생성및 저장
-        groupSchedulerService.createScheduler(savedGroup);
-
         return group.getId();
     }
 
@@ -277,7 +276,8 @@ public class GroupService {
                 passwordEncoder.encode(password),
                 requestForm.getGroupType(),
                 requestForm.getGroupName(),
-                requestForm.getInfo()
+                requestForm.getInfo(),
+                new GroupScheduler(Theme.BLACK)
         );
     }
 }

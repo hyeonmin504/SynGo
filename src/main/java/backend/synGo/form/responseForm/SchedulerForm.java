@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class MySchedulerForm {
+public class SchedulerForm {
     public Theme theme;
 }

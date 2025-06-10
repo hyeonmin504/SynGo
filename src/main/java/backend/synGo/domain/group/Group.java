@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,12 +50,26 @@ public class Group {
         this.information = information;
     }
 
-    public Group(String password, GroupType groupType, String name, String information) {
+    public Group(@Nullable String password, GroupType groupType, String name, String information) {
         this.password = password;
         this.createDate = LocalDateTime.now();
         this.groupType = groupType;
         this.name = name;
         this.information = information;
+    }
+
+    public Group(@Nullable String password, GroupType groupType, String name, String information, GroupScheduler groupScheduler) {
+        this.password = password;
+        this.createDate = LocalDateTime.now();
+        this.groupType = groupType;
+        this.name = name;
+        this.information = information;
+        setGroupScheduler(groupScheduler);
+    }
+
+    public void setGroupScheduler(GroupScheduler groupScheduler) {
+        this.groupScheduler = groupScheduler;
+        groupScheduler.setGroup(this);
     }
 
     //Mock test 위한 setter
