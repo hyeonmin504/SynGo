@@ -1,7 +1,6 @@
 package backend.synGo.config.redis;
 
-import backend.synGo.controller.date.DateSearchController;
-import backend.synGo.controller.date.DateSearchController.GetGroupDateInfo;
+import backend.synGo.controller.date.DateSearchController.GroupDateInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -59,16 +58,16 @@ public class RedisConfig {
     // 그룹 스케줄용 RedisTemplate
     @Bean
     @Qualifier("groupScheduleRedisTemplate") // ✅ 올바른 이름
-    public RedisTemplate<String, GetGroupDateInfo> groupScheduleRedisTemplate(RedisConnectionFactory factory){
-        RedisTemplate<String, GetGroupDateInfo> template = new RedisTemplate<>();
+    public RedisTemplate<String, GroupDateInfo> groupScheduleRedisTemplate(RedisConnectionFactory factory){
+        RedisTemplate<String, GroupDateInfo> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        Jackson2JsonRedisSerializer<GetGroupDateInfo> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, GetGroupDateInfo.class);
+        Jackson2JsonRedisSerializer<GroupDateInfo> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, GroupDateInfo.class);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);

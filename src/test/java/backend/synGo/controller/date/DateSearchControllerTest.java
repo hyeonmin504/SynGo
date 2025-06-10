@@ -105,7 +105,7 @@ class DateSearchControllerTest {
         int year = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
 
-        mockMvc.perform(get("/api/groups/" + groupId + "/date")
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/month")
                         .header("Authorization", "Bearer " + leaderToken)
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month)))
@@ -117,7 +117,7 @@ class DateSearchControllerTest {
     @Test
     @DisplayName("존재하지 않는 월 조회 시 기본값 적용")
     void getGroupDateData_withDefaultValues() throws Exception {
-        mockMvc.perform(get("/api/groups/" + groupId + "/date")
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/month")
                         .header("Authorization", "Bearer " + leaderToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("조회 성공"));
@@ -126,10 +126,51 @@ class DateSearchControllerTest {
     @Test
     @DisplayName("유효하지 않은 year/month 파라미터 검증 실패")
     void getGroupDateData_invalidParams() throws Exception {
-        mockMvc.perform(get("/api/groups/" + groupId + "/date")
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/month")
                         .param("year", "1999")
                         .param("month", "13")
                         .header("Authorization", "Bearer " + leaderToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("하루 슬롯 조회 성공")
+    void getGroupDayDateData_success() throws Exception {
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/day")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .param("year", String.valueOf(tomorrow.getYear()))
+                        .param("month", String.valueOf(tomorrow.getMonthValue()))
+                        .param("day", String.valueOf(tomorrow.getDayOfMonth())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.today").value(tomorrow.toString()))
+                .andExpect(jsonPath("$.data.slotCount").value(1))
+                .andExpect(jsonPath("$.data.groupSlotDtos[0].title").value("회의"))
+                .andExpect(jsonPath("$.data.groupSlotDtos[0].editorNickname").doesNotExist())
+                .andExpect(jsonPath("$.message").value("조회 성공"));
+    }
+
+    @Test
+    @DisplayName("하루 슬롯 조회 실패 - 잘못된 날짜")
+    void getGroupDayDateData_invalidDay() throws Exception {
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/day")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .param("year", "2024")
+                        .param("month", "2")
+                        .param("day", "31")) // 2월 31일은 존재하지 않음
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("하루 슬롯 조회 실패 - 파라미터 범위 초과")
+    void getGroupDayDateData_invalidParamRange() throws Exception {
+        mockMvc.perform(get("/api/groups/" + groupId + "/date/day")
+                        .header("Authorization", "Bearer " + leaderToken)
+                        .param("year", "1500")
+                        .param("month", "20")
+                        .param("day", "50"))
                 .andExpect(status().isBadRequest());
     }
 }

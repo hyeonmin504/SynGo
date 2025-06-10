@@ -18,7 +18,7 @@ import static backend.synGo.controller.date.DateSearchController.*;
 public class SchedulerProvider {
 
     @Qualifier("groupScheduleRedisTemplate")
-    private final RedisTemplate<String, GetGroupDateInfo> redisTemplate;
+    private final RedisTemplate<String, GroupDateInfo> redisTemplate;
 
     private static final String Key = "GROUP:";
 
@@ -32,14 +32,14 @@ public class SchedulerProvider {
         return "GROUP:" + groupId + ":" + year + ":" + month;
     }
 
-    public void saveGroupScheduler(Long groupId, GetGroupDateInfo getGroupDateInfo, int year, int month) {
+    public void saveGroupScheduler(Long groupId, GroupDateInfo groupDateInfo, int year, int month) {
         String key = getRedisKey(groupId, year, month);
         Duration duration = Duration.ofMinutes(saveGroupDataMinutes);
-        redisTemplate.opsForValue().set(key, getGroupDateInfo, duration);
+        redisTemplate.opsForValue().set(key, groupDateInfo, duration);
         log.info("Saved scheduler group={} to Redis.", groupId);
     }
 
-    public Optional<GetGroupDateInfo> getSchedule(Long groupId, int year, int month) {
+    public Optional<GroupDateInfo> getSchedule(Long groupId, int year, int month) {
         String key = getRedisKey(groupId, year, month);
         return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }

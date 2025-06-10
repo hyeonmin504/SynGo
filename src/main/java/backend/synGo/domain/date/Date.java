@@ -1,7 +1,6 @@
 package backend.synGo.domain.date;
 
 import backend.synGo.domain.group.Group;
-import backend.synGo.domain.schedule.GroupScheduler;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
@@ -26,7 +25,6 @@ public class Date {
     private Long id;
 
     private int slotCount;
-    private String summary;
     private LocalDate startDate;
 
     @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST, orphanRemoval = true)
@@ -57,9 +55,8 @@ public class Date {
         slotCount = 0;
     }
 
-    public void addSlotCountAndSummary(String summary){
+    public void addSlotCount(){
         this.slotCount ++;
-        this.summary = summary;
     }
 
     // 양방향 연관 관계

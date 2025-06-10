@@ -25,12 +25,9 @@ import static backend.synGo.domain.slot.UserSlot.createUserSlot;
 @RequiredArgsConstructor
 public class SlotService {
 
-    private final UserService userService;
     private final UserRepository userRepository;
     private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
-    private final DateService dateService;
-
 
     /**
      * 개인 슬롯을 생성하는 서비스
@@ -59,8 +56,8 @@ public class SlotService {
                 slotForm.getPlace(),
                 slotForm.getImportance(),
                 date);
-        //date의 SlotCount, summary를 업데이트
-        dateService.updateDateInfo(date, userSlot);
+        //date의 SlotCount +1
+        date.addSlotCount();
         // cascade로 전부 저장 전파
         userSlotRepository.save(userSlot);
         return userSlot.getId();

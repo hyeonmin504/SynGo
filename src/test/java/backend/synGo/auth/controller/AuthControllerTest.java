@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 public class AuthControllerTest {
-    @Value("${security.jwt.secret-key}")
+    @Value("${security.secret-key}")
     String secretKey;
     @Autowired
     private MockMvc mockMvc;

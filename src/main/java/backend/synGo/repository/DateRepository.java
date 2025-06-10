@@ -1,8 +1,10 @@
 package backend.synGo.repository;
 
 import backend.synGo.domain.date.Date;
+import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.repository.query.DateRepositoryQuery;
+import backend.synGo.service.GroupSlotService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,10 +22,13 @@ public interface DateRepository extends JpaRepository<Date, Long>, DateRepositor
     @Query("select d from scheduleDate d join fetch d.groupSlot where d.group.id=:groupId AND d.startDate=:startDate")
     Optional<Date> findDateAndGroupSlotByStartDateAndUserId(@Param("startDate") LocalDate startDate,@Param("groupId") Long groupId);
 
-    @Query("select distinct d from scheduleDate d left join fetch d.groupSlot gs where d.group.id = :groupId and d.startDate >= :startDate and d.startDate < :endDate")
-    List<Date> findScheduleDateWithSlotsByGroupAndDateRange(
+    @Query("select distinct d from scheduleDate d join fetch d.groupSlot gs where d.group.id = :groupId and d.startDate >= :startDate and d.startDate < :endDate")
+    List<Date> findScheduleDateWithSlotsByGroupAndMonthRange(
             @Param("groupId") Long groupId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("select d from scheduleDate d where d.group.id= :groupId and d.startDate= :day")
+    Optional<Date> findByGroupIdAndDay(@Param("groupId") Long groupId, @Param("day") LocalDate day);
 }
