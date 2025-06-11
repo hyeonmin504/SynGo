@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Schema(description = "개인 슬롯 응답 DTO")
+@Schema(description = "그룹 슬롯 응답 DTO")
 @Builder
 @Data
 @AllArgsConstructor
@@ -44,31 +44,8 @@ public class SlotResponseForm {
 
     private String updater;
 
+    @Builder.Default
     private List<JoinMemberForm> member = new ArrayList<>();
-
-    public SlotResponseForm(String title, String content, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, String place, String importance, String status) {
-        this.title = title;
-        this.content = content;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.createDate = createDate;
-        this.place = place;
-        this.importance = importance;
-        this.status = status;
-    }
-
-    public SlotResponseForm(Long slotId, String title, String content, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, String place, String importance, String status, String updater) {
-        this.slotId = slotId;
-        this.title = title;
-        this.content = content;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.createDate = createDate;
-        this.place = place;
-        this.importance = importance;
-        this.status = status;
-        this.updater = updater;
-    }
 
     @AllArgsConstructor
     @NoArgsConstructor

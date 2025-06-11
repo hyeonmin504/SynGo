@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class DateSearchControllerTest {
+class GroupDateSearchControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

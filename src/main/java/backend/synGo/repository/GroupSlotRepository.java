@@ -17,4 +17,7 @@ public interface GroupSlotRepository extends JpaRepository<GroupSlot, Long>, Gro
 
     @Query("select gs from GroupSlot gs left join fetch gs.slotMember sm where gs.id=:slotId")
     Optional<GroupSlot> joinSlotMemberBySlotId(@Param("slotId") Long slotId);
+
+    @Query("select gs from GroupSlot gs where gs.date.id in :dateIds")
+    List<GroupSlot> findByDateIdIn(@Param("dateIds") List<Long> dateIds);
 }

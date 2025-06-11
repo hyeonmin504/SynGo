@@ -1,5 +1,6 @@
 package backend.synGo.service;
 
+import backend.synGo.controller.my.MySlotController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static backend.synGo.controller.my.MySlotController.*;
 import static backend.synGo.domain.slot.UserSlot.createUserSlot;
 
 @Service
@@ -70,7 +72,7 @@ public class SlotService {
      * @return
      */
     @Transactional(readOnly = true)
-    public SlotResponseForm findMySlot(Long slotId, Long userId) {
+    public UserSlotResponseForm findMySlot(Long slotId, Long userId) {
         //fetch join으로 date, userslot 조회
         Optional<UserSlot> userIdByUserSlotId = userSlotRepository.findDateAndUserSlotByUserSlotId(slotId);
 
@@ -83,8 +85,8 @@ public class SlotService {
         throw new NotFoundDataException("슬롯이 존재하지 않습니다");
     }
 
-    private static SlotResponseForm createMySlotResponseForm(UserSlot userSlot) {
-        return SlotResponseForm.builder()
+    private static UserSlotResponseForm createMySlotResponseForm(UserSlot userSlot) {
+        return UserSlotResponseForm.builder()
                 .slotId(userSlot.getId())
                 .title(userSlot.getTitle())
                 .content(userSlot.getContent())

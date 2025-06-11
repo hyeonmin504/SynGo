@@ -23,6 +23,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -31,9 +33,6 @@ import java.time.LocalDateTime;
 public class MySlotController {
 
     private final SlotService slotService;
-
-//    @PostMapping("{date}")
-//    public ResponseEntity<ResponseForm<?>> generateDateContent(@PathVariable LocalDateTime dateTime, @RequestBody )
 
     @Operation(summary = "slot 생성 api", description = "개인 slot을 생성하고 date에 맵핑하는 api")
     @ApiResponses(value = {
@@ -60,7 +59,7 @@ public class MySlotController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "슬롯 검색 성공", content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = MySlotResponseWrapper.class)
+                    schema = @Schema(implementation = UserSlotResponseForm.class)
             )),
             @ApiResponse(responseCode = "406", description = "다른 유저의 슬롯 검색으로 인한 에러"),
             @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
@@ -68,7 +67,7 @@ public class MySlotController {
     @GetMapping("/{slotId}")
     public ResponseEntity<ResponseForm<?>> getMySlot(@PathVariable Long slotId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            SlotResponseForm responseForm = slotService.findMySlot(slotId, userDetails.getUserId());
+            UserSlotResponseForm responseForm = slotService.findMySlot(slotId, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(responseForm,"슬롯 요청 성공"));
         } catch (AccessDeniedException e) {
             log.error(e.getMessage());
@@ -79,19 +78,47 @@ public class MySlotController {
         }
     }
 
-    @Schema(description = "슬롯 요청 성공 응답 래퍼")
-    public static class MySlotResponseWrapper extends ResponseForm<SlotResponseForm> {
-        public MySlotResponseWrapper() {
-            super(HttpStatus.OK.value(), new SlotResponseForm(
-                    "스터디 일정",
-                    "자바 스터디 모임",
-                    LocalDateTime.now().plusHours(1),
-                    LocalDateTime.now().plusHours(2),
-                    LocalDateTime.now(),
-                    "카페 드롭탑",
-                    "보통",
-                    "PLAN"
-            ),"슬롯 요청 성공");
+    @Schema(description = "그룹 슬롯 응답 DTO")
+    @Builder
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class UserSlotResponseForm {
+
+        private Long slotId;
+        @Schema(description = "제목", example = "스터디 일정")
+        private String title;
+
+        @Schema(description = "내용", example = "자바 스터디 모임")
+        private String content;
+
+        @Schema(description = "시작 시간", example = "2025-06-01T10:00:00")
+        private LocalDateTime startDate;
+
+        @Schema(description = "종료 시간", example = "2025-06-01T12:00:00")
+        private LocalDateTime endDate;
+
+        @Schema(description = "생성 시간", example = "2025-05-31T09:00:00")
+        private LocalDateTime createDate;
+
+        @Schema(description = "장소", example = "카페 드롭탑")
+        private String place;
+
+        @Schema(description = "중요도", example = "HIGH")
+        private String importance;
+
+        @Schema(description = "상태", example = "CONFIRMED")
+        private String status;
+
+        public UserSlotResponseForm(String title, String content, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, String place, String importance, String status) {
+            this.title = title;
+            this.content = content;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.createDate = createDate;
+            this.place = place;
+            this.importance = importance;
+            this.status = status;
         }
     }
 }

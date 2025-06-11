@@ -16,7 +16,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Entity(name = "scheduleDate")
+@Entity(name = "ScheduleDate")
 @Table(name = "schedule_date")
 public class Date {
 
@@ -29,8 +29,7 @@ public class Date {
 
     @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<UserSlot> userSlot = new ArrayList<>();
-
-    @OneToMany(mappedBy = "date", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToMany(mappedBy = "date", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupSlot> groupSlot = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -73,5 +72,10 @@ public class Date {
     public void setUserScheduler(UserScheduler userScheduler){
         this.userScheduler = userScheduler;
         userScheduler.getDate().add(this);
+    }
+
+
+    public void setGroupSlot(List<GroupSlot> slots) {
+        this.groupSlot = slots;
     }
 }

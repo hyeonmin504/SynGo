@@ -1,11 +1,9 @@
 package backend.synGo.service;
 
 import backend.synGo.config.scheduler.SchedulerProvider;
-import backend.synGo.controller.group.GroupSlotController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
 import backend.synGo.domain.slot.GroupSlot;
-import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.domain.slot.SlotMember;
 import backend.synGo.domain.slot.SlotPermission;
 import backend.synGo.domain.userGroupData.Role;
@@ -25,10 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -70,7 +66,7 @@ public class GroupSlotService {
         date.addSlotCount();
         groupSlotRepository.save(groupSlot);
 
-        schedulerProvider.evictSchedule(groupId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
+        schedulerProvider.evictGroupSchedule(groupId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
         log.info("해당 날자 캐시 초기화={}.{}",slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
         return groupSlot.getId();
     }
@@ -93,7 +89,7 @@ public class GroupSlotService {
             GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
                     .orElseThrow(() -> new NotFoundContentsException("슬롯 정보 없음"));
             GroupSlot updatedSlot = setGroupSlot(form, groupSlot, requesterUserGroup);
-            schedulerProvider.evictSchedule(groupId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
+            schedulerProvider.evictGroupSchedule(groupId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
             return new SlotIdResponse(updatedSlot.getId());
         }
         throw new AccessDeniedException("권한 부족");

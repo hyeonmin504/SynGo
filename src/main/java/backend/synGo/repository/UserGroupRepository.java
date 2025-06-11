@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +33,8 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update UserGroup ug set ug.role = :role where ug.id in :targetIds")
     void bulkUpdateUserGroupRoles(@Param("targetIds") List<Long> targetIds, @Param("role") Role role);
+
+    @Query("select ug from UserGroup ug join fetch ug.group g join fetch g.date d where ug.user.id=:userId And d.startDate >=:startDate and d.startDate <:endDate")
+    List<UserGroup> findUserDataByUserId(Long userId, LocalDate startDate, LocalDate endDate);
+
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.Optional;
 
-import static backend.synGo.controller.date.DateSearchController.*;
+import static backend.synGo.controller.date.GroupDateSearchController.*;
 
 @Slf4j
 @Component
@@ -28,25 +28,27 @@ public class SchedulerProvider {
     @Value("${security.scheduler.user.expiration}")
     private long saveUserDataMinutes;
 
-    private String getRedisKey(Long groupId, int year, int month) {
+    private String getGroupRedisKey(Long groupId, int year, int month) {
         return "GROUP:" + groupId + ":" + year + ":" + month;
     }
 
     public void saveGroupScheduler(Long groupId, GroupDateInfo groupDateInfo, int year, int month) {
-        String key = getRedisKey(groupId, year, month);
+        String key = getGroupRedisKey(groupId, year, month);
         Duration duration = Duration.ofMinutes(saveGroupDataMinutes);
         redisTemplate.opsForValue().set(key, groupDateInfo, duration);
         log.info("Saved scheduler group={} to Redis.", groupId);
     }
 
-    public Optional<GroupDateInfo> getSchedule(Long groupId, int year, int month) {
-        String key = getRedisKey(groupId, year, month);
+    public Optional<GroupDateInfo> getGroupSchedule(Long groupId, int year, int month) {
+        String key = getGroupRedisKey(groupId, year, month);
         return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }
 
-    public void evictSchedule(Long groupId, int year, int month) {
-        String key = getRedisKey(groupId, year, month);
+    public void evictGroupSchedule(Long groupId, int year, int month) {
+        String key = getGroupRedisKey(groupId, year, month);
         redisTemplate.delete(key);
         log.debug("Deleted schedule group={} from Redis.", groupId);
     }
+
+
 }
