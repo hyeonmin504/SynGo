@@ -5,6 +5,7 @@ import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.service.DateService;
+import backend.synGo.service.date.group.DateInGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,7 +33,7 @@ import static backend.synGo.service.GroupSlotService.*;
 @RequestMapping("/api/groups")
 public class GroupDateSearchController {
 
-    private final DateService dateService;
+    private final DateInGroupService dateService;
 
     @Operation(summary = "그룹 슬롯 한달 데이터 조회 api", description = "그룹 date를 한달 간격으로 조회하는 api")
     @ApiResponses(value = {
