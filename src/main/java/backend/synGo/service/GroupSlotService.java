@@ -12,7 +12,7 @@ import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
-import backend.synGo.form.GroupSlotDto;
+import backend.synGo.form.DaySlotDto;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.form.responseForm.SlotResponseForm;
@@ -119,40 +119,6 @@ public class GroupSlotService {
         throw new AccessDeniedException("변경 권한이 없습니다");
     }
 
-    @Transactional(readOnly = true)
-    public DateInfo findDateByDay(Long groupId, int year, int month, int day) {
-        //요청한 날자
-        LocalDate localDate = LocalDate.of(year,month,day);
-        //선택한 date 조회
-        Optional<Date> optionalDate = dateRepository.findByGroupIdAndDay(groupId, localDate);
-
-        if (optionalDate.isPresent()) {
-            log.info("optionalDate.isPresent()");
-            return findAllDateInfoOneQuery(optionalDate.get());
-        }
-        return new DateInfo();
-    }
-
-    //쿼리 한번에 유지보수 약함
-
-    /**
-     *
-     * @param date
-     * @return
-     */
-    @Transactional(readOnly = true)
-    private DateInfo findAllDateInfoOneQuery(Date date) {
-        // 해당 date의 slotmember, usergroup 조회
-        List<GroupSlotDto> groupSlotDtoList = groupSlotRepository.findByGroupIdAndDay(date.getId());
-
-        return DateInfo.builder()
-                .slotCount(date.getSlotCount())
-                .today(date.getStartDate())
-                .groupSlotDtos(groupSlotDtoList)
-                .build();
-    }
-
-
     private List<JoinMemberForm> buildSlotMember(GroupSlot groupSlot) {
         List<SlotMember> members = groupSlot.getSlotMember();
         if (members.isEmpty()) return new ArrayList<>();
@@ -213,28 +179,28 @@ public class GroupSlotService {
         int slotCount;
         LocalDate today;
         @Builder.Default
-        List<GroupSlotDto> groupSlotDtos = new ArrayList<>();
+        List<DaySlotDto> daySlotDtos = new ArrayList<>();
     }
 //    //쿼리 두번에 유지보수 강함
 //    private DateInfo findAllDateInfoTwoQuery(Date date) {
 //        // 1차 쿼리: slot 기본 정보만 조회
-//        List<GroupSlotDto> baseSlotDtos = groupSlotRepository.findDateAndSlotByGroupIdAndDay(date.getId());
+//        List<DaySlotDto> baseSlotDtos = groupSlotRepository.findDateAndSlotByGroupIdAndDay(date.getId());
 //
 //        // slotId 추출
 //        List<Long> slotIds = baseSlotDtos.stream()
-//                .map(GroupSlotDto::getSlotId)
+//                .map(DaySlotDto::getSlotId)
 //                .toList();
 //
 //        // Map 형태로 매핑
-//        Map<Long, GroupSlotDto> slotMap = baseSlotDtos.stream()
-//                .collect(Collectors.toMap(GroupSlotDto::getSlotId, dto -> dto));
+//        Map<Long, DaySlotDto> slotMap = baseSlotDtos.stream()
+//                .collect(Collectors.toMap(DaySlotDto::getSlotId, dto -> dto));
 //
 //        // 2차 쿼리: slotId에 해당하는 editor 정보만 조회
-//        List<GroupSlotDto> editorDtos = groupSlotRepository.findMemberWithUserGroupBySlotIdsAndLeader(slotIds);
+//        List<DaySlotDto> editorDtos = groupSlotRepository.findMemberWithUserGroupBySlotIdsAndLeader(slotIds);
 //
 //        // 필요한 필드만 업데이트 (editor 정보)
-//        for (GroupSlotDto editorDto : editorDtos) {
-//            GroupSlotDto original = slotMap.get(editorDto.getSlotId());
+//        for (DaySlotDto editorDto : editorDtos) {
+//            DaySlotDto original = slotMap.get(editorDto.getSlotId());
 //            if (original != null) {
 //                original.setUserGroupId(editorDto.getUserGroupId());
 //                original.setEditorNickname(editorDto.getEditorNickname());
@@ -244,7 +210,7 @@ public class GroupSlotService {
 //        return DateInfo.builder()
 //                .slotCount(date.getSlotCount())
 //                .today(date.getStartDate())
-//                .groupSlotDtos(baseSlotDtos)
+//                .daySlotDtos(baseSlotDtos)
 //                .build();
 //    }
 }

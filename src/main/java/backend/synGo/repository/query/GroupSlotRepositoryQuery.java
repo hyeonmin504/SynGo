@@ -1,11 +1,11 @@
 package backend.synGo.repository.query;
 
-import backend.synGo.form.GroupSlotDto;
+import backend.synGo.form.DaySlotDto;
 
 import java.util.List;
 
 public interface GroupSlotRepositoryQuery {
-    List<GroupSlotDto> findByGroupIdAndDay(Long dateId);
-    List<GroupSlotDto> findDateAndSlotByGroupIdAndDay(Long dateId);
-    List<GroupSlotDto> findMemberWithUserGroupBySlotIdsAndLeader(List<Long> slotIds);
+    List<DaySlotDto> findByGroupIdAndDay(Long dateId);
+    List<DaySlotDto> findDateAndSlotByGroupIdAndDay(Long dateId);
+    List<DaySlotDto> findMemberWithUserGroupBySlotIdsAndLeader(List<Long> slotIds);
 }

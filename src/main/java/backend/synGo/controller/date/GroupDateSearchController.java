@@ -4,7 +4,6 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.form.ResponseForm;
-import backend.synGo.service.DateService;
 import backend.synGo.service.date.group.DateInGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static backend.synGo.controller.date.UserDataDateSearchController.*;
 import static backend.synGo.service.GroupSlotService.*;
 
 @RestController
@@ -69,7 +69,7 @@ public class GroupDateSearchController {
             @PathVariable Long groupId,
             @RequestParam(required = false) @Min(2000) @Max(2100) Integer year,
             @RequestParam(required = false) @Min(1) @Max(12) Integer month,
-            @RequestParam(required = false) Integer day,
+            @RequestParam(required = false) @Min(1) @Max(31) Integer day,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         LocalDate now = LocalDate.now();
         int requestYear = (year != null) ? year : now.getYear();
@@ -92,49 +92,26 @@ public class GroupDateSearchController {
     public static class GroupDateInfo {
         Long groupId;
         @Builder.Default
-        List<MonthDateInfo> monthDateInfo = new ArrayList<>();
+        List<MonthDateInfoGroupVer> monthDateDto = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @Builder
     @NoArgsConstructor
-    public static class MonthDateInfo {
+    public static class MonthDateDto {
         Long dateId;
         int slotCount;
         LocalDate today;
         @Builder.Default
-        List<SlotInfo> slotInfo = new ArrayList<>();
+        List<MonthSlotDto> monthSlotDto = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class SlotInfo {
-        Long slotId;
-        String title;
-        LocalDateTime startTime;
-        SlotImportance importance;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @Builder
-    @NoArgsConstructor
-    public static class MonthDateInfoGroupVer {
-        int slotCount;
-        LocalDate today;
-        @Builder.Default
-        List<SlotInfoContainGroupId> slotInfo = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class SlotInfoContainGroupId {
-        Long groupId;
+    public static class MonthSlotDto {
         Long slotId;
         String title;
         LocalDateTime startTime;

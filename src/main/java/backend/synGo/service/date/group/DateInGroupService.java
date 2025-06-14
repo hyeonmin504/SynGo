@@ -1,15 +1,15 @@
 package backend.synGo.service.date.group;
 
 import backend.synGo.config.scheduler.SchedulerProvider;
-import backend.synGo.controller.date.GroupDateSearchController;
+import backend.synGo.controller.date.UserDataDateSearchController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.form.DaySlotDto;
 import backend.synGo.repository.DateRepository;
+import backend.synGo.repository.GroupSlotRepository;
 import backend.synGo.repository.UserGroupRepository;
-import backend.synGo.service.DateService;
-import backend.synGo.service.GroupSlotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static backend.synGo.controller.date.GroupDateSearchController.*;
+import static backend.synGo.controller.date.UserDataDateSearchController.*;
+import static backend.synGo.service.GroupSlotService.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class DateInGroupService {
     private final SchedulerProvider schedulerProvider;
     private final UserGroupRepository userGroupRepository;
     private final DateRepository dateRepository;
-    private final GroupSlotService groupSlotService;
+    private final GroupSlotRepository groupSlotRepository;
 
 
     @Transactional(readOnly = true)
@@ -55,25 +57,17 @@ public class DateInGroupService {
         //DB 조회
         List<Date> dateByMonth = findGroupDataByMonth(year, month, groupId);
         //dto 작성
-        List<MonthDateInfo> monthDateInfo = dateByMonth.stream()
+        List<MonthDateInfoGroupVer> monthDateDto = dateByMonth.stream()
                 .map(DateInGroupService::getDateInfoToDto)
                 .toList();
 
-        GroupDateInfo groupDateInfo = new GroupDateInfo(groupId, monthDateInfo);
+        GroupDateInfo groupDateInfo = new GroupDateInfo(groupId, monthDateDto);
         if (isCurrentMonth || isNextMonth) {
             schedulerProvider.saveGroupScheduler(groupId, groupDateInfo, year, month);
             log.info("데이터 캐싱");
             return groupDateInfo;
         }
         return groupDateInfo;
-    }
-
-    @Transactional(readOnly = true)
-    public GroupSlotService.DateInfo findGroupDataByDayInGroup(Long groupId, int year, int month, int day, Long requestUserId) {
-        if(userGroupRepository.existsByGroupIdAndUserId(groupId,requestUserId)) {
-            return groupSlotService.findDateByDay(groupId, year, month, day);
-        }
-        throw new AccessDeniedException("그룹원 외 접근 불가");
     }
 
     @Transactional(readOnly = true)
@@ -86,9 +80,47 @@ public class DateInGroupService {
         return dateRepository.findScheduleDateWithSlotsByGroupAndMonthRange(groupId, startDate, endDate);
     }
 
-    public static MonthDateInfo getDateInfoToDto(Date date) {
+    /**
+     * 그룹 슬롯 하루 데이터 조회
+     * @param groupId
+     * @param year
+     * @param month
+     * @param day
+     * @param requestUserId
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public DateInfo findGroupDataByDayInGroup(Long groupId, int year, int month, int day, Long requestUserId) {
+        if(userGroupRepository.existsByGroupIdAndUserId(groupId,requestUserId)) {
+            //요청한 날자
+            LocalDate localDate = LocalDate.of(year,month,day);
+            //선택한 date 조회
+            Optional<Date> optionalDate = dateRepository.findByGroupIdAndDay(groupId, localDate);
+
+            if (optionalDate.isPresent()) {
+                log.info("optionalDate.isPresent()");
+                return findAllUserDate(optionalDate.get());
+            }
+            return new DateInfo();
+        }
+        throw new AccessDeniedException("그룹원 외 접근 불가");
+    }
+
+    @Transactional(readOnly = true)
+    private DateInfo findAllUserDate(Date date) {
+        // 해당 date의 slotmember, usergroup 조회
+        List<DaySlotDto> daySlotDtoList = groupSlotRepository.findByGroupIdAndDay(date.getId());
+
+        return DateInfo.builder()
+                .slotCount(date.getSlotCount())
+                .today(date.getStartDate())
+                .daySlotDtos(daySlotDtoList)
+                .build();
+    }
+
+    public static MonthDateInfoGroupVer getDateInfoToDto(Date date) {
         //상위 2개의 데이터만 추출
-        List<SlotInfo> top2Slots = new ArrayList<>();
+        List<SlotInfoByMonth> top2Slots = new ArrayList<>();
         if (date.getUser() == null && date.getGroup() != null) {
             top2Slots = date.getGroupSlot().stream()
                     .sorted(Comparator.comparingInt((GroupSlot s) -> s.getImportance().getPriority()).reversed())
@@ -102,8 +134,7 @@ public class DateInGroupService {
                     .map(DateInGroupService::getUserSlotInfoToDto)
                     .toList();
         }
-        return MonthDateInfo.builder()
-                .dateId(date.getId())
+        return MonthDateInfoGroupVer.builder()
                 .slotCount(date.getSlotCount())
                 .today(date.getStartDate())
                 .slotInfo(
@@ -112,9 +143,10 @@ public class DateInGroupService {
                 .build();
     }
 
-    private static SlotInfo getGroupSlotInfoToDto(GroupSlot groupSlot) {
+    private static SlotInfoByMonth getGroupSlotInfoToDto(GroupSlot groupSlot) {
 
-        return SlotInfo.builder()
+        return SlotInfoByMonth.builder()
+                .groupId(groupSlot.getDate().getGroup().getId())
                 .slotId(groupSlot.getId())
                 .title(groupSlot.getTitle())
                 .startTime(groupSlot.getStartTime())
@@ -122,9 +154,9 @@ public class DateInGroupService {
                 .build();
     }
 
-    private static SlotInfo getUserSlotInfoToDto(UserSlot userSlot) {
+    private static SlotInfoByMonth getUserSlotInfoToDto(UserSlot userSlot) {
 
-        return SlotInfo.builder()
+        return SlotInfoByMonth.builder()
                 .slotId(userSlot.getId())
                 .title(userSlot.getTitle())
                 .startTime(userSlot.getStartTime())

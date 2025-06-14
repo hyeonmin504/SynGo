@@ -32,4 +32,7 @@ public interface DateRepository extends JpaRepository<Date, Long>, DateRepositor
 
     @Query("select d from ScheduleDate d join fetch d.userSlot us where d.user.id=:userId and d.startDate >=:startDate and d.startDate <:endDate")
     List<Date> findAllUserDataByMonthRange(Long userId, LocalDate startDate, LocalDate endDate);
+
+    @Query("select d from ScheduleDate d join fetch d.userSlot us where d.user.id=:userId and d.startDate=:day")
+    Optional<Date> findUserDateByDay(@Param("userId") Long userId, @Param("day") LocalDate day);
 }
