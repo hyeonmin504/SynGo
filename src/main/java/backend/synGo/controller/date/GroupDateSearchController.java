@@ -3,6 +3,8 @@ package backend.synGo.controller.date;
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.form.DateDtoForDay;
+import backend.synGo.form.GroupDateInfo;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.service.date.group.DateInGroupService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,21 +80,11 @@ public class GroupDateSearchController {
 
         try {
             log.info("date={},{}", requestYear, requestMonth);
-            DateInfo dates = dateService.findGroupDataByDayInGroup(groupId, requestYear, requestMonth, requestDay, userDetails.getUserId());
+            DateDtoForDay dates = dateService.findGroupDataByDayInGroup(groupId, requestYear, requestMonth, requestDay, userDetails.getUserId());
             return ResponseEntity.ok(ResponseForm.success(dates, "조회 성공"));
         } catch (DateTimeException | AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
-    }
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class GroupDateInfo {
-        Long groupId;
-        @Builder.Default
-        List<MonthDateInfoGroupVer> monthDateDto = new ArrayList<>();
     }
 
     @Data

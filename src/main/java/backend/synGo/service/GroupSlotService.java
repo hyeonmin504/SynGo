@@ -12,7 +12,6 @@ import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
-import backend.synGo.form.DaySlotDto;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.form.responseForm.SlotResponseForm;
@@ -169,48 +168,36 @@ public class GroupSlotService {
                 slotForm.getImportance(),
                 date);
     }
-
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Data
-    public static class DateInfo {
-
-        int slotCount;
-        LocalDate today;
-        @Builder.Default
-        List<DaySlotDto> daySlotDtos = new ArrayList<>();
-    }
 //    //쿼리 두번에 유지보수 강함
-//    private DateInfo findAllDateInfoTwoQuery(Date date) {
+//    private DateDtoForDay findAllDateInfoTwoQuery(Date date) {
 //        // 1차 쿼리: slot 기본 정보만 조회
-//        List<DaySlotDto> baseSlotDtos = groupSlotRepository.findDateAndSlotByGroupIdAndDay(date.getId());
+//        List<SlotDtoForDay> baseSlotDtos = groupSlotRepository.findDateAndSlotByGroupIdAndDay(date.getId());
 //
 //        // slotId 추출
 //        List<Long> slotIds = baseSlotDtos.stream()
-//                .map(DaySlotDto::getSlotId)
+//                .map(SlotDtoForDay::getSlotId)
 //                .toList();
 //
 //        // Map 형태로 매핑
-//        Map<Long, DaySlotDto> slotMap = baseSlotDtos.stream()
-//                .collect(Collectors.toMap(DaySlotDto::getSlotId, dto -> dto));
+//        Map<Long, SlotDtoForDay> slotMap = baseSlotDtos.stream()
+//                .collect(Collectors.toMap(SlotDtoForDay::getSlotId, dto -> dto));
 //
 //        // 2차 쿼리: slotId에 해당하는 editor 정보만 조회
-//        List<DaySlotDto> editorDtos = groupSlotRepository.findMemberWithUserGroupBySlotIdsAndLeader(slotIds);
+//        List<SlotDtoForDay> editorDtos = groupSlotRepository.findMemberWithUserGroupBySlotIdsAndLeader(slotIds);
 //
 //        // 필요한 필드만 업데이트 (editor 정보)
-//        for (DaySlotDto editorDto : editorDtos) {
-//            DaySlotDto original = slotMap.get(editorDto.getSlotId());
+//        for (SlotDtoForDay editorDto : editorDtos) {
+//            SlotDtoForDay original = slotMap.get(editorDto.getSlotId());
 //            if (original != null) {
 //                original.setUserGroupId(editorDto.getUserGroupId());
 //                original.setEditorNickname(editorDto.getEditorNickname());
 //            }
 //        }
 //
-//        return DateInfo.builder()
+//        return DateDtoForDay.builder()
 //                .slotCount(date.getSlotCount())
 //                .today(date.getStartDate())
-//                .daySlotDtos(baseSlotDtos)
+//                .slotDtoForDay(baseSlotDtos)
 //                .build();
 //    }
 }

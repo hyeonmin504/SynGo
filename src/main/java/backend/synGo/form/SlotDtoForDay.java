@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-public class DaySlotDto {
+public class SlotDtoForDay {
+    Long groupId;
     Long slotId;
     String title;
     LocalDateTime startTime;

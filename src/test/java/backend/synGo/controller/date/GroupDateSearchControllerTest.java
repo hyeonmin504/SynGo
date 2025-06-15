@@ -146,8 +146,8 @@ class GroupDateSearchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.today").value(tomorrow.toString()))
                 .andExpect(jsonPath("$.data.slotCount").value(1))
-                .andExpect(jsonPath("$.data.groupSlotDtos[0].title").value("회의"))
-                .andExpect(jsonPath("$.data.groupSlotDtos[0].editorNickname").doesNotExist())
+                .andExpect(jsonPath("$.data.slotInfo[0].title").value("회의"))
+                .andExpect(jsonPath("$.data.slotInfo[0].editorNickname").doesNotExist())
                 .andExpect(jsonPath("$.message").value("조회 성공"));
     }
 

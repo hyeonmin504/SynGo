@@ -1,10 +1,10 @@
 package backend.synGo.repository.query;
 
-import backend.synGo.form.DaySlotDto;
+import backend.synGo.form.SlotDtoForDay;
 
 import java.util.List;
 
 public interface UserSlotRepositoryQuery {
 
-    List<DaySlotDto> findByUserIdAndDay(Long dateId);
+    List<SlotDtoForDay> findByUserIdAndDay(Long dateId);
 }

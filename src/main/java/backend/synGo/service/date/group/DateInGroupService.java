@@ -1,12 +1,11 @@
 package backend.synGo.service.date.group;
 
 import backend.synGo.config.scheduler.SchedulerProvider;
-import backend.synGo.controller.date.UserDataDateSearchController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.exception.AccessDeniedException;
-import backend.synGo.form.DaySlotDto;
+import backend.synGo.form.*;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.GroupSlotRepository;
 import backend.synGo.repository.UserGroupRepository;
@@ -21,10 +20,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-
-import static backend.synGo.controller.date.GroupDateSearchController.*;
-import static backend.synGo.controller.date.UserDataDateSearchController.*;
-import static backend.synGo.service.GroupSlotService.*;
 
 @Service
 @RequiredArgsConstructor
@@ -57,8 +52,8 @@ public class DateInGroupService {
         //DB 조회
         List<Date> dateByMonth = findGroupDataByMonth(year, month, groupId);
         //dto 작성
-        List<MonthDateInfoGroupVer> monthDateDto = dateByMonth.stream()
-                .map(DateInGroupService::getDateInfoToDto)
+        List<DateDtoForMonth> monthDateDto = dateByMonth.stream()
+                .map(DateInGroupService::getMonthDataToDtoLimit2)
                 .toList();
 
         GroupDateInfo groupDateInfo = new GroupDateInfo(groupId, monthDateDto);
@@ -90,7 +85,7 @@ public class DateInGroupService {
      * @return
      */
     @Transactional(readOnly = true)
-    public DateInfo findGroupDataByDayInGroup(Long groupId, int year, int month, int day, Long requestUserId) {
+    public DateDtoForDay findGroupDataByDayInGroup(Long groupId, int year, int month, int day, Long requestUserId) {
         if(userGroupRepository.existsByGroupIdAndUserId(groupId,requestUserId)) {
             //요청한 날자
             LocalDate localDate = LocalDate.of(year,month,day);
@@ -101,26 +96,31 @@ public class DateInGroupService {
                 log.info("optionalDate.isPresent()");
                 return findAllUserDate(optionalDate.get());
             }
-            return new DateInfo();
+            return new DateDtoForDay();
         }
         throw new AccessDeniedException("그룹원 외 접근 불가");
     }
 
     @Transactional(readOnly = true)
-    private DateInfo findAllUserDate(Date date) {
+    private DateDtoForDay findAllUserDate(Date date) {
         // 해당 date의 slotmember, usergroup 조회
-        List<DaySlotDto> daySlotDtoList = groupSlotRepository.findByGroupIdAndDay(date.getId());
+        List<SlotDtoForDay> slotDtoForDayList = groupSlotRepository.findByGroupIdAndDay(date.getId());
 
-        return DateInfo.builder()
+        return DateDtoForDay.builder()
                 .slotCount(date.getSlotCount())
                 .today(date.getStartDate())
-                .daySlotDtos(daySlotDtoList)
+                .slotInfo(slotDtoForDayList)
                 .build();
     }
 
-    public static MonthDateInfoGroupVer getDateInfoToDto(Date date) {
+    /**
+     * date에 있는 slot을 2개만 가져오는 로직
+     * @param date
+     * @return
+     */
+    public static DateDtoForMonth getMonthDataToDtoLimit2(Date date) {
         //상위 2개의 데이터만 추출
-        List<SlotInfoByMonth> top2Slots = new ArrayList<>();
+        List<SlotDtoForMonth> top2Slots = new ArrayList<>();
         if (date.getUser() == null && date.getGroup() != null) {
             top2Slots = date.getGroupSlot().stream()
                     .sorted(Comparator.comparingInt((GroupSlot s) -> s.getImportance().getPriority()).reversed())
@@ -134,7 +134,7 @@ public class DateInGroupService {
                     .map(DateInGroupService::getUserSlotInfoToDto)
                     .toList();
         }
-        return MonthDateInfoGroupVer.builder()
+        return DateDtoForMonth.builder()
                 .slotCount(date.getSlotCount())
                 .today(date.getStartDate())
                 .slotInfo(
@@ -143,9 +143,9 @@ public class DateInGroupService {
                 .build();
     }
 
-    private static SlotInfoByMonth getGroupSlotInfoToDto(GroupSlot groupSlot) {
+    private static SlotDtoForMonth getGroupSlotInfoToDto(GroupSlot groupSlot) {
 
-        return SlotInfoByMonth.builder()
+        return SlotDtoForMonth.builder()
                 .groupId(groupSlot.getDate().getGroup().getId())
                 .slotId(groupSlot.getId())
                 .title(groupSlot.getTitle())
@@ -154,9 +154,9 @@ public class DateInGroupService {
                 .build();
     }
 
-    private static SlotInfoByMonth getUserSlotInfoToDto(UserSlot userSlot) {
+    private static SlotDtoForMonth getUserSlotInfoToDto(UserSlot userSlot) {
 
-        return SlotInfoByMonth.builder()
+        return SlotDtoForMonth.builder()
                 .slotId(userSlot.getId())
                 .title(userSlot.getTitle())
                 .startTime(userSlot.getStartTime())

@@ -1,6 +1,7 @@
 package backend.synGo.repository;
 
 import backend.synGo.domain.slot.GroupSlot;
+import backend.synGo.domain.slot.SlotPermission;
 import backend.synGo.repository.query.GroupSlotRepositoryQuery;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,6 +1,6 @@
 package backend.synGo.config.redis;
 
-import backend.synGo.controller.date.GroupDateSearchController.GroupDateInfo;
+import backend.synGo.form.GroupDateInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

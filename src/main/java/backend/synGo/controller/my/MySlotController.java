@@ -6,7 +6,6 @@ import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.SlotForm;
-import backend.synGo.form.responseForm.SlotResponseForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.service.SlotService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,8 +22,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @Slf4j
@@ -109,16 +106,5 @@ public class MySlotController {
 
         @Schema(description = "상태", example = "CONFIRMED")
         private String status;
-
-        public UserSlotResponseForm(String title, String content, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, String place, String importance, String status) {
-            this.title = title;
-            this.content = content;
-            this.startDate = startDate;
-            this.endDate = endDate;
-            this.createDate = createDate;
-            this.place = place;
-            this.importance = importance;
-            this.status = status;
-        }
     }
 }

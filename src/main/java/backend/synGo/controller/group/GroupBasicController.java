@@ -164,16 +164,11 @@ public class GroupBasicController {
 
     @Data
     @AllArgsConstructor
-    @NoArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @Builder
     public static class UserGroupRoleSummary {
         private Long id;
         private String nickname;
         private Role role;
-
-        public UserGroupRoleSummary updateRole(Role role) {
-            this.role = role;
-            return this;
-        }
     }
 }

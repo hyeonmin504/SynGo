@@ -35,6 +35,9 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
     void bulkUpdateUserGroupRoles(@Param("targetIds") List<Long> targetIds, @Param("role") Role role);
 
     @Query("select ug from UserGroup ug join fetch ug.group g join fetch g.date d where ug.user.id=:userId And d.startDate >=:startDate and d.startDate <:endDate")
-    List<UserGroup> findUserDataByUserId(Long userId, LocalDate startDate, LocalDate endDate);
+    List<UserGroup> findUserGroupDataByUserIdForMonth(Long userId, LocalDate startDate, LocalDate endDate);
+
+    @Query("select ug from UserGroup ug join fetch ug.group g join fetch g.date d where ug.user.id=:userId And d.startDate=:startDate")
+    List<UserGroup> findUserDataByUserIdForDay(Long userId, LocalDate startDate);
 
 }

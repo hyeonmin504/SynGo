@@ -14,10 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -75,6 +72,7 @@ public class SlotMemberController {
 
 
     @Data
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class JoinMemberRequestForm {
         @NotNull
@@ -82,9 +80,6 @@ public class SlotMemberController {
         public String nickname;
         @NotBlank
         public SlotPermission permission;
-
-        public JoinMemberRequestForm() {
-        }
 
         public JoinMemberRequestForm(Long userGroupId, SlotPermission permission) {
             this.userGroupId = userGroupId;
