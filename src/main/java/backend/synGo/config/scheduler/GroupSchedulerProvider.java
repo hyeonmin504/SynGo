@@ -44,38 +44,38 @@ public class GroupSchedulerProvider {
         String key = getGroupRedisKey(groupId, year, month);
         Duration duration = Duration.ofMinutes(saveGroupDataMinutes);
         redisTemplate.opsForValue().set(key, dateDtoForMonths, duration);
-        log.info("Saved scheduler group={} to Redis.", groupId);
+        log.info("그룹 데이터 캐싱");
     }
     public void saveMyGroupScheduler(Long userId, List<DateDtoForMonth> dateDtoForMonths, int year, int month) {
         String key = getMyGroupRedisKey(userId, year, month);
         Duration duration = Duration.ofMinutes(saveUserDataMinutes);
         redisTemplate.opsForValue().set(key, dateDtoForMonths, duration);
-        log.info("Saved scheduler group={} to Redis.", userId);
+        log.info("유저의 그룹 데이터 캐싱");
     }
     public void saveMyScheduler(Long userId, List<DateDtoForMonth> dateDtoForMonths, int year, int month) {
         String key = getMyRedisKey(userId, year, month);
         Duration duration = Duration.ofMinutes(saveUserDataMinutes);
         redisTemplate.opsForValue().set(key, dateDtoForMonths, duration);
-        log.info("Saved scheduler group={} to Redis.", userId);
+        log.info("유저 데이터 캐싱");
     }
 
     public List<DateDtoForMonth> getGroupSchedule(Long groupId, int year, int month) {
         Object value = redisTemplate.opsForValue().get(getGroupRedisKey(groupId, year, month));
         if (value == null) return Collections.emptyList();
-        return objectMapper.convertValue(value, new TypeReference<>() {
-        });
+        log.info("그룹 데이터 조회");
+        return objectMapper.convertValue(value, new TypeReference<>(){});
     }
     public List<DateDtoForMonth> getMyGroupSchedule(Long userId, int year, int month) {
         Object value = redisTemplate.opsForValue().get(getMyGroupRedisKey(userId, year, month));
         if (value == null) return Collections.emptyList();
-        return objectMapper.convertValue(value, new TypeReference<>() {
-        });
+        log.info("유저의 그룹 데이터 캐싱");
+        return objectMapper.convertValue(value, new TypeReference<>(){});
     }
     public List<DateDtoForMonth> getMySchedule(Long userId, int year, int month) {
         Object value = redisTemplate.opsForValue().get(getMyRedisKey(userId, year, month));
         if (value == null) return Collections.emptyList();
-        return objectMapper.convertValue(value, new TypeReference<>() {
-        });
+        log.info("유저 데이터 캐싱");
+        return objectMapper.convertValue(value, new TypeReference<>(){});
     }
 
     public void evictGroupSchedule(Long groupId, int year, int month) {
@@ -95,11 +95,13 @@ public class GroupSchedulerProvider {
     }
 
     public boolean isSameYearAndMonth(LocalDate requestDay) {
+        log.info("이번 달 입니다");
         return requestDay.getYear() == LocalDate.now().getYear() &&
                 requestDay.getMonth() == LocalDate.now().getMonth();
     }
 
     public boolean isSameYearAndMonthPlusOne(LocalDate requestDay) {
+        log.info("다음 달 입니다");
         return requestDay.getYear() == LocalDate.now().plusMonths(1).getYear() &&
                 requestDay.getMonth() == LocalDate.now().plusMonths(1).getMonth();
     }

@@ -42,12 +42,10 @@ public class DateInGroupService {
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
         //다음 달을 조회 한 경우
         boolean isNextMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue()+1;
-        //Redis 캐시 조회
-        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getGroupSchedule(groupId, year, month);
         //캐시 존재 && 이번 달 혹은 다음 달 인 경우
-        if ((isCurrentMonth || isNextMonth) && !cachedSchedule.isEmpty()) {
-            log.info("캐시 조회중");
-            return cachedSchedule;
+        if ((isCurrentMonth || isNextMonth)) {
+            List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getGroupSchedule(groupId, year, month);
+            if (!cachedSchedule.isEmpty()) return cachedSchedule;
         }
         //DB 조회
         List<Date> dateByMonth = findGroupDataByMonth(year, month, groupId);
@@ -57,7 +55,6 @@ public class DateInGroupService {
                 .toList();
         if ((isCurrentMonth || isNextMonth) && !monthDateDto.isEmpty() ) {
             groupSchedulerProvider.saveGroupScheduler(groupId, monthDateDto, year, month);
-            log.info("데이터 캐싱");
         }
         return monthDateDto;
     }

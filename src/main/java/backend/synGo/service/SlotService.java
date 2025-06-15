@@ -51,22 +51,13 @@ public class SlotService {
                     return new Date(user, startDate);
                 });
         //userSlot 생성
-        UserSlot userSlot = createUserSlot(
-                slotForm.getStatus(),
-                slotForm.getTitle(),
-                slotForm.getContent(),
-                slotForm.getStartDate(),
-                slotForm.getEndDate(),
-                slotForm.getPlace(),
-                slotForm.getImportance(),
-                date);
+        UserSlot userSlot = creatSlot(slotForm, date);
         //date의 SlotCount +1
         date.addSlotCount();
         //이번 달에 슬롯 추가 시 캐시 초기화
-        if (slotForm.getStartDate().toLocalDate().isEqual(LocalDate.now())){
+        if (groupSchedulerProvider.isSameYearAndMonth(slotForm.getStartDate().toLocalDate())){
             groupSchedulerProvider.evictMySchedule(userId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
         }
-
         // cascade로 전부 저장 전파
         userSlotRepository.save(userSlot);
         return userSlot.getId();
@@ -112,5 +103,17 @@ public class SlotService {
                 slotForm.getStartDate().isBefore(LocalDateTime.now()) ||
                 slotForm.getEndDate().isBefore(LocalDateTime.now())
         );
+    }
+
+    private static UserSlot creatSlot(SlotForm slotForm, Date date) {
+        return createUserSlot(
+                slotForm.getStatus(),
+                slotForm.getTitle(),
+                slotForm.getContent(),
+                slotForm.getStartDate(),
+                slotForm.getEndDate(),
+                slotForm.getPlace(),
+                slotForm.getImportance(),
+                date);
     }
 }

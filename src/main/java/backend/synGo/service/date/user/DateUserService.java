@@ -46,12 +46,10 @@ public class DateUserService {
     public List<DateDtoForMonth> getUserDataDatesForMonth(int year, int month, Long requestUserId) {
         //이번 달을 조회 한 경우
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
-        //Redis 캐시 조회
-        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMySchedule(requestUserId, year, month);
-        //캐시 존재 && 이번 달 혹은 다음 달 인 경우
-        if (isCurrentMonth && !cachedSchedule.isEmpty()) {
-            log.info("캐시 조회중");
-            return cachedSchedule;
+        //캐시 존재 && 이번 달 인 경우
+        if (isCurrentMonth) {
+            List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMySchedule(requestUserId, year, month);
+            if (!cachedSchedule.isEmpty()) return cachedSchedule;
         }
         //DB 조회
         List<Date> dateByMonth = findUserDataByMonth(year, month, requestUserId);
@@ -62,7 +60,6 @@ public class DateUserService {
 
         if (isCurrentMonth && !monthDateDto.isEmpty() ) {
             groupSchedulerProvider.saveMyScheduler(requestUserId, monthDateDto, year, month);
-            log.info("데이터 캐싱");
         }
         return monthDateDto;
     }
@@ -95,12 +92,10 @@ public class DateUserService {
     public List<DateDtoForMonth> getUserDataDatesForMonthByGroup(int year, int month, Long requestUserId) {
         //이번 달을 조회 한 경우
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
-        //Redis 캐시 조회
-        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMyGroupSchedule(requestUserId, year, month);
-        //캐시 존재 && 이번 달 혹은 다음 달 인 경우
-        if (isCurrentMonth && !cachedSchedule.isEmpty()) {
-            log.info("캐시 조회중");
-            return cachedSchedule;
+        //캐시 존재 && 이번 달 인 경우
+        if (isCurrentMonth) {
+            List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMyGroupSchedule(requestUserId, year, month);
+            if (!cachedSchedule.isEmpty()) return cachedSchedule;
         }
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1); // 해당 월의 첫째 날
@@ -119,7 +114,6 @@ public class DateUserService {
         //오늘 인 경우 캐싱
         if (isCurrentMonth && !monthArrayDateInfo.isEmpty()) {
             groupSchedulerProvider.saveMyGroupScheduler(requestUserId, monthArrayDateInfo, year, month);
-            log.info("데이터 캐싱");
         }
         return monthArrayDateInfo;
     }

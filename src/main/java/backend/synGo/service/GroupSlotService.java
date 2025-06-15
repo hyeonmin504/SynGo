@@ -123,12 +123,10 @@ public class GroupSlotService {
     private void evictCache(Long groupId, Long userId, LocalDateTime updateDate) {
         if (groupSchedulerProvider.isSameYearAndMonth(updateDate.toLocalDate())){
             //이번 달에 슬롯 추가 시 캐시 초기화
-            log.info("이번 달 캐시 삭제");
             groupSchedulerProvider.evictGroupSchedule(groupId, updateDate.getYear(), updateDate.getMonthValue());
             groupSchedulerProvider.evictMyGroupSchedule(userId, updateDate.getYear(), updateDate.getMonthValue());
         } else if (groupSchedulerProvider.isSameYearAndMonthPlusOne(updateDate.toLocalDate())) {
             //다음 달에 슬롯 추가 시 그룹 캐시 초기화
-            log.info("다음 달 캐시 삭제");
             groupSchedulerProvider.evictGroupSchedule(groupId, updateDate.getYear(), updateDate.getMonthValue());
         }
     }
