@@ -110,7 +110,7 @@ class GroupDateSearchControllerTest {
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.groupId").value(groupId))
+                .andExpect(jsonPath("$.data[0].slotInfo[0].groupId").value(groupId))
                 .andExpect(jsonPath("$.message").value("조회 성공"));
     }
 

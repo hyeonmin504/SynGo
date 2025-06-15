@@ -1,5 +1,6 @@
 package backend.synGo.service;
 
+import backend.synGo.config.scheduler.GroupSchedulerProvider;
 import backend.synGo.controller.my.MySlotController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.UserSlot;
@@ -27,6 +28,7 @@ import static backend.synGo.domain.slot.UserSlot.createUserSlot;
 @RequiredArgsConstructor
 public class SlotService {
 
+    private final GroupSchedulerProvider groupSchedulerProvider;
     private final UserRepository userRepository;
     private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
@@ -60,6 +62,11 @@ public class SlotService {
                 date);
         //date의 SlotCount +1
         date.addSlotCount();
+        //이번 달에 슬롯 추가 시 캐시 초기화
+        if (slotForm.getStartDate().toLocalDate().isEqual(LocalDate.now())){
+            groupSchedulerProvider.evictMySchedule(userId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
+        }
+
         // cascade로 전부 저장 전파
         userSlotRepository.save(userSlot);
         return userSlot.getId();

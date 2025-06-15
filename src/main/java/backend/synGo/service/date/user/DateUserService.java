@@ -1,5 +1,6 @@
 package backend.synGo.service.date.user;
 
+import backend.synGo.config.scheduler.GroupSchedulerProvider;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
@@ -29,8 +30,8 @@ import java.util.List;
 @Slf4j
 public class DateUserService {
 
+    private final GroupSchedulerProvider groupSchedulerProvider;
     private final UserGroupRepository userGroupRepository;
-    private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
     private final GroupSlotRepository groupSlotRepository;
 
@@ -46,12 +47,12 @@ public class DateUserService {
         //이번 달을 조회 한 경우
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
         //Redis 캐시 조회
-//        Optional<GroupDateInfo> cachedSchedule = schedulerProvider.getGroupSchedule(requesterUserId, year, month);
-        //캐시 존재 && 이번 달 인 경우
-//        if ((isCurrentMonth) && cachedSchedule.isPresent()) {
-//            log.info("캐시 조회중");
-//            return cachedSchedule.get();
-//        }
+        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMySchedule(requestUserId, year, month);
+        //캐시 존재 && 이번 달 혹은 다음 달 인 경우
+        if (isCurrentMonth && !cachedSchedule.isEmpty()) {
+            log.info("캐시 조회중");
+            return cachedSchedule;
+        }
         //DB 조회
         List<Date> dateByMonth = findUserDataByMonth(year, month, requestUserId);
         //dto 작성
@@ -59,11 +60,10 @@ public class DateUserService {
                 .map(DateInGroupService::getMonthDataToDtoLimit2)
                 .toList();
 
-//        if (isCurrentMonth) {
-//            schedulerProvider.saveGroupScheduler(groupId, groupDateInfo, year, month);
-//            log.info("데이터 캐싱");
-//            return groupDateInfo;
-//        }
+        if (isCurrentMonth && !monthDateDto.isEmpty() ) {
+            groupSchedulerProvider.saveMyScheduler(requestUserId, monthDateDto, year, month);
+            log.info("데이터 캐싱");
+        }
         return monthDateDto;
     }
 
@@ -96,12 +96,12 @@ public class DateUserService {
         //이번 달을 조회 한 경우
         boolean isCurrentMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue();
         //Redis 캐시 조회
-//        Optional<GroupDateInfo> cachedSchedule = schedulerProvider.getGroupSchedule(requesterUserId, year, month);
-        //캐시 존재 && 이번 달 인 경우
-//        if ((isCurrentMonth) && cachedSchedule.isPresent()) {
-//            log.info("캐시 조회중");
-//            return cachedSchedule.get();
-//        }
+        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getMyGroupSchedule(requestUserId, year, month);
+        //캐시 존재 && 이번 달 혹은 다음 달 인 경우
+        if (isCurrentMonth && !cachedSchedule.isEmpty()) {
+            log.info("캐시 조회중");
+            return cachedSchedule;
+        }
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1); // 해당 월의 첫째 날
         LocalDate endDate = yearMonth.plusMonths(1).atDay(1); // 해당 월의 마지막 날
@@ -117,11 +117,10 @@ public class DateUserService {
         //dto 정렬 -> date의 today로 정렬
         List<DateDtoForMonth> monthArrayDateInfo = sortMonthDateInfoGroupVerForToday(monthDateInfo);
         //오늘 인 경우 캐싱
-//        if (isCurrentMonth) {
-//            schedulerProvider.saveGroupScheduler(groupId, groupDateInfo, year, month);
-//            log.info("데이터 캐싱");
-//            return groupDateInfo;
-//        }
+        if (isCurrentMonth && !monthArrayDateInfo.isEmpty()) {
+            groupSchedulerProvider.saveMyGroupScheduler(requestUserId, monthArrayDateInfo, year, month);
+            log.info("데이터 캐싱");
+        }
         return monthArrayDateInfo;
     }
 

@@ -1,5 +1,6 @@
 package backend.synGo.config.redis;
 
+import backend.synGo.form.DateDtoForMonth;
 import backend.synGo.form.GroupDateInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -16,6 +17,8 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.List;
 
 @Configuration
 @EnableRedisRepositories
@@ -57,20 +60,21 @@ public class RedisConfig {
 
     // 그룹 스케줄용 RedisTemplate
     @Bean
-    @Qualifier("groupScheduleRedisTemplate") // ✅ 올바른 이름
-    public RedisTemplate<String, GroupDateInfo> groupScheduleRedisTemplate(RedisConnectionFactory factory){
-        RedisTemplate<String, GroupDateInfo> template = new RedisTemplate<>();
+    @Qualifier("groupScheduleRedisTemplate")
+    public RedisTemplate<String, Object> groupScheduleRedisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        Jackson2JsonRedisSerializer<GroupDateInfo> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, GroupDateInfo.class);
+        // 핵심: GenericJackson2JsonRedisSerializer 사용 (ObjectMapper 커스터마이징 포함) List 반환을 위함.
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);
+
         return template;
     }
 }

@@ -4,6 +4,7 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.form.DateDtoForDay;
+import backend.synGo.form.DateDtoForMonth;
 import backend.synGo.form.GroupDateInfo;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.service.date.group.DateInGroupService;
@@ -54,7 +55,7 @@ public class GroupDateSearchController {
 
         try {
             log.info("date={},{}", requestYear, requestMonth);
-            GroupDateInfo dates = dateService.getDatesForMonthInGroup(groupId, requestYear, requestMonth, userDetails.getUserId());
+            List<DateDtoForMonth> dates = dateService.getDatesForMonthInGroup(groupId, requestYear, requestMonth, userDetails.getUserId());
             return ResponseEntity.ok(ResponseForm.success(dates, "조회 성공"));
         } catch (DateTimeException | AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
@@ -85,28 +86,5 @@ public class GroupDateSearchController {
         } catch (DateTimeException | AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
-    }
-
-    @Data
-    @AllArgsConstructor
-    @Builder
-    @NoArgsConstructor
-    public static class MonthDateDto {
-        Long dateId;
-        int slotCount;
-        LocalDate today;
-        @Builder.Default
-        List<MonthSlotDto> monthSlotDto = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class MonthSlotDto {
-        Long slotId;
-        String title;
-        LocalDateTime startTime;
-        SlotImportance importance;
     }
 }

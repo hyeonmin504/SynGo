@@ -30,7 +30,7 @@ public class UserDataDateSearchController {
 
     private final DateUserService dateService;
 
-    @Operation(summary = "유저의 슬롯 한달 데이터 조회 api", description = "개인 date를 한달 간격으로 조회하는 api")
+    @Operation(summary = "개인 월 슬롯 데이터 조회 api", description = "개인 date를 한달 간격으로 조회하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "한달 date,slot 조회 성공"),
             @ApiResponse(responseCode = "406", description = "잘못된 유저 요청"),
@@ -53,7 +53,7 @@ public class UserDataDateSearchController {
         }
     }
 
-    @Operation(summary = "유저의 그룹 슬롯 한달 데이터 조회 api", description = "그룹에 개인이 속하면서 개인이 할당된 date를 한달 간격으로 조회하는 api")
+    @Operation(summary = "개인 월 그룹 슬롯 데이터 조회 api", description = "그룹에 개인이 속하면서 개인이 할당된 date를 한달 간격으로 조회하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "한달 date,slot 조회 성공"),
             @ApiResponse(responseCode = "406", description = "잘못된 유저 요청"),
@@ -76,7 +76,7 @@ public class UserDataDateSearchController {
         }
     }
 
-    @Operation(summary = "유저의 슬롯 하루 데이터 조회 api", description = "유저의 그룹 date를 하루 간격으로 조회하는 api")
+    @Operation(summary = "개인 일 슬롯 데이터 조회 api", description = "유저의 그룹 date를 하루 간격으로 조회하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "그룹 하루 date,slot 조회 성공"),
             @ApiResponse(responseCode = "406", description = "잘못된 유저 요청"),
@@ -101,7 +101,7 @@ public class UserDataDateSearchController {
         }
     }
 
-    @Operation(summary = "유저의 그룹 슬롯 하루 데이터 조회 api", description = "유저의 그룹 date를 하루 간격으로 조회하는 api")
+    @Operation(summary = "개인 일 그룹 슬롯 데이터 조회 api", description = "유저의 그룹 date를 하루 간격으로 조회하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "그룹 하루 date,slot 조회 성공"),
             @ApiResponse(responseCode = "406", description = "잘못된 유저 요청"),

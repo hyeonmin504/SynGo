@@ -1,6 +1,6 @@
 package backend.synGo.service;
 
-import backend.synGo.config.scheduler.SchedulerProvider;
+import backend.synGo.config.scheduler.GroupSchedulerProvider;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.group.Group;
 import backend.synGo.domain.slot.GroupSlot;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,18 +42,19 @@ public class GroupSlotService {
     private final DateRepository dateRepository;
     private final GroupRepository groupRepository;
     private final GroupSlotRepository groupSlotRepository;
-    private final SchedulerProvider schedulerProvider;
+    private final GroupSchedulerProvider groupSchedulerProvider;
 
     @Transactional
     public Long createGroupSlot(Long groupId, SlotForm slotForm, Long userId) {
         checkUserGroupRole(groupId, userId);
+        LocalDateTime updateDate = slotForm.getStartDate();
 
         if (validDateTime(slotForm))
             throw new NotValidException("날자를 확인해주세요.");
-        else if (slotForm.getEndDate() != null && slotForm.getStartDate().isEqual(slotForm.getEndDate()))
+        else if (slotForm.getEndDate() != null && updateDate.isEqual(slotForm.getEndDate()))
             slotForm.setEndDate(null);
 
-        LocalDate startDate = slotForm.getStartDate().toLocalDate();
+        LocalDate startDate = updateDate.toLocalDate();
         log.info("startDate={}", startDate);
         Date date = dateRepository.findDateAndGroupSlotByStartDateAndUserId(startDate, groupId)   //fetch join
                 .orElseGet(() -> {
@@ -64,9 +66,8 @@ public class GroupSlotService {
         //date의 SlotCount +1
         date.addSlotCount();
         groupSlotRepository.save(groupSlot);
-
-        schedulerProvider.evictGroupSchedule(groupId,slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
-        log.info("해당 날자 캐시 초기화={}.{}",slotForm.getStartDate().getYear(), slotForm.getStartDate().getMonthValue());
+        //캐시 초기화
+        evictCache(groupId, userId, updateDate);
         return groupSlot.getId();
     }
 
@@ -88,7 +89,8 @@ public class GroupSlotService {
             GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
                     .orElseThrow(() -> new NotFoundContentsException("슬롯 정보 없음"));
             GroupSlot updatedSlot = setGroupSlot(form, groupSlot, requesterUserGroup);
-            schedulerProvider.evictGroupSchedule(groupId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
+            //캐시 초기화
+            evictCache(groupId, userId, form.getStartDate());
             return new SlotIdResponse(updatedSlot.getId());
         }
         throw new AccessDeniedException("권한 부족");
@@ -116,6 +118,19 @@ public class GroupSlotService {
             return new SlotIdResponse(slotId);
         }
         throw new AccessDeniedException("변경 권한이 없습니다");
+    }
+
+    private void evictCache(Long groupId, Long userId, LocalDateTime updateDate) {
+        if (groupSchedulerProvider.isSameYearAndMonth(updateDate.toLocalDate())){
+            //이번 달에 슬롯 추가 시 캐시 초기화
+            log.info("이번 달 캐시 삭제");
+            groupSchedulerProvider.evictGroupSchedule(groupId, updateDate.getYear(), updateDate.getMonthValue());
+            groupSchedulerProvider.evictMyGroupSchedule(userId, updateDate.getYear(), updateDate.getMonthValue());
+        } else if (groupSchedulerProvider.isSameYearAndMonthPlusOne(updateDate.toLocalDate())) {
+            //다음 달에 슬롯 추가 시 그룹 캐시 초기화
+            log.info("다음 달 캐시 삭제");
+            groupSchedulerProvider.evictGroupSchedule(groupId, updateDate.getYear(), updateDate.getMonthValue());
+        }
     }
 
     private List<JoinMemberForm> buildSlotMember(GroupSlot groupSlot) {

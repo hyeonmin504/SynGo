@@ -1,6 +1,6 @@
 package backend.synGo.service.date.group;
 
-import backend.synGo.config.scheduler.SchedulerProvider;
+import backend.synGo.config.scheduler.GroupSchedulerProvider;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
@@ -26,14 +26,14 @@ import java.util.Optional;
 @Slf4j
 public class DateInGroupService {
 
-    private final SchedulerProvider schedulerProvider;
+    private final GroupSchedulerProvider groupSchedulerProvider;
     private final UserGroupRepository userGroupRepository;
     private final DateRepository dateRepository;
     private final GroupSlotRepository groupSlotRepository;
 
 
     @Transactional(readOnly = true)
-    public GroupDateInfo getDatesForMonthInGroup(Long groupId, int year, int month, Long requesterUserId) {
+    public List<DateDtoForMonth> getDatesForMonthInGroup(Long groupId, int year, int month, Long requesterUserId) {
         //인증 조회
         if(!userGroupRepository.existsByGroupIdAndUserId(groupId,requesterUserId)) {
             throw new AccessDeniedException("그룹원 외 접근 불가");
@@ -43,11 +43,11 @@ public class DateInGroupService {
         //다음 달을 조회 한 경우
         boolean isNextMonth = year == LocalDate.now().getYear() && month == LocalDate.now().getMonthValue()+1;
         //Redis 캐시 조회
-        Optional<GroupDateInfo> cachedSchedule = schedulerProvider.getGroupSchedule(groupId, year, month);
+        List<DateDtoForMonth> cachedSchedule = groupSchedulerProvider.getGroupSchedule(groupId, year, month);
         //캐시 존재 && 이번 달 혹은 다음 달 인 경우
-        if ((isCurrentMonth || isNextMonth) && cachedSchedule.isPresent()) {
+        if ((isCurrentMonth || isNextMonth) && !cachedSchedule.isEmpty()) {
             log.info("캐시 조회중");
-            return cachedSchedule.get();
+            return cachedSchedule;
         }
         //DB 조회
         List<Date> dateByMonth = findGroupDataByMonth(year, month, groupId);
@@ -55,14 +55,11 @@ public class DateInGroupService {
         List<DateDtoForMonth> monthDateDto = dateByMonth.stream()
                 .map(DateInGroupService::getMonthDataToDtoLimit2)
                 .toList();
-
-        GroupDateInfo groupDateInfo = new GroupDateInfo(groupId, monthDateDto);
-        if (isCurrentMonth || isNextMonth) {
-            schedulerProvider.saveGroupScheduler(groupId, groupDateInfo, year, month);
+        if ((isCurrentMonth || isNextMonth) && !monthDateDto.isEmpty() ) {
+            groupSchedulerProvider.saveGroupScheduler(groupId, monthDateDto, year, month);
             log.info("데이터 캐싱");
-            return groupDateInfo;
         }
-        return groupDateInfo;
+        return monthDateDto;
     }
 
     @Transactional(readOnly = true)
