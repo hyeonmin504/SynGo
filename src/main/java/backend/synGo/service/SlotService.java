@@ -1,13 +1,12 @@
 package backend.synGo.service;
 
 import backend.synGo.config.scheduler.GroupSchedulerProvider;
-import backend.synGo.controller.my.MySlotController;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.*;
 import backend.synGo.form.requestForm.SlotForm;
-import backend.synGo.form.responseForm.SlotResponseForm;
+import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSlotRepository;
@@ -16,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -81,6 +81,29 @@ public class SlotService {
             throw new AccessDeniedException("다른 사용자의 슬롯입니다");
         }
         throw new NotFoundDataException("슬롯이 존재하지 않습니다");
+    }
+
+    /**
+     * 개인 슬롯 수정하는 서비스
+     * @param slotId
+     * @param userId
+     * @return
+     */
+    @Transactional
+    public SlotIdResponse updateMySlot(Long slotId, SlotForm form, Long userId) {
+        if(userSlotRepository.existUserUserId(userId)) {
+            Optional<UserSlot> slot = userSlotRepository.findById(slotId);
+            if (slot.isPresent()){
+                if (validDateTime(form)){
+                    throw new DateTimeException("날자를 확인해주세요");
+                }
+                slot.get().updateSlot(form.getStatus(), form.getTitle(), form.getContent(), form.getStartDate(), form.getEndDate(), form.getPlace(), form.getImportance());
+                if (groupSchedulerProvider.isSameYearAndMonth(form.getStartDate().toLocalDate())){
+                    groupSchedulerProvider.evictMySchedule(userId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
+                }
+                return new SlotIdResponse(slotId);
+            } throw new NotFoundContentsException("해당 슬롯을 찾을 수 없습니다.");
+        } throw new NotFoundUserException("해당 유저의 슬롯이 아닙니다.");
     }
 
     private static UserSlotResponseForm createMySlotResponseForm(UserSlot userSlot) {

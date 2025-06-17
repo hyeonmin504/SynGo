@@ -19,7 +19,6 @@ public class UserSlot{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_slot_id")
     private Long id;
-    @NotNull
     @Enumerated(EnumType.STRING)
     private Status status;
     @NotNull
@@ -56,7 +55,9 @@ public class UserSlot{
     }
 
     public UserSlot(Status status,String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance, Date date) {
-        this.status = status;
+        if (status == null) {
+                changeStatus(startTime, endTime);
+        } else this.status = status;
         this.title = title;
         this.content = content;
         this.startTime = startTime;
@@ -67,15 +68,25 @@ public class UserSlot{
         setDate(date);
     }
 
+    public void updateSlot(Status status,String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance) {
+        this.status = status;
+        this.title = title;
+        this.content = content;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.place = place;
+        this.importance = importance;
+    }
+
     //기본 상태 선언
-    private Status changeStatus(LocalDateTime startTime, LocalDateTime endTime) {
+    private void changeStatus(LocalDateTime startTime, LocalDateTime endTime) {
         LocalDateTime now = LocalDateTime.now();
         if (endTime.isBefore(now)) {
-            return Status.HOLD; // 보류중
+            this.status = Status.HOLD; // 보류중
         } else if (startTime.isAfter(now)) {
-            return Status.PLAN; // 계획중
+            this.status = Status.PLAN; // 계획중
         } else {
-            return Status.DOING; // 진행중
+            this.status = Status.DOING; // 진행중
         }
     }
 }

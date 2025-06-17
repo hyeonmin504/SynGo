@@ -61,7 +61,8 @@ public class GlobalExceptionHandler {
             EmptyResultDataAccessException.class,
             MethodArgumentNotValidException.class,
             UnexpectedTypeException.class,
-            HandlerMethodValidationException.class
+            HandlerMethodValidationException.class,
+            HttpMessageNotReadableException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ResponseForm<Map<String, Object>>> handleBadRequest(Exception ex, WebRequest request) {
@@ -97,8 +98,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ConnectException.class, // db 연결 장애
             SocketTimeoutException.class, //api 연결 시간 장애
-            UnknownHostException.class,
-            HttpMessageNotReadableException.class
+            UnknownHostException.class
     })
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ResponseEntity<ResponseForm<Map<String, Object>>> handleNetworkException(Exception ex, WebRequest request) {

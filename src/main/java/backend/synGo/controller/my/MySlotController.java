@@ -2,6 +2,7 @@ package backend.synGo.controller.my;
 
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.exception.AccessDeniedException;
+import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
@@ -21,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 
 @RestController
@@ -72,6 +74,25 @@ public class MySlotController {
         } catch (NotFoundUserException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notAcceptResponse(null,e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "My slot 수정 api", description = "개인 slot을 수정하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "슬롯 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
+    })
+    @PutMapping("/{slotId}")
+    public ResponseEntity<ResponseForm<?>> updateMySLot(
+            @PathVariable Long slotId,
+            @RequestBody SlotForm slotForm,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        try {
+            SlotIdResponse form = slotService.updateMySlot(slotId, slotForm, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(form, "수정 성공"));
+        } catch (NotFoundUserException | NotFoundContentsException | DateTimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
         }
     }
 
