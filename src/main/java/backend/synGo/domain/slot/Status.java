@@ -1,20 +1,41 @@
 package backend.synGo.domain.slot;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
 @Getter
-public enum Status {
-    COMPLETE("완료"),
-    DELAY("지연"),
-    DOING("진행중"),
-    PLAN("계획중"),
-    CANCEL("취소"),
-    HOLD("보류");
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Status {
 
-    private final String status;
+    public static final String PLAN = "PLAN";
+    public static final String DOING = "DOING";
+    public static final String COMPLETE = "COMPLETE";
+    public static final String CANCEL = "CANCEL";
+    public static final String DELAY = "DELAY";
+    public static final String HOLD = "HOLD";
 
+    @Id
+    private Long id;
+    @Column(nullable = false, unique = true)
+    @NotBlank
+    private String status;
 
-    Status(String status) {
+    public Status(Long id, String status) {
+        this.id = id;
         this.status = status;
     }
+
+    @OneToMany(mappedBy = "status", fetch = FetchType.LAZY)
+    private List<UserSlot> userSlot = new ArrayList<>();
+    @OneToMany(mappedBy = "status", fetch = FetchType.LAZY)
+    private List<GroupSlot> groupSlot = new ArrayList<>();
 }

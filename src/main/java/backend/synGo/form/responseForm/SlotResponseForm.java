@@ -1,6 +1,8 @@
 package backend.synGo.form.responseForm;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +42,8 @@ public class SlotResponseForm {
     private String importance;
 
     @Schema(description = "상태", example = "CONFIRMED")
+    @Pattern(regexp = "COMPLETE|DELAY|DOING|PLAN|CANCEL|HOLD", message = "올바른 상태 값을 입력하세요.")
+    @NotBlank
     private String status;
 
     private String updater;

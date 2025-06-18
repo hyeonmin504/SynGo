@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -96,6 +98,23 @@ public class MySlotController {
         }
     }
 
+    @Operation(summary = "My slot 삭제 api", description = "개인 slot을 삭제하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "슬롯 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
+    })
+    @DeleteMapping("/{slotId}")
+    public ResponseEntity<ResponseForm<?>> deleteMySlot(
+            @PathVariable Long slotId,
+            @AuthenticationPrincipal CustomUserDetails userDetails ) {
+        try {
+            slotService.deleteMySlot(slotId, userDetails.getUserId());
+            return ResponseEntity.ok(ResponseForm.success(null, "삭제 완료"));
+        } catch (NotFoundUserException | NotFoundContentsException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
+        }
+    }
+
     @Schema(description = "그룹 슬롯 응답 DTO")
     @Builder
     @Data
@@ -126,6 +145,7 @@ public class MySlotController {
         private String importance;
 
         @Schema(description = "상태", example = "CONFIRMED")
+        @NotBlank
         private String status;
     }
 }

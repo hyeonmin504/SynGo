@@ -89,6 +89,6 @@ public class SlotMemberController {
 
     @Data
     public static class GroupSlotStatusForm {
-        public Status status;
+        public String status;
     }
 }

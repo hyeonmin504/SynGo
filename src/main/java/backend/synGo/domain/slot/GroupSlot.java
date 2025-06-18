@@ -15,14 +15,13 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GroupSlot {
+public class GroupSlot implements Slot{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_slot_id")
     private Long id;
-
-    @NotNull(message = "status을 null로 할 수 없습니다")
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id")
     private Status status;
     @NotNull
     private String title;

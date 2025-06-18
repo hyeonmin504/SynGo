@@ -2,6 +2,7 @@ package backend.synGo.service;
 
 import backend.synGo.config.scheduler.GroupSchedulerProvider;
 import backend.synGo.domain.date.Date;
+import backend.synGo.domain.slot.Status;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.*;
@@ -32,6 +33,7 @@ public class SlotService {
     private final UserRepository userRepository;
     private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
+    private final StatusService statusService;
 
     /**
      * 개인 슬롯을 생성하는 서비스
@@ -51,7 +53,7 @@ public class SlotService {
                     return new Date(user, startDate);
                 });
         //userSlot 생성
-        UserSlot userSlot = creatSlot(slotForm, date);
+        UserSlot userSlot = createSlot(slotForm, date);
         //date의 SlotCount +1
         date.addSlotCount();
         //이번 달에 슬롯 추가 시 캐시 초기화
@@ -97,12 +99,25 @@ public class SlotService {
                 if (validDateTime(form)){
                     throw new DateTimeException("날자를 확인해주세요");
                 }
-                slot.get().updateSlot(form.getStatus(), form.getTitle(), form.getContent(), form.getStartDate(), form.getEndDate(), form.getPlace(), form.getImportance());
+                Status status = statusService.getStatus(form.getStatus());
+                slot.get().updateSlot(status, form.getTitle(), form.getContent(), form.getStartDate(), form.getEndDate(), form.getPlace(), form.getImportance());
                 if (groupSchedulerProvider.isSameYearAndMonth(form.getStartDate().toLocalDate())){
                     groupSchedulerProvider.evictMySchedule(userId,form.getStartDate().getYear(), form.getStartDate().getMonthValue());
                 }
                 return new SlotIdResponse(slotId);
             } throw new NotFoundContentsException("해당 슬롯을 찾을 수 없습니다.");
+        } throw new NotFoundUserException("해당 유저의 슬롯이 아닙니다.");
+    }
+
+    @Transactional
+    public void deleteMySlot(Long slotId, Long userId) {
+        if(userSlotRepository.existUserUserId(userId)) {
+            UserSlot userSlot = userSlotRepository.findById(slotId).orElseThrow(
+                    () -> new NotFoundContentsException("해당 슬롯을 찾을 수 없습니다.")
+            );
+            groupSchedulerProvider.evictMySchedule(userId,userSlot.getStartTime().getYear(), userSlot.getStartTime().getMonthValue());
+            userSlotRepository.delete(userSlot);
+            return ;
         } throw new NotFoundUserException("해당 유저의 슬롯이 아닙니다.");
     }
 
@@ -128,9 +143,10 @@ public class SlotService {
         );
     }
 
-    private static UserSlot creatSlot(SlotForm slotForm, Date date) {
+    private UserSlot createSlot(SlotForm slotForm, Date date) {
+
         return createUserSlot(
-                slotForm.getStatus(),
+                statusService.getStatus(slotForm.getStatus()),
                 slotForm.getTitle(),
                 slotForm.getContent(),
                 slotForm.getStartDate(),

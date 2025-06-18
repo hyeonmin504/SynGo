@@ -14,12 +14,13 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSlot{
+public class UserSlot implements Slot{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_slot_id")
     private Long id;
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id")
     private Status status;
     @NotNull
     private String title;
@@ -55,9 +56,7 @@ public class UserSlot{
     }
 
     public UserSlot(Status status,String title, String content, LocalDateTime startTime, LocalDateTime endTime, String place, SlotImportance importance, Date date) {
-        if (status == null) {
-                changeStatus(startTime, endTime);
-        } else this.status = status;
+        this.status = status;
         this.title = title;
         this.content = content;
         this.startTime = startTime;
@@ -76,17 +75,5 @@ public class UserSlot{
         this.endTime = endTime;
         this.place = place;
         this.importance = importance;
-    }
-
-    //기본 상태 선언
-    private void changeStatus(LocalDateTime startTime, LocalDateTime endTime) {
-        LocalDateTime now = LocalDateTime.now();
-        if (endTime.isBefore(now)) {
-            this.status = Status.HOLD; // 보류중
-        } else if (startTime.isAfter(now)) {
-            this.status = Status.PLAN; // 계획중
-        } else {
-            this.status = Status.DOING; // 진행중
-        }
     }
 }

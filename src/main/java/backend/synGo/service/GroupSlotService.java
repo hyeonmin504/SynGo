@@ -43,6 +43,7 @@ public class GroupSlotService {
     private final GroupRepository groupRepository;
     private final GroupSlotRepository groupSlotRepository;
     private final GroupSchedulerProvider groupSchedulerProvider;
+    private final StatusService statusService;
 
     @Transactional
     public Long createGroupSlot(Long groupId, SlotForm slotForm, Long userId) {
@@ -109,12 +110,12 @@ public class GroupSlotService {
                 .findFirst();
         if ( requesterUserGroup.getRole().equals(Role.LEADER) ){
             log.info("리더의 슬롯 생태 변경 요청");
-            groupSlot.updateStatus(form.getStatus(), requesterUserGroup.getNickname());
+            groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             return new SlotIdResponse(slotId);
         }
         if ( requesterSlotMember.isPresent() && requesterSlotMember.get().getSlotPermission().equals(SlotPermission.EDITOR )) {
             log.info("에디터의 슬롯 생태 변경 요청");
-            groupSlot.updateStatus(form.getStatus(), requesterUserGroup.getNickname());
+            groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             return new SlotIdResponse(slotId);
         }
         throw new AccessDeniedException("변경 권한이 없습니다");
@@ -170,9 +171,9 @@ public class GroupSlotService {
         return groupSlot.updateSlot(requesterUserGroup.getNickname(), form.getTitle(), form.getContent(), form.getStartDate(), form.getEndDate(), form.getPlace(), form.getImportance());
     }
 
-    private static GroupSlot createGroupSlot(SlotForm slotForm, Date date) {
+    private GroupSlot createGroupSlot(SlotForm slotForm, Date date) {
         return GroupSlot.createGroupSlot(
-                slotForm.getStatus(),
+                statusService.getStatus(slotForm.getStatus()),
                 slotForm.getTitle(),
                 slotForm.getContent(),
                 slotForm.getStartDate(),

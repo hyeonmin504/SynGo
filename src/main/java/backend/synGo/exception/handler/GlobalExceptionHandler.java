@@ -1,5 +1,6 @@
 package backend.synGo.exception.handler;
 
+import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.exception.AuthenticationFailedException;
 import backend.synGo.exception.NotFoundUserException;
@@ -62,7 +63,8 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException.class,
             UnexpectedTypeException.class,
             HandlerMethodValidationException.class,
-            HttpMessageNotReadableException.class
+            HttpMessageNotReadableException.class,
+            NotValidException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ResponseForm<Map<String, Object>>> handleBadRequest(Exception ex, WebRequest request) {

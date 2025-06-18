@@ -1,10 +1,10 @@
 package backend.synGo.form.requestForm;
 
 import backend.synGo.domain.slot.SlotImportance;
-import backend.synGo.domain.slot.Status;
 import backend.synGo.util.DateTimeRange;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class SlotForm {
-    private Status status;
+    @NotBlank
+    private String status;
     @DateTimeRange(message = "날짜가 허용된 범위를 벗어났습니다.")
     private LocalDateTime startDate;
     @Nullable
