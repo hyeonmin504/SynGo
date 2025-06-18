@@ -1,5 +1,6 @@
-package backend.synGo.domain.slot;
+package backend.synGo.util;
 
+import backend.synGo.domain.slot.Status;
 import backend.synGo.repository.StatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -15,9 +16,9 @@ public class StatusInitializer implements CommandLineRunner {
     private final StatusRepository statusRepository;
     @Override
     public void run(String... args) {
-        initRoles();
+        initStatus();
     }
-    private void initRoles() {
+    private void initStatus() {
         if (statusRepository.count() == 0) {
             statusRepository.saveAll(List.of(
                     new Status(1L, Status.COMPLETE),

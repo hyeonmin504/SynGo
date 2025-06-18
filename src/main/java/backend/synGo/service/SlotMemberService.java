@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static backend.synGo.controller.group.SlotMemberController.*;
@@ -29,6 +30,7 @@ public class SlotMemberService {
     private final GroupSlotRepository groupSlotRepository;
     private final UserGroupService userGroupService;
     private final UserGroupRepository userGroupRepository;
+    private final SlotPermissionService permissionService;
 
     @Transactional
     public SlotIdResponse registerGroupSlotMember(Long groupId, Long userId, Long slotId, List<JoinMemberRequestForm> form) {
@@ -41,7 +43,7 @@ public class SlotMemberService {
         }
         // 현재 슬롯의 slotMember 중에 EDITOR가 존재하는지 확인
         boolean hasEditor = groupSlot.getSlotMember().stream()
-                .anyMatch(member -> member.getSlotPermission() == SlotPermission.EDITOR);
+                .anyMatch(member -> member.getSlotPermission().getSlotPermission().equals(SlotPermission.EDITOR));
         log.info("에디터 존재 유무={}", hasEditor);
         // userGroupId -> UserGroup 매핑
         Map<Long, UserGroup> userGroupMap = userGroups.stream()
@@ -60,14 +62,14 @@ public class SlotMemberService {
                 continue; // 이미 등록된 경우 무시
             }
             log.info("request.getPermission={}", request.getPermission());
-            if (request.getPermission() == SlotPermission.EDITOR && hasEditor) {
+            if (Objects.equals(request.getPermission(), SlotPermission.EDITOR) && hasEditor) {
                 throw new NotValidException("이미 EDITOR 권한을 가진 멤버가 존재합니다.");
             }
             // 새 SlotMember 생성 및 연관관계 설정 (연관 메서드 내부에서 add 연결)
-            SlotMember member = new SlotMember(request.getPermission(), targetUG, groupSlot);
+            SlotMember member = new SlotMember(permissionService.getSlotPermission(request.getPermission()), targetUG, groupSlot);
             log.info("member.getSlotPermission={}",member.getSlotPermission());
             // EDITOR 권한 설정되면 플래그 true로 변경
-            if (request.getPermission() == SlotPermission.EDITOR) {
+            if (request.getPermission().equals(SlotPermission.EDITOR)) {
                 hasEditor = true;
             }
         }
@@ -82,7 +84,7 @@ public class SlotMemberService {
             GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
                     .orElseThrow(() -> new NotFoundContentsException("슬롯이 존재하지 않습니다"));
             return groupSlot.getSlotMember().stream()
-                    .map(sm -> new JoinMemberRequestForm(sm.getUserGroup().getId(), sm.getUserGroup().getNickname(), sm.getSlotPermission()))
+                    .map(sm -> new JoinMemberRequestForm(sm.getUserGroup().getId(), sm.getUserGroup().getNickname(), sm.getSlotPermission().getSlotPermission()))
                     .collect(Collectors.toList());
         }
         throw new AccessDeniedException("그룹원 외 접근 불가");

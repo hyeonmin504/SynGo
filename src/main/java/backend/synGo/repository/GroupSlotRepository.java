@@ -13,12 +13,12 @@ import java.util.Optional;
 
 public interface GroupSlotRepository extends JpaRepository<GroupSlot, Long>, GroupSlotRepositoryQuery {
 
-    @Query("select gs from GroupSlot gs left join fetch gs.slotMember sm left join fetch sm.userGroup where gs.id=:slotId")
+    @Query("select gs from GroupSlot gs left join fetch gs.status s left join fetch gs.slotMember sm left join fetch sm.slotPermission sp left join fetch sm.userGroup where gs.id=:slotId")
     Optional<GroupSlot> joinSlotMemberAndUserGroupBySlotId(@Param("slotId") Long slotId);
 
     @Query("select gs from GroupSlot gs left join fetch gs.slotMember sm where gs.id=:slotId")
     Optional<GroupSlot> joinSlotMemberBySlotId(@Param("slotId") Long slotId);
 
-    @Query("select gs from GroupSlot gs where gs.date.id in :dateIds")
+    @Query("select gs from GroupSlot gs join fetch gs.status s where gs.date.id in :dateIds")
     List<GroupSlot> findByDateIdIn(@Param("dateIds") List<Long> dateIds);
 }

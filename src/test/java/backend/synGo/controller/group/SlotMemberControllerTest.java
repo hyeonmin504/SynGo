@@ -9,6 +9,7 @@ import backend.synGo.domain.slot.Status;
 import backend.synGo.form.requestForm.GroupRequestForm;
 import backend.synGo.form.requestForm.JoinGroupForm;
 import backend.synGo.form.requestForm.SlotForm;
+import backend.synGo.service.SlotPermissionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
@@ -38,6 +39,7 @@ class SlotMemberControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private SlotPermissionService service;
     @Autowired
     EntityManager em;
 
@@ -75,7 +77,7 @@ class SlotMemberControllerTest {
     @Test
     @DisplayName("슬롯 멤버 등록 성공")
     void registerSlotMember_success() throws Exception {
-        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, SlotPermission.BASIC);
+        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, service.getSlotPermission(SlotPermission.EDITOR));
 
         mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId + "/members")
                         .header("Authorization", "Bearer " + leaderToken)
@@ -92,7 +94,7 @@ class SlotMemberControllerTest {
         signUp("outsider@test.com", "외부인");
         String outsiderToken = login("outsider@test.com");
 
-        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, SlotPermission.EDITOR);
+        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, service.getSlotPermission(SlotPermission.EDITOR));
 
         mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId + "/members")
                         .header("Authorization", "Bearer " + outsiderToken)
@@ -106,7 +108,7 @@ class SlotMemberControllerTest {
     @DisplayName("슬롯 멤버 조회 성공 - 그룹원 접근 가능")
     void getSlotMember_success() throws Exception {
         // 1. 슬롯 멤버 등록
-        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, SlotPermission.BASIC);
+        JoinMemberRequestForm form = new JoinMemberRequestForm(memberUserGroupId, service.getSlotPermission(SlotPermission.EDITOR));
         mockMvc.perform(post("/api/groups/" + groupId + "/slots/" + slotId + "/members")
                         .header("Authorization", "Bearer " + leaderToken)
                         .contentType(MediaType.APPLICATION_JSON)

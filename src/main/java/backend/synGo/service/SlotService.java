@@ -41,7 +41,7 @@ public class SlotService {
      */
     @Transactional
     public Long createMySlot(SlotForm slotForm, Long userId) {
-        if (validDateTime(slotForm))
+        if (validDateTime(slotForm.getStartDate(), slotForm.getEndDate()))
             throw new NotValidException("날자를 확인해주세요.");
         else if (slotForm.getEndDate() != null && slotForm.getStartDate().isEqual(slotForm.getEndDate()))
             slotForm.setEndDate(null);
@@ -96,7 +96,7 @@ public class SlotService {
         if(userSlotRepository.existUserUserId(userId)) {
             Optional<UserSlot> slot = userSlotRepository.findById(slotId);
             if (slot.isPresent()){
-                if (validDateTime(form)){
+                if (validDateTime(form.getStartDate(), form.getEndDate())){
                     throw new DateTimeException("날자를 확인해주세요");
                 }
                 Status status = statusService.getStatus(form.getStatus());
@@ -135,11 +135,11 @@ public class SlotService {
                 .build();
     }
 
-    public static boolean validDateTime(SlotForm slotForm) {
-        return slotForm.getEndDate() != null && (
-                slotForm.getStartDate().isAfter(slotForm.getEndDate()) ||
-                slotForm.getStartDate().isBefore(LocalDateTime.now()) ||
-                slotForm.getEndDate().isBefore(LocalDateTime.now())
+    public static boolean validDateTime(LocalDateTime startDate, LocalDateTime endDate) {
+        return endDate != null && (
+                startDate.isAfter(endDate) ||
+                        startDate.isBefore(LocalDateTime.now()) ||
+                        endDate.isBefore(LocalDateTime.now())
         );
     }
 

@@ -79,11 +79,11 @@ public class SlotMemberController {
         public Long userGroupId;
         public String nickname;
         @NotBlank
-        public SlotPermission permission;
+        public String permission;
 
         public JoinMemberRequestForm(Long userGroupId, SlotPermission permission) {
             this.userGroupId = userGroupId;
-            this.permission = permission;
+            this.permission = permission.getSlotPermission();
         }
     }
 

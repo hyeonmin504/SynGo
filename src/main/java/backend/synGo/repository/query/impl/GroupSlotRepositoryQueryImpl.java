@@ -24,7 +24,8 @@ public class GroupSlotRepositoryQueryImpl implements GroupSlotRepositoryQuery {
             "(d.group.id, gs.id, gs.title, gs.startTime, gs.endTime, gs.importance, ug.id, ug.nickname) " +
             "from GroupSlot gs " +
             "join gs.date d " +
-            "left join gs.slotMember sm on sm.slotPermission = :permission " +
+            "left join gs.slotMember sm " +
+            "left join sm.slotPermission sp on sp.slotPermission = :permission " +
             "left join sm.userGroup ug " +
             "where d.id = :dateId";
     @Override
@@ -39,20 +40,6 @@ public class GroupSlotRepositoryQueryImpl implements GroupSlotRepositoryQuery {
     public List<SlotDtoForDay> findDateAndSlotByGroupIdAndDay(Long dateId) {
         return em.createQuery(query, SlotDtoForDay.class)
                 .setParameter("dateId", dateId)
-                .getResultList();
-    }
-
-    @Override
-    public List<SlotDtoForDay> findMemberWithUserGroupBySlotIdsAndLeader(List<Long> slotIds) {
-        return em.createQuery(
-                "select new backend.synGo.form.SlotDtoForDay" +
-                "(sm.groupSlot.id, ug.id, ug.nickname) " +
-                "from SlotMember sm " +
-                "join sm.userGroup ug " +
-                "where sm.groupSlot.id in :slotIds And " +
-                "sm.slotPermission= :permission", SlotDtoForDay.class)
-                .setParameter("slotIds", slotIds)
-                .setParameter("permission", SlotPermission.EDITOR)
                 .getResultList();
     }
 

@@ -15,7 +15,8 @@ public class SlotMember {
     @Column(name = "slot_member_id")
     private Long id;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "permission_id")
     private SlotPermission slotPermission;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

@@ -50,7 +50,7 @@ public class GroupSlotService {
         checkUserGroupRole(groupId, userId);
         LocalDateTime updateDate = slotForm.getStartDate();
 
-        if (validDateTime(slotForm))
+        if (validDateTime(slotForm.getStartDate(), slotForm.getEndDate()))
             throw new NotValidException("날자를 확인해주세요.");
         else if (slotForm.getEndDate() != null && updateDate.isEqual(slotForm.getEndDate()))
             slotForm.setEndDate(null);
@@ -85,6 +85,9 @@ public class GroupSlotService {
 
     @Transactional
     public SlotIdResponse updateSlotData(Long groupId, Long slotId, Long userId, SlotUpdateForm form) {
+        if (validDateTime(form.getStartDate(), form.getEndDate())) {
+            throw new NotValidException("날자 확인해주세요");
+        }
         UserGroup requesterUserGroup = userGroupService.findUserGroupByUserIdAndGroupId(userId, groupId);
         if (requesterUserGroup.getRole().equals(Role.LEADER) || requesterUserGroup.getRole().equals(Role.MANAGER)) {
             GroupSlot groupSlot = groupSlotRepository.joinSlotMemberAndUserGroupBySlotId(slotId)
@@ -113,7 +116,7 @@ public class GroupSlotService {
             groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             return new SlotIdResponse(slotId);
         }
-        if ( requesterSlotMember.isPresent() && requesterSlotMember.get().getSlotPermission().equals(SlotPermission.EDITOR )) {
+        if ( requesterSlotMember.isPresent() && requesterSlotMember.get().getSlotPermission().getSlotPermission().equals(SlotPermission.EDITOR )) {
             log.info("에디터의 슬롯 생태 변경 요청");
             groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             return new SlotIdResponse(slotId);

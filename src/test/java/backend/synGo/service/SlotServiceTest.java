@@ -29,7 +29,7 @@ class SlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         SlotForm form = makeForm(now.plusDays(1), now);
 
-        assertTrue(SlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form.getStartDate(), form.getEndDate()));
     }
 
     @Test
@@ -38,7 +38,7 @@ class SlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         SlotForm form = makeForm(now.minusDays(1), now.plusDays(1));
 
-        assertTrue(SlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form.getStartDate(), form.getEndDate()));
     }
 
     @Test
@@ -47,7 +47,7 @@ class SlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         SlotForm form = makeForm(now.plusHours(1), now.minusDays(1));
 
-        assertTrue(SlotService.validDateTime(form));
+        assertTrue(SlotService.validDateTime(form.getStartDate(), form.getEndDate()));
     }
 
     @Test
@@ -56,7 +56,7 @@ class SlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         SlotForm form = makeForm(now.plusHours(1), now.plusHours(2));
 
-        assertFalse(SlotService.validDateTime(form));
+        assertFalse(SlotService.validDateTime(form.getStartDate(), form.getEndDate()));
     }
 
     @Test
@@ -65,7 +65,7 @@ class SlotServiceTest {
         LocalDateTime now = LocalDateTime.now();
         SlotForm form = makeForm(now.plusDays(1), null);
 
-        assertFalse(SlotService.validDateTime(form));
+        assertFalse(SlotService.validDateTime(form.getStartDate(), form.getEndDate()));
     }
 
 }
