@@ -9,6 +9,7 @@ import backend.synGo.domain.user.User;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSchedulerRepository;
+import backend.synGo.service.ThemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,12 +42,13 @@ public class MySlotControllerTest {
     private UserRepository userRepository;
     @Autowired
     private UserSchedulerRepository userSchedulerRepository;
+    @Autowired private ThemeService themeService;
     private String accessToken;
 
     @BeforeEach
     void setUp() throws Exception {
         // 테스트 유저 등록
-        UserScheduler scheduler = new UserScheduler(Theme.BLACK);
+        UserScheduler scheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
         UserScheduler savedScheduler = userSchedulerRepository.save(scheduler);
         User user = new User(
                 "SlotUser",

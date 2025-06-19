@@ -8,6 +8,7 @@ import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.form.responseForm.SchedulerForm;
 import backend.synGo.repository.GroupRepository;
 import backend.synGo.repository.GroupSchedulerRepository;
+import backend.synGo.repository.ThemeRepository;
 import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,13 @@ public class GroupSchedulerService {
 
     private final GroupSchedulerRepository groupSchedulerRepository;
     private final UserGroupRepository userGroupRepository;
+    private final ThemeService themeService;
 
     @Transactional
-    public GroupScheduler createScheduler(Group group) {
-        return groupSchedulerRepository.save(
-                new GroupScheduler(Theme.BLACK)
+    public GroupScheduler createScheduler(String theme) {
+
+        return new GroupScheduler(
+                themeService.getTheme(theme)
         );
     }
 
@@ -32,7 +35,7 @@ public class GroupSchedulerService {
         if (userGroupRepository.existsByGroupIdAndUserId(groupId,userId)) {
             GroupScheduler groupScheduler = groupSchedulerRepository.findSchedulerAndGroupByGroupId(groupId);
             return SchedulerForm.builder()
-                    .theme(groupScheduler.getTheme())
+                    .theme(groupScheduler.getTheme().getTheme())
                     .build();
         }
         throw new AccessDeniedException("그룹원 외 접근 불가");

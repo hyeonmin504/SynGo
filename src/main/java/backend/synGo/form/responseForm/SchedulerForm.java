@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class SchedulerForm {
-    public Theme theme;
+    public String theme;
 }

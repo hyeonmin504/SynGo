@@ -18,7 +18,8 @@ public class GroupScheduler {
     private Long id;
 
     private LocalDateTime lastDeploy;
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "theme_id")
     private Theme theme;
 
     @OneToOne(mappedBy = "groupScheduler", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -26,10 +27,15 @@ public class GroupScheduler {
 
     public GroupScheduler(Theme theme) {
         this.lastDeploy = LocalDateTime.now();
+        setTheme(theme);
+    }
+
+    private void setTheme(Theme theme) {
         this.theme = theme;
+        theme.getGroupSchedulers().add(this);
     }
 
     public void setGroup(Group group) {
-        this.group =group;
+        this.group = group;
     }
 }

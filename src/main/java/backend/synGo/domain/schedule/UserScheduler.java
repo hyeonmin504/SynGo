@@ -19,7 +19,8 @@ public class UserScheduler {
     @Column(name = "schedule_id")
     private Long id;
     private LocalDateTime lastUpdate;
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "theme_id")
     private Theme theme;
 
     @OneToOne(mappedBy = "userScheduler", fetch = FetchType.LAZY)

@@ -17,7 +17,7 @@ public class UserSchedulerService {
     public SchedulerForm getMyScheduler(Long userId) {
         UserScheduler userScheduler = userSchedulerRepository.findSchedulerAndUserByUserId(userId);
         return SchedulerForm.builder()
-                .theme(userScheduler.getTheme())
+                .theme(userScheduler.getTheme().getTheme())
                 .build();
     }
 }

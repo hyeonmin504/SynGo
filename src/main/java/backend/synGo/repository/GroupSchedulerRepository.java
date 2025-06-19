@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface GroupSchedulerRepository extends JpaRepository<GroupScheduler, Long> {
-    @Query("select gs from GroupScheduler gs join fetch gs.group g where g.id=:groupId")
+    @Query("select gs from GroupScheduler gs join fetch gs.theme t join fetch gs.group g where g.id=:groupId")
     GroupScheduler findSchedulerAndGroupByGroupId(@Param("groupId") Long groupId);
 }

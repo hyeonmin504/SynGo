@@ -40,8 +40,9 @@ public class GroupService {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
     private final UserGroupService userGroupService;
-    private final GroupSchedulerService groupSchedulerService;
+    private final ThemeService themeService;
     private final UserGroupRepository userGroupRepository;
+    private final GroupSchedulerService groupSchedulerService;
 
     /**
      * 그룹 생성 -> userGroup, GroupScheduler 생성
@@ -271,13 +272,14 @@ public class GroupService {
         if (!StringUtils.hasText(password) || !password.equals(checkPassword)) {
             throw new NotValidException("패스워드를 확인해주세요");
         }
+        GroupScheduler scheduler = groupSchedulerService.createScheduler(Theme.BLACK);
         //비공개 그룹 생성
         return new Group(
                 passwordEncoder.encode(password),
                 requestForm.getGroupType(),
                 requestForm.getGroupName(),
                 requestForm.getInfo(),
-                new GroupScheduler(Theme.BLACK)
+                scheduler
         );
     }
 }

@@ -5,15 +5,11 @@ import backend.synGo.auth.controller.form.SignUpForm;
 import backend.synGo.domain.schedule.Theme;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.user.User;
-import backend.synGo.exception.ExpiredTokenException;
 import backend.synGo.repository.UserRepository;
+import backend.synGo.service.ThemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,10 +42,12 @@ public class AuthControllerTest {
     PasswordEncoder passwordEncoder;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    ThemeService themeService;
 
     @BeforeEach
     public void setUp() {
-        UserScheduler scheduler = new UserScheduler(Theme.BLACK);
+        UserScheduler scheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
         User user = new User(
                 "name"
                 ,"test@naver.com"

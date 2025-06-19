@@ -15,6 +15,7 @@ import backend.synGo.exception.ExistUserException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.repository.UserRepository;
+import backend.synGo.service.ThemeService;
 import backend.synGo.util.ClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final ThemeService themeService;
 
     @Transactional(readOnly = true)
     public LoginResponseForm login(LoginForm form, HttpServletRequest request) {
@@ -70,7 +72,7 @@ public class AuthService {
                     throw new ExistUserException("이미 존재하는 이메일입니다");
                 }
                 log.info("saveUser");
-                UserScheduler userScheduler = new UserScheduler(Theme.BLACK);
+                UserScheduler userScheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
                 userRepository.save(new User(form.getName(),form.getEmail(),passwordEncoder.encode(form.getPassword()),ClientIp.getClientIp(request),userScheduler));
                 return ;
             }
