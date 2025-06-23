@@ -20,6 +20,7 @@ import backend.synGo.webSocket.config.RedisPublisher;
 import backend.synGo.webSocket.message.GroupSyncDayMessage;
 import backend.synGo.webSocket.message.GroupSyncDetailMessage;
 import backend.synGo.webSocket.message.GroupSyncMonthMessage;
+import backend.synGo.webSocket.service.GroupSyncService;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class GroupSlotService {
     private final GroupSlotRepository groupSlotRepository;
     private final GroupSchedulerProvider groupSchedulerProvider;
     private final StatusService statusService;
-    private final RedisPublisher redisPublisher;
+    private final GroupSyncService groupSyncService;
 
     @Transactional
     public Long createGroupSlot(Long groupId, SlotForm slotForm, Long userId) {
@@ -75,70 +76,8 @@ public class GroupSlotService {
         //캐시 초기화
         evictCache(groupId, userId, updateDate);
         //webSocket Pub
-        groupCreateSyncGoPub(groupId, startDate);
+        groupSyncService.groupCreateSyncGoPub(groupId, startDate);
         return groupSlot.getId();
-    }
-
-    /**
-     * 슬롯 status 수정 시, 일반 맴버 등록 시 디테일만 동기화
-     * @param groupId
-     * @param slotId
-     */
-    public void groupSlotSyncGoPub(Long groupId, Long slotId) {
-        log.info("슬롯 status 수정 시, 일반 맴버 등록 시 디테일만 동기화");
-        // 예: 상세 슬롯 변경
-        GroupSyncDetailMessage detailMessage = new GroupSyncDetailMessage(groupId, slotId);
-        redisPublisher.publish(detailMessage);
-    }
-
-    /**
-     * 슬롯 생성 시 달, 하루 동기화
-     * @param groupId
-     * @param startDate
-     */
-    private void groupCreateSyncGoPub(Long groupId, LocalDate startDate) {
-        log.info("슬롯 생성 시 달, 하루 동기화");
-        // 예: 그룹 슬롯 생성 후
-        GroupSyncMonthMessage monthMessage = new GroupSyncMonthMessage(groupId, startDate.getYear(), startDate.getMonthValue());
-        redisPublisher.publish(monthMessage);
-        // 예: 특정 날자의 변경
-        GroupSyncDayMessage dayMessage = new GroupSyncDayMessage(groupId, startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth());
-        redisPublisher.publish(dayMessage);
-    }
-
-    /**
-     * 에디터 등록 시 하루, 디테일 동기화
-     * @param groupId
-     * @param startDate
-     * @param slotId
-     */
-    public void groupMemberSyncGoPub(Long groupId,LocalDate startDate, Long slotId) {
-        log.info("에디터 등록 시 하루, 디테일 동기화");
-        // 예: 특정 날자의 변경
-        GroupSyncDayMessage dayMessage = new GroupSyncDayMessage(groupId, startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth());
-        redisPublisher.publish(dayMessage);
-        // 예: 상세 슬롯 변경
-        GroupSyncDetailMessage detailMessage = new GroupSyncDetailMessage(groupId, slotId);
-        redisPublisher.publish(detailMessage);
-    }
-
-    /**
-     * 슬롯 업데이트 시 전체 동기화
-     * @param groupId
-     * @param startDate
-     * @param slotId
-     */
-    private void groupUpdateSlotSyncGoPub(Long groupId, LocalDate startDate, Long slotId) {
-        log.info("슬롯 업데이트 시 전체 동기화");
-        // 예: 그룹 슬롯 생성 후
-        GroupSyncMonthMessage monthMessage = new GroupSyncMonthMessage(groupId, startDate.getYear(), startDate.getMonthValue());
-        redisPublisher.publish(monthMessage);
-        // 예: 특정 날자의 변경
-        GroupSyncDayMessage dayMessage = new GroupSyncDayMessage(groupId, startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth());
-        redisPublisher.publish(dayMessage);
-        // 예: 상세 슬롯 변경
-        GroupSyncDetailMessage detailMessage = new GroupSyncDetailMessage(groupId, slotId);
-        redisPublisher.publish(detailMessage);
     }
 
     @Transactional(readOnly = true)
@@ -165,7 +104,7 @@ public class GroupSlotService {
             //캐시 초기화
             evictCache(groupId, userId, form.getStartDate());
             //webSocket Pub
-            groupUpdateSlotSyncGoPub(groupId, form.getStartDate().toLocalDate(), slotId);
+            groupSyncService.groupUpdateSlotSyncGoPub(groupId, form.getStartDate().toLocalDate(), slotId);
             return new SlotIdResponse(updatedSlot.getId());
         }
         throw new AccessDeniedException("권한 부족");
@@ -186,14 +125,14 @@ public class GroupSlotService {
             log.info("리더의 슬롯 상태 변경 요청");
             groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             //webSocket Pub
-            groupSlotSyncGoPub(groupId, slotId);
+            groupSyncService.groupSlotSyncGoPub(groupId, slotId);
             return new SlotIdResponse(slotId);
         }
         if ( requesterSlotMember.isPresent() && requesterSlotMember.get().getSlotPermission().getSlotPermission().equals(SlotPermission.EDITOR )) {
             log.info("에디터의 슬롯 상태 변경 요청");
             groupSlot.updateStatus(statusService.getStatus(form.getStatus()), requesterUserGroup.getNickname());
             //webSocket Pub
-            groupSlotSyncGoPub(groupId, slotId);
+            groupSyncService.groupSlotSyncGoPub(groupId, slotId);
             return new SlotIdResponse(slotId);
         }
         throw new AccessDeniedException("변경 권한이 없습니다");

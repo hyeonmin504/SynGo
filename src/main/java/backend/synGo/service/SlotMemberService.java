@@ -10,6 +10,7 @@ import backend.synGo.exception.NotValidException;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.repository.GroupSlotRepository;
 import backend.synGo.repository.UserGroupRepository;
+import backend.synGo.webSocket.service.GroupSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class SlotMemberService {
     private final UserGroupService userGroupService;
     private final UserGroupRepository userGroupRepository;
     private final SlotPermissionService permissionService;
-    private final GroupSlotService groupSlotService;
+    private final GroupSyncService groupSyncService;
 
     @Transactional
     public SlotIdResponse registerGroupSlotMember(Long groupId, Long userId, Long slotId, List<JoinMemberRequestForm> form) {
@@ -73,14 +74,14 @@ public class SlotMemberService {
             if (request.getPermission().equals(SlotPermission.EDITOR)) {
                 hasEditor = true;
                 //websocket 메시지 발행
-                groupSlotService.groupMemberSyncGoPub(groupId ,groupSlot.getStartTime().toLocalDate() ,slotId);
+                groupSyncService.groupMemberSyncGoPub(groupId ,groupSlot.getStartTime().toLocalDate() ,slotId);
             }
         }
         // SlotMember는 Cascade로 저장됨
         groupSlotRepository.save(groupSlot);
         if (!hasEditor) {
             // 만약 EDITOR가 없다면 websocket 슬롯 업데이트 메시지 발행
-            groupSlotService.groupSlotSyncGoPub(groupId, slotId);
+            groupSyncService.groupSlotSyncGoPub(groupId, slotId);
         }
         return new SlotIdResponse(groupSlot.getId());
     }
