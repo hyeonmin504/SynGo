@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -32,7 +35,14 @@ public class SecurityConfig {
         log.info("start filter");
         //인증 없이 접근 가능한 url
         List<String> permitUrls = List.of(
+                "/index.html",
                 "/",
+                "/ws-stomp/**", // ← 이게 중요
+                "/topic/**",
+                "/sub/**", // ← 메시지 브로커 구독 경로
+                "/pub/**", // ← 메시지 발행 경로
+                "/app.js",
+                "/main.css",
                 "/api/auth/login",
                 "/api/auth/signup",
                 "/swagger-ui/**",
@@ -42,7 +52,12 @@ public class SecurityConfig {
         http
                 //요청 url 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/login", "/api/auth/signup", "/swagger-ui/**","/v3/api-docs/**").permitAll()
+                        .requestMatchers(
+                                "/index.html", "/", "/app.js", "/main.css",
+                                "/ws-stomp/**", "/topic/**", "/sub/**", "/pub/**",
+                                "/api/auth/login", "/api/auth/signup",
+                                "/swagger-ui/**", "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -53,9 +68,22 @@ public class SecurityConfig {
                 )
                 .csrf(AbstractHttpConfigurer::disable) // csrf 보호 비활성화 (JWT 사용 시 비활성화)
                 .formLogin(AbstractHttpConfigurer::disable) // 스프링 시큐리티 기본 로그인 폼 비활성화
-                .logout(AbstractHttpConfigurer::disable); // 스프링 시큐리티 기본 로그 아웃 폼 비활성화
-
+                .logout(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())); // ✅ 여기 주목
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*")); // 또는 정확한 origin 명시
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean

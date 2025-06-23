@@ -1,4 +1,6 @@
 server:
+  tomcat:
+    connection-timeout: 60s
   port: 8080
 spring:
   datasource:

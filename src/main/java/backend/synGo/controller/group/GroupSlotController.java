@@ -97,7 +97,7 @@ public class GroupSlotController {
         try {
             SlotIdResponse slotIdResponse = groupSlotService.updateSlotData(groupId, slotId, userDetails.getUserId(), form);
             return ResponseEntity.ok().body(ResponseForm.success(slotIdResponse, "슬롯 업데이트 성공"));
-        } catch (NotFoundContentsException | NotFoundUserException | AccessDeniedException e) {
+        } catch (NotFoundContentsException | NotFoundUserException | AccessDeniedException | NotValidException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
         }

@@ -1,14 +1,9 @@
 package backend.synGo.service;
 
-import backend.synGo.domain.group.Group;
 import backend.synGo.domain.schedule.GroupScheduler;
-import backend.synGo.domain.schedule.Theme;
-import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.exception.AccessDeniedException;
 import backend.synGo.form.responseForm.SchedulerForm;
-import backend.synGo.repository.GroupRepository;
 import backend.synGo.repository.GroupSchedulerRepository;
-import backend.synGo.repository.ThemeRepository;
 import backend.synGo.repository.UserGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

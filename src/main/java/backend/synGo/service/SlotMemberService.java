@@ -31,6 +31,7 @@ public class SlotMemberService {
     private final UserGroupService userGroupService;
     private final UserGroupRepository userGroupRepository;
     private final SlotPermissionService permissionService;
+    private final GroupSlotService groupSlotService;
 
     @Transactional
     public SlotIdResponse registerGroupSlotMember(Long groupId, Long userId, Long slotId, List<JoinMemberRequestForm> form) {
@@ -71,10 +72,16 @@ public class SlotMemberService {
             // EDITOR 권한 설정되면 플래그 true로 변경
             if (request.getPermission().equals(SlotPermission.EDITOR)) {
                 hasEditor = true;
+                //websocket 메시지 발행
+                groupSlotService.groupMemberSyncGoPub(groupId ,groupSlot.getStartTime().toLocalDate() ,slotId);
             }
         }
         // SlotMember는 Cascade로 저장됨
         groupSlotRepository.save(groupSlot);
+        if (!hasEditor) {
+            // 만약 EDITOR가 없다면 websocket 슬롯 업데이트 메시지 발행
+            groupSlotService.groupSlotSyncGoPub(groupId, slotId);
+        }
         return new SlotIdResponse(groupSlot.getId());
     }
 
