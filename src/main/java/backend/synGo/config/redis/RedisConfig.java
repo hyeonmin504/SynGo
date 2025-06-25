@@ -40,6 +40,7 @@ public class RedisConfig {
 
     /**
      * redis 에 발행(publish)된 메시지 처리를 위한 리스너 설정
+     * 메세지를 수신하기 전에 인자의 listernerAdapterChatMessage의 subscriber 메시지 파싱
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListener (
@@ -48,13 +49,17 @@ public class RedisConfig {
     ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory());
+        //모든 서버에 브로드캐스팅을 한 후, 각 서버에 데이터를 수신받는 곳
         container.addMessageListener(listenerAdapterChatMessage, channelTopic);
         return container;
     }
 
-    /** 실제 메시지를 처리하는 subscriber 설정 추가*/
+    /**
+     * 수신 하기전 메시지 파싱을 위한 리스너 어댑터 설정
+     * subscriber의 updatedData 메서드를 호출
+     */
     @Bean
-    public MessageListenerAdapter listenerAdapterChatMessage(RedisSubscriber subscriber) {
+    public MessageListenerAdapter listenerAdapterGroupMessage(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "updatedData");
     }
 

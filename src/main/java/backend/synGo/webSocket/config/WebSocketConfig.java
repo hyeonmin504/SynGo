@@ -9,6 +9,21 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * [어딘가에서 변경됨]
+ *    ↓
+ * RedisPublisher.publish()       // Redis에 발행
+ *    ↓
+ * Redis                          // Pub/Sub 브로드캐스팅
+ *    ↓
+ * 각 서버의 RedisConfig          // listener 등록되어 있음
+ *    ↓
+ * RedisSubscriber.updatedData() // 메시지 수신 + WebSocket 전송
+ *    ↓
+ * simpMessagingTemplate.convertAndSend("/sub/...")
+ *    ↓
+ * WebSocket 구독 중인 클라이언트에게 실시간 전달
+ */
 @Configuration
 @EnableWebSocketMessageBroker   // 메세지 브로커를 통해 웹소켓 메시지 처리를 활성화
 @RequiredArgsConstructor

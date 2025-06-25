@@ -8,16 +8,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
-@Service
+@Component
 @Slf4j
 public class RedisSubscriber {
 
     private final ObjectMapper objectMapper;
     private final SimpMessageSendingOperations messagingTemplate;
 
+    /**
+     * Redis로부터 메세지를 수신 받으면 자동 호출
+     * @param publishMessage
+     */
     public void updatedData(String publishMessage) {
         try {
             JsonNode root = objectMapper.readTree(publishMessage);

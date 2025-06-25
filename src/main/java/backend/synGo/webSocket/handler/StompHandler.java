@@ -1,9 +1,7 @@
 package backend.synGo.webSocket.handler;
 
-import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.form.TokenType;
 import backend.synGo.config.jwt.JwtProvider;
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
