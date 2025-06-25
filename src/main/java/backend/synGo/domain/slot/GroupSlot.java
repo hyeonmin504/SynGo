@@ -80,4 +80,11 @@ public class GroupSlot{
         this.date = date;
         date.getGroupSlot().add(this);
     }
+
+    public void removeDate(Date date) {
+        if (this.date.equals(date)) {
+            this.date.getGroupSlot().remove(this);
+            this.date = null; // Remove the association
+        }
+    }
 }

@@ -78,4 +78,11 @@ public class Date {
     public void setGroupSlot(List<GroupSlot> slots) {
         this.groupSlot = slots;
     }
+
+    public void removeGroupSlot(GroupSlot groupSlot) {
+        if (this.groupSlot.contains(groupSlot)) {
+            groupSlot.removeDate(this); // 연결 해제
+            slotCount--; // 슬롯 카운트 감소
+        }
+    }
 }

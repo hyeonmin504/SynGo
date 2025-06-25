@@ -123,6 +123,25 @@ public class GroupSlotController {
         }
     }
 
+    @Operation(summary = "슬롯 진행 상태 저장 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 수정하는 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 슬롯 상태 변경 성공"),
+            @ApiResponse(responseCode = "406", description = "유저 권한 부족")
+    })
+    @DeleteMapping("/{groupId}/slots/{slotId}")
+    public ResponseEntity<ResponseForm<?>> deleteGroupSlot (
+            @PathVariable Long groupId,
+            @PathVariable Long slotId,
+            @AuthenticationPrincipal CustomUserDetails userDetails ) {
+        try {
+            groupSlotService.deleteGroupSlot(groupId, slotId, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(null,"슬롯 삭제 성공"));
+        } catch (AccessDeniedException | NotFoundContentsException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+        }
+    }
+
     @Data
     public static class SlotUpdateForm {
         @NotBlank

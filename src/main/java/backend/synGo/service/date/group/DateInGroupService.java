@@ -107,6 +107,15 @@ public class DateInGroupService {
                 .build();
     }
 
+    @Transactional
+    public void deleteSlotFromDate(Date date, GroupSlot groupSlot) {
+        if (date.getSlotCount() <= 1) {
+            dateRepository.delete(date);
+            return ;
+        }
+        date.removeGroupSlot(groupSlot);
+    }
+
     /**
      * date에 있는 slot을 2개만 가져오는 로직
      * @param date

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static backend.synGo.controller.group.SlotMemberController.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -241,6 +242,24 @@ public class GroupSlotControllerTest {
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isNotAcceptable())
                 .andExpect(jsonPath("$.message").value("변경 권한이 없습니다"));
+    }
+
+    @Test
+    @DisplayName("그룹 리더가 슬롯 삭제에 성공한다")
+    void deleteGroupSlot_success_byLeader() throws Exception {
+        mockMvc.perform(delete("/api/groups/" + groupId + "/slots/" + slotId)
+                        .header("Authorization", "Bearer " + leaderToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("슬롯 삭제 성공"));
+    }
+
+    @Test
+    @DisplayName("그룹 멤버가 슬롯 삭제에 실패한다 (권한 없음)")
+    void deleteGroupSlot_fail_byMember() throws Exception {
+        mockMvc.perform(delete("/api/groups/" + groupId + "/slots/" + slotId)
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.message").value("권한 부족"));
     }
 
     private Long getUserGroupId(String token) throws Exception {

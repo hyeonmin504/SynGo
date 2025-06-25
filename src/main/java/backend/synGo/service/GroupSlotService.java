@@ -16,6 +16,7 @@ import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.form.responseForm.SlotResponseForm;
 import backend.synGo.repository.*;
+import backend.synGo.service.date.group.DateInGroupService;
 import backend.synGo.webSocket.config.RedisPublisher;
 import backend.synGo.webSocket.message.GroupSyncDayMessage;
 import backend.synGo.webSocket.message.GroupSyncDetailMessage;
@@ -50,6 +51,7 @@ public class GroupSlotService {
     private final GroupSchedulerProvider groupSchedulerProvider;
     private final StatusService statusService;
     private final GroupSyncService groupSyncService;
+    private final DateInGroupService dateService;
 
     @Transactional
     public Long createGroupSlot(Long groupId, SlotForm slotForm, Long userId) {
@@ -136,6 +138,23 @@ public class GroupSlotService {
             return new SlotIdResponse(slotId);
         }
         throw new AccessDeniedException("변경 권한이 없습니다");
+    }
+
+    @Transactional
+    public void deleteGroupSlot(Long groupId, Long slotId, Long userId) {
+        checkUserGroupRole(groupId, userId);
+        GroupSlot groupSlot = groupSlotRepository.findSlotWithDateBySlotId(slotId)
+                .orElseThrow(() -> new NotFoundContentsException("슬롯 정보 없음"));
+        //date의 slot 연결 해제
+        Date date = groupSlot.getDate();
+        dateService.deleteSlotFromDate(date, groupSlot);
+        //그룹 슬롯 삭제
+        LocalDateTime updateDate = groupSlot.getStartTime();
+        groupSlotRepository.delete(groupSlot);
+        //캐시 초기화
+        evictCache(groupId, userId, updateDate);
+        //webSocket Pub
+        groupSyncService.groupUpdateSlotSyncGoPub(groupId, updateDate.toLocalDate(), slotId);
     }
 
     private void evictCache(Long groupId, Long userId, LocalDateTime updateDate) {
