@@ -2,35 +2,50 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <label>JWT Token: <input type="text" id="jwtToken" placeholder="토큰 복붙하세요" style="width: 100%"></label><br><br>
     <title>Group Slot WebSocket Test</title>
+    <link rel="stylesheet" href="main.css">
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="/app.js"></script>
 </head>
 <body>
-<h2>그룹 슬롯 실시간 수신 테스트</h2>
-<button id="connect">Connect</button>
-<button id="disconnect" disabled>Disconnect</button>
+<div class="container">
+    <h2 class="title">그룹 슬롯 실시간 수신 테스트</h2>
 
-<br><br>
+    <div class="connection-controls">
+        <label>JWT Token:
+            <input type="text" id="jwtToken" placeholder="토큰 복붙하세요">
+        </label>
+        <div class="buttons">
+            <button id="connect">Connect</button>
+            <button id="disconnect" disabled>Disconnect</button>
+        </div>
+    </div>
 
-<label>Group ID: <input type="text" id="groupId" value="121"></label><br>
-<label>Year: <input type="text" id="year" value="2025"></label><br>
-<label>Month: <input type="text" id="month" value="7"></label><br>
-<label>Day: <input type="text" id="day" value="29"></label><br>
+    <div class="subscription-controls">
+        <label>Group ID: <input type="text" id="groupId" value="121"></label><br>
+        <label>Year: <input type="text" id="year" value="2025"></label><br>
+        <label>Month: <input type="text" id="month" value="7"></label><br>
+        <label>Day: <input type="text" id="day" value="29"></label><br>
+        <label>Slot ID: <input type="text" id="slotId" value="90"></label><br>
 
-<button id="subscribeMonth">한달 구독</button>
-<button id="subscribeDay">하루 구독</button>
-<button id="subscribeSlot">슬롯 상세 구독 (slotId 필요)</button><br>
-<label>Slot ID: <input type="text" id="slotId" value="90"></label>
+        <div class="buttons">
+            <button id="subscribeMonth">한달 구독</button>
+            <button id="subscribeDay">하루 구독</button>
+            <button id="subscribeSlot">슬롯 상세 구독</button>
+        </div>
+    </div>
 
-<hr>
-<h4>수신 메시지:</h4>
-<pre id="messages" style="background-color:#f5f5f5;padding:10px;max-height:300px;overflow:auto;"></pre>
+    <hr>
 
-<h4>데이터 상세 정보:</h4>
-<pre id="dataDetail" style="font-size: 12px; background-color:#f0f0f0; padding:10px; max-height:600px; overflow:auto;"></pre>
+    <div class="output-section">
+        <h4>수신 메시지:</h4>
+        <pre id="messages"></pre>
+
+        <h4>데이터 상세 정보:</h4>
+        <pre id="dataDetail"></pre>
+    </div>
+</div>
 </body>
 </html>
