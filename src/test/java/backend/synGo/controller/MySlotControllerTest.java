@@ -5,13 +5,17 @@ import backend.synGo.domain.schedule.Theme;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.slot.SlotImportance;
 import backend.synGo.domain.slot.Status;
+import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSchedulerRepository;
+import backend.synGo.repository.UserSlotRepository;
+import backend.synGo.service.StatusService;
 import backend.synGo.service.ThemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @SpringBootTest
@@ -42,7 +47,9 @@ public class MySlotControllerTest {
     private UserRepository userRepository;
     @Autowired
     private UserSchedulerRepository userSchedulerRepository;
-    @Autowired private ThemeService themeService;
+    @Autowired
+    private ThemeService themeService;
+
     private String accessToken;
 
     @BeforeEach
@@ -113,5 +120,37 @@ public class MySlotControllerTest {
                         .content(objectMapper.writeValueAsString(validForm)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("슬롯 생성 성공"));
+    }
+
+    @Test
+    @DisplayName("슬롯 삭제 성공")
+    void deleteSlotSuccess() throws Exception {
+        // 1. 슬롯 먼저 생성
+        SlotForm form = SlotForm.builder()
+                .startDate(LocalDateTime.now().plusDays(1))
+                .endDate(LocalDateTime.now().plusDays(2))
+                .status(Status.PLAN)
+                .title("삭제용 슬롯")
+                .content("삭제 테스트 슬롯")
+                .place("스터디룸")
+                .importance(SlotImportance.LOW)
+                .build();
+
+        String response = mockMvc.perform(post("/api/my/slots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer read = JsonPath.read(response, "$.data.slotId");
+        // 슬롯 ID를 Long으로 변환
+        Long slotId = read.longValue();
+
+        // 2. 슬롯 삭제 요청
+        mockMvc.perform(delete("/api/my/slots/" + slotId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("슬롯 삭제 성공"));
     }
 }

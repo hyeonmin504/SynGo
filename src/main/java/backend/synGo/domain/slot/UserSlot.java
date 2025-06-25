@@ -76,4 +76,11 @@ public class UserSlot{
         this.place = place;
         this.importance = importance;
     }
+
+    public void removeDate(Date date) {
+        if (this.date.equals(date)) {
+            this.date.getUserSlot().remove(this);
+            this.date = null; // Remove the association
+        }
+    }
 }

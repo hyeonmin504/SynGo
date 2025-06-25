@@ -118,6 +118,15 @@ public class DateUserService {
         return monthArrayDateInfo;
     }
 
+    @Transactional
+    public void deleteUserSlotFromDate(Date date, UserSlot userSlot) {
+        if (date.getSlotCount() <= 1) {
+            dateRepository.delete(date);
+            return ;
+        }
+        date.removeUserSlot(userSlot);
+    }
+
     /**
      * dto 정렬 -> date의 today로 정렬
      * @param monthDateInfo

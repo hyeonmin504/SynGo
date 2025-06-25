@@ -98,20 +98,21 @@ public class MySlotController {
         }
     }
 
-    @Operation(summary = "My slot 삭제 api", description = "개인 slot을 삭제하는 api")
+    @Operation(summary = "슬롯 진행 상태 저장 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 수정하는 api")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "슬롯 삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
+            @ApiResponse(responseCode = "200", description = "그룹 슬롯 상태 변경 성공"),
+            @ApiResponse(responseCode = "406", description = "유저 권한 부족")
     })
     @DeleteMapping("/{slotId}")
-    public ResponseEntity<ResponseForm<?>> deleteMySlot(
+    public ResponseEntity<ResponseForm<?>> deleteGroupSlot (
             @PathVariable Long slotId,
             @AuthenticationPrincipal CustomUserDetails userDetails ) {
         try {
             slotService.deleteMySlot(slotId, userDetails.getUserId());
-            return ResponseEntity.ok(ResponseForm.success(null, "삭제 완료"));
-        } catch (NotFoundUserException | NotFoundContentsException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
+            return ResponseEntity.ok().body(ResponseForm.success(null,"슬롯 삭제 성공"));
+        } catch (AccessDeniedException | NotFoundContentsException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         }
     }
 

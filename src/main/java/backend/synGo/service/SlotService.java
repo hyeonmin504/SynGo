@@ -11,6 +11,7 @@ import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.repository.DateRepository;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.repository.UserSlotRepository;
+import backend.synGo.service.date.user.DateUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class SlotService {
     private final UserSlotRepository userSlotRepository;
     private final DateRepository dateRepository;
     private final StatusService statusService;
+    private final DateUserService dateService;
 
     /**
      * 개인 슬롯을 생성하는 서비스
@@ -112,13 +114,17 @@ public class SlotService {
     @Transactional
     public void deleteMySlot(Long slotId, Long userId) {
         if(userSlotRepository.existUserUserId(userId)) {
-            UserSlot userSlot = userSlotRepository.findById(slotId).orElseThrow(
-                    () -> new NotFoundContentsException("해당 슬롯을 찾을 수 없습니다.")
-            );
-            groupSchedulerProvider.evictMySchedule(userId,userSlot.getStartTime().getYear(), userSlot.getStartTime().getMonthValue());
+            UserSlot userSlot = userSlotRepository.findSlotWithDateBySlotId(slotId)
+                    .orElseThrow( () -> new NotFoundContentsException("해당 슬롯을 찾을 수 없습니다.") );
+            //date의 slot 연결 해제
+            Date date = userSlot.getDate();
+            dateService.deleteUserSlotFromDate(date, userSlot);
+            //그룹 슬롯 삭제
             userSlotRepository.delete(userSlot);
+            //캐시 초기화
+            groupSchedulerProvider.evictMySchedule(userId,userSlot.getStartTime().getYear(), userSlot.getStartTime().getMonthValue());
             return ;
-        } throw new NotFoundUserException("해당 유저의 슬롯이 아닙니다.");
+        } throw new AccessDeniedException("해당 유저의 슬롯이 아닙니다.");
     }
 
     private static UserSlotResponseForm createMySlotResponseForm(UserSlot userSlot) {

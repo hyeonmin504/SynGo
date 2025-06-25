@@ -85,4 +85,11 @@ public class Date {
             slotCount--; // 슬롯 카운트 감소
         }
     }
+
+    public void removeUserSlot(UserSlot userSlot) {
+        if (this.userSlot.contains(userSlot)) {
+            userSlot.removeDate(this); // 연결 해제
+            slotCount--; // 슬롯 카운트 감소
+        }
+    }
 }

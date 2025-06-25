@@ -1,5 +1,6 @@
 package backend.synGo.repository;
 
+import backend.synGo.domain.slot.GroupSlot;
 import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.repository.query.UserSlotRepositoryQuery;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -15,4 +16,7 @@ public interface UserSlotRepository extends JpaRepository<UserSlot,Long>, UserSl
 
     @Query("select count(us) > 0 from UserSlot us join us.date d where d.user.id=:userId")
     boolean existUserUserId(Long userId);
+
+    @Query("select us from UserSlot us join fetch us.date d where us.id = :slotId")
+    Optional<UserSlot> findSlotWithDateBySlotId(Long slotId);
 }

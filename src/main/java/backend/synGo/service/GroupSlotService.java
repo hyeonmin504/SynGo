@@ -17,10 +17,6 @@ import backend.synGo.form.responseForm.SlotIdResponse;
 import backend.synGo.form.responseForm.SlotResponseForm;
 import backend.synGo.repository.*;
 import backend.synGo.service.date.group.DateInGroupService;
-import backend.synGo.webSocket.config.RedisPublisher;
-import backend.synGo.webSocket.message.GroupSyncDayMessage;
-import backend.synGo.webSocket.message.GroupSyncDetailMessage;
-import backend.synGo.webSocket.message.GroupSyncMonthMessage;
 import backend.synGo.webSocket.service.GroupSyncService;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -147,7 +143,7 @@ public class GroupSlotService {
                 .orElseThrow(() -> new NotFoundContentsException("슬롯 정보 없음"));
         //date의 slot 연결 해제
         Date date = groupSlot.getDate();
-        dateService.deleteSlotFromDate(date, groupSlot);
+        dateService.deleteGroupSlotFromDate(date, groupSlot);
         //그룹 슬롯 삭제
         LocalDateTime updateDate = groupSlot.getStartTime();
         groupSlotRepository.delete(groupSlot);

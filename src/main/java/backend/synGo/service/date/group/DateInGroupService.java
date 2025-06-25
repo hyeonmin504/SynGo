@@ -108,7 +108,7 @@ public class DateInGroupService {
     }
 
     @Transactional
-    public void deleteSlotFromDate(Date date, GroupSlot groupSlot) {
+    public void deleteGroupSlotFromDate(Date date, GroupSlot groupSlot) {
         if (date.getSlotCount() <= 1) {
             dateRepository.delete(date);
             return ;
