@@ -15,9 +15,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.*;
@@ -52,13 +54,14 @@ public class JwtProvider{
     public String createAccessToken(CustomUserDetails user) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + accessTokenMinutes * 60 * 1000);
-        String accessToken = createToken(now, expiredAt, user);
+        String accessToken = createToken(now, expiredAt, user)
+                .claim("token_type", "access")
+                .compact();;
 
         redisTemplate.opsForValue().set(
                 "AT:" + user.getUserId(), //key=AT:userId
                 accessToken,    // value=token
-                Duration.ofMinutes(accessTokenMinutes).toMillis(),
-                TimeUnit.MILLISECONDS
+                Duration.ofMinutes(accessTokenMinutes)
         );
         return accessToken;
     }
@@ -67,7 +70,9 @@ public class JwtProvider{
     public String createRefreshToken(CustomUserDetails user) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + refreshTokenDay * 24 * 60 * 60 * 1000);
-        String refreshToken = createToken(now, expiredAt, user);
+        String refreshToken = createToken(now, expiredAt, user)
+                .claim("token_type", "refresh")
+                .compact();
 
         //Redis에 저장 (key = RT:userId, value = 토큰)
         redisTemplate.opsForValue().set(
@@ -80,28 +85,28 @@ public class JwtProvider{
     }
 
     // JWT 생성 공통 로직 (Access, Refresh)
-    private String createToken(Date now, Date expiredAt, CustomUserDetails  user) {
+    private JwtBuilder createToken(Date now, Date expiredAt, CustomUserDetails  user) {
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE) //헤더 타입 명시
-                .setIssuer("SynGo") // 발급자
-                .setIssuedAt(now) // 발급 시간
-                .setExpiration(expiredAt) // 만료 시간
-                .setSubject(String.valueOf(user.getUserId())) // 주제(사용자 Id)
-                .claim("username", user.getName()) // 사용자 이름
-                .claim("user_ip", user.getLastAccessIp()) // 사용자 마지막 IP
-                .signWith(key, SignatureAlgorithm.HS256) // 서명
-                .compact();
+                .issuer("SynGo")
+                .issuedAt(now)
+                .notBefore(now) // 추가: 유효 시작 시간
+                .expiration(expiredAt)
+                .subject(String.valueOf(user.getUserId()))
+                .claim("username", user.getName())
+                .claim("user_ip", user.getLastAccessIp())
+                .id(UUID.randomUUID().toString()) // 추가: 고유 ID
+                .signWith(key);
     }
 
     // JWT Token 타입 별 유효성 검증
     public boolean validateToken(String token, TokenType tokenType) {
         try {
             // 기본 서명 검증
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Claims claims = Jwts.parser()
+                    .verifyWith((SecretKey) key)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
             // 타입에 따라 Redis 검증 로직 추가
             switch (tokenType) {
@@ -155,11 +160,11 @@ public class JwtProvider{
 
     // JWT에서 Claims 데이터 가져오기
     public Claims getClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
+        return Jwts.parser()
+                .verifyWith((SecretKey) key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody(); // Payload(Claims) 부분 반환
+                .parseSignedClaims(token)
+                .getPayload(); // Payload(Claims) 부분 반환
     }
 
     // JWT 토큰에서 인증 정보 추출 (Spring Security 연동)
@@ -211,11 +216,11 @@ public class JwtProvider{
 
     // 블랙리스트 추가
     public void blackListToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key) // this.key로 수정
+        Claims claims = Jwts.parser()
+                .verifyWith((SecretKey) key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         long expiration = claims.getExpiration().getTime() - System.currentTimeMillis();
         log.info("남은 expiration={}", expiration);

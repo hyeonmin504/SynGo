@@ -1,5 +1,6 @@
 package backend.synGo.domain.user;
 
+import backend.synGo.chatBot.domain.ChatMessage;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
@@ -45,6 +46,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Date> date = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ChatMessage> chatMessage = new ArrayList<>();
 
     // redis 추출 유저 데이터
     public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler) {

@@ -28,6 +28,11 @@ spring:
     host: localhost
     port: 6379
     password:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
 
 
 logging:
