@@ -29,15 +29,26 @@ spring:
     port: 6379
     password:
   ai:
+    model:
+      chat: anthropic
     openai:
       api-key: ${OPENAI_API_KEY}
     anthropic:
+      base-url: ${ANTHROPIC_BASE_URL}
+      completions-path: ${ANTHROPIC_COMPLETIONS_PATH}
       api-key: ${ANTHROPIC_API_KEY}
+      version: ${ANTHROPIC_VERSION}
+      chat:
+        options:
+          model: ${ANTHROPIC_CHAT_MODEL}
+          max-tokens: ${ANTHROPIC_MAX_TOKENS}
+          temperature: ${ANTHROPIC_TEMPERATURE}
+
 
 
 logging:
   level:
-    root: INFO
+    root: DEBUG
     #org.springframework.web: DEBUG
     #org.spring-doc: DEBUG
     #org.springframework.boot.autoconfigure: DEBUG
