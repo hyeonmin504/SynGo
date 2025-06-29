@@ -1,8 +1,10 @@
 package backend.synGo.chatBot.controller;
 
 import backend.synGo.auth.form.CustomUserDetails;
+import backend.synGo.chatBot.controller.dto.UploadImageRequest;
 import backend.synGo.chatBot.service.Chat;
 import backend.synGo.form.ResponseForm;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -26,8 +28,9 @@ public class ChatBotController {
 
     @PostMapping("/ai/generate")
     public ResponseEntity<ResponseForm<?>> generate(@RequestBody String message,
-                                                    ,
+                                                    @ModelAttribute @Valid final UploadImageRequest uploadImageRequest,
                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+
         return ResponseEntity.ok().body(ResponseForm.success(Map.of("generation", this.chatModel.call(message)), "AI 응답 생성 성공"));
     }
 

@@ -13,6 +13,7 @@ Dockerfile
 docker-compose.yml
 nginx/
 db/
+src/main/java/backend/synGo/config/security/**
 .factorypath
 .project
 .settings

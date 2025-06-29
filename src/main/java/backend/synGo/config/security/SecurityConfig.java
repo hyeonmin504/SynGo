@@ -1,4 +1,4 @@
-package backend.synGo.config;
+package backend.synGo.config.security;
 
 import backend.synGo.auth.util.CustomAuthenticationEntryPoint;
 import backend.synGo.config.jwt.JwtAuthenticationFilter;
