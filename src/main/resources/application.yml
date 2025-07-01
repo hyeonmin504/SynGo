@@ -53,7 +53,15 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-
+aws:
+  cloud-front:
+    region: ${AWS_CLOUD_FRONT_REGION}
+    asset-distribution-id: ${CLOUD_FRONT_ASSET_ID}
+    domain: ${CLOUD_FRONT_DOMAIN}
+  s3:
+    region: ${AWS_S3_REGION}
+    asset-root-directory: ${S3_ASSET_DIRECTORY}
+    bucket-name: ${S3_BUCKET_NAME}
 
 logging:
   level:
