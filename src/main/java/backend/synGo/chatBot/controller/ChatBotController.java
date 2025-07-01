@@ -11,9 +11,9 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -21,12 +21,14 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chatbot")
+@RequestMapping("/api/my/chatbot")
 public class ChatBotController {
 
     private final AnthropicChatModel chatModel;
 
-    @PostMapping("/ai/generate")
+    private final Chat chatService;
+
+    @PostMapping
     public ResponseEntity<ResponseForm<?>> generate(@RequestBody String message,
                                                     @ModelAttribute @Valid final UploadImageRequest uploadImageRequest,
                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -34,8 +36,10 @@ public class ChatBotController {
         return ResponseEntity.ok().body(ResponseForm.success(Map.of("generation", this.chatModel.call(message)), "AI 응답 생성 성공"));
     }
 
-    @GetMapping("/ai/generateStream")
-    public Flux<ChatResponse> generateStream(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
+    @GetMapping("/stream")
+    public Flux<ChatResponse> generateStream(@RequestBody String message,
+                                             @ModelAttribute @Valid final UploadImageRequest uploadImageRequest,
+                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Prompt prompt = new Prompt(new UserMessage(message));
         return this.chatModel.stream(prompt);
     }

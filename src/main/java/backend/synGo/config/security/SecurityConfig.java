@@ -37,7 +37,7 @@ public class SecurityConfig {
         List<String> permitUrls = List.of(
                 "/index.html",
                 "/",
-                "/ws-stomp/**", // ← 이게 중요
+                "/ws-stomp/**",
                 "/topic/**",
                 "/sub/**", // ← 메시지 브로커 구독 경로
                 "/pub/**", // ← 메시지 발행 경로

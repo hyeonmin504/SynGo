@@ -14,13 +14,6 @@ import java.util.List;
 @Table(name = "ai_model")
 public class AiModel {
 
-//    @Value("${ai.model.max-tokens}")
-//    private int MAX_TOKEN; // 최대 토큰 수
-//    @Value("${ai.model.model-name}")
-//    private String MODEL_NAME; // 모델 이름
-//    @Value("${ai.model.api-key}")
-//    private String API_KEY; // API 키
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
