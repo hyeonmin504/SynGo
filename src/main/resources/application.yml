@@ -36,7 +36,9 @@ spring:
     model:
       chat: anthropic
     openai:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${OPEN_AI_API_KEY}
+      base-url: ${OPEN_AI_BASE_URL}
+      gpt-url: ${OPEN_AI_COMPLETIONS_PATH}
     anthropic:
       base-url: ${ANTHROPIC_BASE_URL}
       completions-path: ${ANTHROPIC_COMPLETIONS_PATH}
@@ -47,6 +49,7 @@ spring:
           model: ${ANTHROPIC_CHAT_MODEL}
           max-tokens: ${ANTHROPIC_MAX_TOKENS}
           temperature: ${ANTHROPIC_TEMPERATURE}
+
   servlet:
     multipart:
       enabled: true
