@@ -54,8 +54,6 @@ dependencies {
 	//Spring AI 의존성들
 	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 	implementation 'org.springframework.ai:spring-ai-anthropic-spring-boot-starter'
-	implementation 'org.springframework.ai:spring-ai-core'
-	implementation 'org.springframework.ai:spring-ai-spring-boot-autoconfigure'
 
 	//test, 검증
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -82,6 +80,8 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.20.56')
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:cloudfront'
+
+	implementation 'org.springframework.ai:spring-ai-anthropic-spring-boot-starter:1.0.0-M2'
 }
 
 dependencyManagement {

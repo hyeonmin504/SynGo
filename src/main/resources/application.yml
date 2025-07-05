@@ -57,6 +57,9 @@ spring:
       max-request-size: 10MB
 
 aws:
+  credentials:
+    access-key-id: ${AWS_ACCESS_KEY}
+    secret-access-key: ${AWS_SECRET_KEY}
   cloud-front:
     region: ${AWS_CLOUD_FRONT_REGION}
     asset-distribution-id: ${CLOUD_FRONT_ASSET_ID}
@@ -65,10 +68,12 @@ aws:
     region: ${AWS_S3_REGION}
     asset-root-directory: ${S3_ASSET_DIRECTORY}
     bucket-name: ${S3_BUCKET_NAME}
+    image-directory: ${S3_IMAGE_DIRECTORY}
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
+    org.springframework.security: DEBUG
     #org.springframework.web: DEBUG
     #org.spring-doc: DEBUG
     #org.springframework.boot.autoconfigure: DEBUG

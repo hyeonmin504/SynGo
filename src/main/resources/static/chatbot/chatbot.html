@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI 챗봇</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>🧠 Claude AI 챗봇</h2>
+        <p>Spring AI · 실시간 스트리밍</p>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div class="typing-indicator" id="typing-indicator">
+        Claude가 답변을 생성하고 있습니다...
+    </div>
+
+    <div class="controls">
+        <div class="input-group">
+            <textarea id="message" rows="2" placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"></textarea>
+            <button class="send-button" onclick="sendMessage()" id="send-button">전송</button>
+            <button class="cancel-button" onclick="cancelStream()" id="cancel-button" style="display: none;">취소</button>
+        </div>
+
+        <div class="file-input-wrapper">
+            <label for="imageInput" class="file-input-button">📷 이미지 선택</label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+        <div id="image-preview"></div>
+
+        <!-- 상태 표시 영역 -->
+        <div id="auth-status"></div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

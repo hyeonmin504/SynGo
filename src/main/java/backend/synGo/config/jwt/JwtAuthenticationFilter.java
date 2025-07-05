@@ -28,7 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         PathPatternParser parser = new PathPatternParser();
-
+        String uri = request.getRequestURI();
+        log.info("JWT Filter processing: {} (Method: {}, IP: {})",
+                uri, request.getMethod(), request.getRemoteAddr());
         //jwt 인증 url 검증
         if (permitAll.stream().anyMatch(pattern ->
                 parser.parse(pattern).matches(PathContainer.parsePath(request.getRequestURI())))) {
@@ -41,10 +43,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token != null && jwtProvider.validateToken(token, TokenType.TOKEN)) {
                 Authentication authentication = jwtProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info(">> Authentication success. User: {}", authentication.getName());
+            } else {
+                log.warn(">> JWT 인증 실패 또는 토큰 없음.");
             }
             filterChain.doFilter(request, response);
-        } catch (ExpiredTokenException e){
+        } catch (Exception e){
+            log.info("Token expired: {}", e.getMessage());
             request.setAttribute("exception", "TOKEN_EXPIRED"); // 예외 정보를 request에 설정
+            if (!response.isCommitted()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Authentication failed\"}");
+            }
             throw e;
         }
     }
