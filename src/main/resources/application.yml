@@ -49,6 +49,7 @@ spring:
           model: ${ANTHROPIC_CHAT_MODEL}
           max-tokens: ${ANTHROPIC_MAX_TOKENS}
           temperature: ${ANTHROPIC_TEMPERATURE}
+          functions: calculateDateTime,getCurrentDateTime
 
   servlet:
     multipart:

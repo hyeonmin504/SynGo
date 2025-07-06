@@ -37,4 +37,15 @@ public class FileUtil {
                 "파일 확장자를 찾을 수 없습니다. 파일 이름: " + originalFilename
         );
     }
+
+    // 헬퍼 메서드 추가
+    public static String getMimeTypeFromExtension(String extension) {
+        return switch (extension) {
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "png" -> "image/png";
+            case "gif" -> "image/gif";
+            case "webp" -> "image/webp";
+            default -> "image/jpeg";
+        };
+    }
 }
