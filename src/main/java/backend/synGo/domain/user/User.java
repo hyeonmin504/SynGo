@@ -1,9 +1,10 @@
 package backend.synGo.domain.user;
 
-import backend.synGo.chatBot.domain.ChatMessage;
+import backend.synGo.chatBot.domain.ChatHistory;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.userGroupData.UserGroup;
+import backend.synGo.filesystem.domain.Image;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AccessLevel;
@@ -48,7 +49,10 @@ public class User {
     private List<Date> date = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<ChatMessage> chatMessage = new ArrayList<>();
+    private List<ChatHistory> chatHistory = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Image> images = new ArrayList<>();
 
     // redis 추출 유저 데이터
     public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler) {

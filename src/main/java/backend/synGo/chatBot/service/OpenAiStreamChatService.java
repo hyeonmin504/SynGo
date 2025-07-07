@@ -1,5 +1,6 @@
 package backend.synGo.chatBot.service;
 
+import backend.synGo.chatBot.controller.ChatBotController;
 import backend.synGo.filesystem.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,8 @@ import reactor.core.publisher.Flux;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static backend.synGo.chatBot.controller.ChatBotController.*;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ import java.net.URL;
 public class OpenAiStreamChatService implements StreamChat {
 
     @Override
-    public Flux<String> streamChatWithAuth(String message, MultipartFile[] images) {
+    public Flux<String> streamChatWithAuth(ChatRequest message, MultipartFile[] images) {
         return null;
     }
 

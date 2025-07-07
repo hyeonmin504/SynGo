@@ -2,14 +2,13 @@ package backend.synGo.chatBot.domain;
 
 import backend.synGo.domain.user.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatMessage {
+public class ChatHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +19,18 @@ public class ChatMessage {
     private String aiMessage;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "ai_model_id")
-    private AiModel aiModel;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Builder
+    public ChatHistory(String userMessage, String aiMessage, User user) {
+        this.userMessage = userMessage;
+        this.aiMessage = aiMessage;
+        addUser(user);
+    }
+
+    public void addUser(User user) {
+        this.user = user;
+        user.getChatHistory().add(this);
+    }
 }

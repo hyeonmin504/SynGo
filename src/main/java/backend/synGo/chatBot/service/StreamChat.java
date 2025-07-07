@@ -1,7 +1,10 @@
 package backend.synGo.chatBot.service;
 
+import backend.synGo.chatBot.controller.ChatBotController;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
+
+import static backend.synGo.chatBot.controller.ChatBotController.*;
 
 public interface StreamChat {
 
@@ -11,5 +14,5 @@ public interface StreamChat {
      * @param images
      * @return
      */
-    public Flux<String> streamChatWithAuth(String message, MultipartFile[] images);
+    public Flux<String> streamChatWithAuth(ChatRequest message, MultipartFile[] images);
 }
