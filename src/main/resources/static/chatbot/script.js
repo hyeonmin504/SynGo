@@ -1,9 +1,85 @@
-// 전역 상태 관리
+// 설정
+const CONFIG = {
+    API_BASE_URL: 'http://localhost:8080/api/my/chatbot',
+    STREAM_TIMEOUT: 30000,
+    JWT_STORAGE_KEY: 'chatbot_jwt_token'
+};
+
+// JWT 인증 관리
+class AuthManager {
+    constructor() {
+        this.token = localStorage.getItem(CONFIG.JWT_STORAGE_KEY);
+        this.updateAuthUI();
+    }
+
+    setToken() {
+        const tokenInput = document.getElementById('jwt-token');
+        const token = tokenInput.value.trim();
+
+        if (!token) {
+            showStatus('토큰을 입력해주세요.', 'error');
+            return;
+        }
+
+        if (!this.isValidJWTFormat(token)) {
+            showStatus('올바르지 않은 JWT 토큰 형식입니다.', 'error');
+            return;
+        }
+
+        this.token = token;
+        localStorage.setItem(CONFIG.JWT_STORAGE_KEY, token);
+        tokenInput.value = '';
+        this.updateAuthUI();
+        showStatus('토큰이 설정되었습니다.', 'success');
+    }
+
+    clearToken() {
+        this.token = null;
+        localStorage.removeItem(CONFIG.JWT_STORAGE_KEY);
+        this.updateAuthUI();
+        showStatus('로그아웃되었습니다.', 'info');
+    }
+
+    getAuthHeaders() {
+        const headers = {};
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        return headers;
+    }
+
+    isAuthenticated() {
+        return !!this.token;
+    }
+
+    isValidJWTFormat(token) {
+        const parts = token.split('.');
+        return parts.length === 3;
+    }
+
+    updateAuthUI() {
+        const authStatus = document.getElementById('auth-status');
+        const authControls = document.getElementById('auth-controls');
+
+        if (this.isAuthenticated()) {
+            authStatus.innerHTML = '<span class="auth-success">✅ 인증됨</span>';
+            authControls.style.display = 'none';
+        } else {
+            authStatus.innerHTML = '<span class="auth-required">⚠️ 로그인 필요</span>';
+            authControls.style.display = 'block';
+        }
+    }
+}
+
+// 전역 상태 관리 (기존 구조 유지)
 let isStreaming = false;
 let currentAssistantDiv = null;
 let abortController = null;
 let streamingTimeout = null;
 let streamCompleted = false;
+
+// 전역 인스턴스
+const chatAuth = new AuthManager();
 
 // DOM 로드 완료 후 이벤트 리스너 등록
 document.addEventListener('DOMContentLoaded', function() {
@@ -87,6 +163,12 @@ async function sendMessage() {
         return;
     }
 
+    // 인증 확인
+    if (!chatAuth.isAuthenticated()) {
+        showStatus('로그인이 필요합니다. JWT 토큰을 설정해주세요.', 'error');
+        return;
+    }
+
     const message = document.getElementById('message').value.trim();
     const imageFiles = document.getElementById('imageInput').files;
 
@@ -126,12 +208,17 @@ async function sendMessage() {
             forceStopStreaming();
             appendMessage('assistant', '⏰ 응답 시간이 초과되었습니다.');
         }
-    }, 30000);
+    }, CONFIG.STREAM_TIMEOUT);
 
     try {
         console.log('fetch 시작');
-        const response = await fetch('http://localhost:8080/api/my/chatbot/stream', {
+
+        // JWT 토큰을 포함한 요청 헤더 준비
+        const headers = chatAuth.getAuthHeaders();
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/stream`, {
             method: 'POST',
+            headers: headers,
             body: formData,
             signal: abortController.signal
         });
@@ -139,6 +226,11 @@ async function sendMessage() {
         console.log('응답 받음:', response.status, response.statusText);
 
         if (!response.ok) {
+            if (response.status === 401) {
+                // 인증 실패 시 토큰 삭제하고 재로그인 요청
+                chatAuth.clearToken();
+                throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -389,21 +481,19 @@ function clearInputs() {
 }
 
 function showStatus(message, type) {
-    const statusDiv = document.getElementById('auth-status');
-    statusDiv.innerHTML = `<div class="status-indicator status-${type}">${message}</div>`;
+    const statusDiv = document.getElementById('status-messages');
 
+    // 새로운 상태 메시지 생성
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `status-message status-${type}`;
+    messageDiv.textContent = message;
+
+    statusDiv.appendChild(messageDiv);
+
+    // 5초 후 자동 제거
     setTimeout(() => {
-        if (statusDiv.innerHTML.includes(message)) {
-            statusDiv.innerHTML = '';
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
         }
     }, 5000);
-}
-
-// 더미 함수들 (개발 모드)
-function testToken() {
-    showStatus('개발 모드: 인증이 비활성화되었습니다', 'warning');
-}
-
-function testAuthEndpoint() {
-    showStatus('개발 모드: 인증이 비활성화되었습니다', 'warning');
 }

@@ -83,7 +83,9 @@ public class AnthropicStreamChatService implements StreamChat {
                             chatRequest,
                             completeResponse
                     );
-                    uploadS3AndCloudFront(images, chatRequest.getUserId());
+                    if (images != null && images.length > 0) {
+                        uploadS3AndCloudFront(images, chatRequest.getUserId());
+                    }
                 })
                 .onErrorResume(error -> {
                     log.error("에러 발생: {}", error.getMessage(), error);
@@ -172,9 +174,9 @@ public class AnthropicStreamChatService implements StreamChat {
                             
                     응답 규칙:
                     - 필수 정보가 모두 있으면: 순수한 JSON만 출력 (설명이나 다른 텍스트 절대 포함 금지)
-                    - 부족한 정보는 값을 null 으로 응답
+                    - 부족한 정보는 추측해서 응답
                     
-                    중요: JSON 응답 시에는 어떠한 설명도 추가하지 말고 오직 JSON 데이터만 출력하세요.
+                    중요: 어떠한 설명도 추가하지 말고 오직 JSON 데이터만 출력하세요.
                     """, currentDate);
         } else {
             return String.format("""
@@ -203,7 +205,7 @@ public class AnthropicStreamChatService implements StreamChat {
                     
                     응답 규칙:
                     - 필수 정보가 모두 있으면: 순수한 JSON만 출력 (설명이나 다른 텍스트 절대 포함 금지)
-                    - 부족한 정보는 값을 null 으로 응답
+                    - 부족한 정보는 추측해서 응답
                     
                     중요: 어떠한 설명도 추가하지 말고 오직 JSON 데이터만 출력하세요.
                     """,currentDate);

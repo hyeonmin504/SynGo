@@ -11,9 +11,19 @@
     <div class="header">
         <h2>🧠 Claude AI 챗봇</h2>
         <p>Spring AI · 실시간 스트리밍</p>
+
+        <!-- JWT 인증 상태 -->
+        <div class="auth-section">
+            <div id="auth-status" class="auth-status"></div>
+            <div class="auth-controls" id="auth-controls">
+                <input type="text" id="jwt-token" placeholder="JWT 토큰을 입력하세요..." />
+                <button onclick="chatAuth.setToken()" class="auth-button">토큰 설정</button>
+                <button onclick="chatAuth.clearToken()" class="auth-button secondary">로그아웃</button>
+            </div>
+        </div>
     </div>
 
-    <div id="chat-box"></div>
+    <div id="chat-box" class="chat-box"></div>
 
     <div class="typing-indicator" id="typing-indicator">
         Claude가 답변을 생성하고 있습니다...
@@ -22,18 +32,18 @@
     <div class="controls">
         <div class="input-group">
             <textarea id="message" rows="2" placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"></textarea>
-            <button class="send-button" onclick="sendMessage()" id="send-button">전송</button>
-            <button class="cancel-button" onclick="cancelStream()" id="cancel-button" style="display: none;">취소</button>
+            <button class="send-button" onclick="chatClient.sendMessage()" id="send-button">전송</button>
+            <button class="cancel-button" onclick="chatClient.cancelStream()" id="cancel-button" style="display: none;">취소</button>
         </div>
 
         <div class="file-input-wrapper">
             <label for="imageInput" class="file-input-button">📷 이미지 선택</label>
             <input type="file" id="imageInput" accept="image/*" multiple>
         </div>
-        <div id="image-preview"></div>
+        <div id="image-preview" class="image-preview-container"></div>
 
-        <!-- 상태 표시 영역 -->
-        <div id="auth-status"></div>
+        <!-- 상태 메시지 영역 -->
+        <div id="status-messages" class="status-messages"></div>
     </div>
 </div>
 
