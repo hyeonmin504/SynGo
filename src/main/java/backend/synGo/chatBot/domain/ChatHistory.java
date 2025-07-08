@@ -16,6 +16,7 @@ public class ChatHistory {
     private Long id;
 
     private String userMessage;
+    @Column(length = 10000)
     private String aiMessage;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

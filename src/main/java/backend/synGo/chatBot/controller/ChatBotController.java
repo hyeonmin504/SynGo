@@ -39,6 +39,7 @@ public class ChatBotController {
 
     /**
      * 이미지 업로드 후 채팅 스트리밍
+     *
      * @param message
      * @param images
      * @return
@@ -48,7 +49,10 @@ public class ChatBotController {
             @RequestParam String message,
             @RequestParam(required = false) MultipartFile[] images,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return chatService.streamChatWithAuth(new ChatRequest(message,userDetails.getUserId()), images)
+        if (userDetails == null || userDetails.getUserId() == null) {
+            return Flux.error(new NotFoundUserException("로그인 후 이용해주세요"));
+        }
+        return chatService.streamChatWithAuth(new ChatRequest(message, userDetails.getUserId()), images)
                 .doOnNext(response -> log.info("Stream response: {}", response))
                 .map(response -> ServerSentEvent.<String>builder()
                         .data("{\"content\": \"" + escapeJson(response) + "\"}")

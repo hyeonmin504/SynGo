@@ -78,11 +78,12 @@ public class AnthropicStreamChatService implements StreamChat {
                 .doOnComplete(() -> {
                     // 스트림 완료 시 전체 메시지 저장
                     String completeResponse = fullResponse.toString();
-                    // @Async 메서드 호출
+                    // 히스토리 저장
                     chatHistoryService.saveHistory(
                             chatRequest,
                             completeResponse
                     );
+                    uploadS3AndCloudFront(images, chatRequest.getUserId());
                 })
                 .onErrorResume(error -> {
                     log.error("에러 발생: {}", error.getMessage(), error);
@@ -120,7 +121,7 @@ public class AnthropicStreamChatService implements StreamChat {
             messages.add(new SystemMessage(systemPrompt));
             if (images != null && images.length > 0) {
                 // 이미지 처리 로직
-                List<Media> mediaList = getMedia(images, chatRequest.getUserId());
+                List<Media> mediaList = getMedia(images);
                 // UserMessage 생성 - 텍스트와 이미지 모두 포함
                 UserMessage userMessage = new UserMessage(chatRequest.getMessage(), mediaList);
                 messages.add(userMessage);
@@ -148,7 +149,7 @@ public class AnthropicStreamChatService implements StreamChat {
         if (hasImages) {
             return String.format("""
                     스케줄 생성 AI입니다.
-                    텍스트와 이미지를 참고하여 일정을 다음 JSON 형식만 반환하세요
+                    텍스트와 이미지를 참고하여 일정을 다음 JSON 형식으로  반환하세요
                     
                     JSON 형식:
                     {
@@ -160,18 +161,18 @@ public class AnthropicStreamChatService implements StreamChat {
                           "end_date": "YYYY-MM-DD HH:mm",
                           "place": "장소",
                           "important": "VERY_LOW | LOW | MEDIUM | HIGH | VERY_HIGH"
-                        },
-                        ...
+                        }
                       ]
                     }
                             
                     필수 요구사항:
-                    - title, start_date, end_date는 반드시 포함되어야 합니다
+                    - calculateDateTime,getCurrentDateTime Tool을 활용
+                    - 12시간제(오후 2시) → 24시간제(14:00)
                     - 상대적 날짜/시간은 현재 시각(%s)을 기준으로 계산하세요
                             
                     응답 규칙:
                     - 필수 정보가 모두 있으면: 순수한 JSON만 출력 (설명이나 다른 텍스트 절대 포함 금지)
-                    - 필수 정보가 부족하면: "이미지에서 일정을 추출할 수 없습니다" 으로 응답
+                    - 부족한 정보는 값을 null 으로 응답
                     
                     중요: JSON 응답 시에는 어떠한 설명도 추가하지 말고 오직 JSON 데이터만 출력하세요.
                     """, currentDate);
@@ -196,12 +197,13 @@ public class AnthropicStreamChatService implements StreamChat {
                     }
                     
                     필수 요구사항:
-                    - title, start_date, end_date는 반드시 포함되어야 합니다
+                    - calculateDateTime,getCurrentDateTime Tool을 활용
+                    - 12시간제(오후 2시) → 24시간제(14:00)
                     - 상대적 날짜/시간은 현재 시각(%s)을 기준으로 계산하세요
                     
                     응답 규칙:
                     - 필수 정보가 모두 있으면: 순수한 JSON만 출력 (설명이나 다른 텍스트 절대 포함 금지)
-                    - 필수 정보가 부족하면: : 값을 null 으로 응답
+                    - 부족한 정보는 값을 null 으로 응답
                     
                     중요: 어떠한 설명도 추가하지 말고 오직 JSON 데이터만 출력하세요.
                     """,currentDate);
@@ -213,18 +215,12 @@ public class AnthropicStreamChatService implements StreamChat {
      * @param images 업로드된 이미지 파일 배열
      * @return Media 객체 리스트
      */
-    private List<Media> getMedia(MultipartFile[] images, Long userId) {
+    private List<Media> getMedia(MultipartFile[] images) {
         List<Media> mediaList = new ArrayList<>();
         for (MultipartFile image : images) {
             try {
-                // 고유한 파일명 생성
-                String originalFileName = image.getOriginalFilename();
                 // 이미지 크기 및 확장자 유효성 검사
                 imageValidationService.validate(image);
-                // S3, Cloudfront 업로드
-                String url = uploadS3AndCloudFront(image, originalFileName);
-                uploadService.saveImage(url, userId, image);
-
                 // ✅ Spring AI의 올바른 방식
                 byte[] imageBytes = image.getBytes();
                 String mimeType = image.getContentType();
@@ -257,17 +253,21 @@ public class AnthropicStreamChatService implements StreamChat {
 
     /**
      * S3에 이미지를 업로드하고 CloudFront URL을 반환
-     * @param image 업로드할 이미지 파일
-     * @param originalFileName 원본 파일 이름
+     * @param images 업로드할 이미지 파일
+     * @param userId 저장할 유저
      * @return CloudFront 이미지 URL
      */
-    private String uploadS3AndCloudFront(MultipartFile image, String originalFileName) {
-        //S3를 위한 이미지 경로 생성
-        String filePath = imageDirectory + "/" + "chat_" + UUID.randomUUID();
-        // S3에 이미지 업로드
-        String cloudFrontImageUrl = s3StorageManager.upload(image, filePath, originalFileName);
-        log.info("Image uploaded to S3: {}", cloudFrontImageUrl);
-        return cloudFrontImageUrl;
+    private void uploadS3AndCloudFront(MultipartFile[] images, Long userId) {
+        for (MultipartFile image : images) {
+            String originalFileName = image.getOriginalFilename();
+            //S3를 위한 이미지 경로 생성
+            String filePath = imageDirectory + "/" + "chat_" + UUID.randomUUID();
+            // S3에 이미지 업로드
+            String cloudFrontImageUrl = s3StorageManager.upload(image, filePath, originalFileName);
+            log.info("Image uploaded to S3: {}", cloudFrontImageUrl);
+            //이미지 정보 저장
+            uploadService.saveImage(cloudFrontImageUrl, userId, image);
+        }
     }
 
     /**
