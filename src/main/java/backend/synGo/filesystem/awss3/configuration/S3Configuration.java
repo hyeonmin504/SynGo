@@ -3,6 +3,7 @@ package backend.synGo.filesystem.awss3.configuration;
 import backend.synGo.filesystem.FileStorageManager;
 import backend.synGo.filesystem.awss3.CloudfrontCacheInvalidator;
 import backend.synGo.filesystem.awss3.S3StorageManager;
+import backend.synGo.filesystem.awss3.S3UrlConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,7 +41,8 @@ public class S3Configuration {
     public FileStorageManager fileCloudUploader() {
         return new S3StorageManager(
                 s3Client(),
-                cloudfrontCacheInvalidator()
+                cloudfrontCacheInvalidator(),
+                new S3UrlConverter()
         );
     }
 

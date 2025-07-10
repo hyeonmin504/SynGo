@@ -2,6 +2,7 @@ package backend.synGo.domain.slot;
 
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.user.Reminder;
+import backend.synGo.filesystem.domain.Image;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -45,6 +48,9 @@ public class UserSlot{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "date_id")
     private Date date;
+
+    @OneToMany(mappedBy = "userSlot")
+    private List<Image> images = new ArrayList<>();
 
     private void setDate(Date date) {
         this.date = date;

@@ -1,12 +1,9 @@
 package backend.synGo.filesystem.domain;
 
+import backend.synGo.domain.slot.UserSlot;
 import backend.synGo.domain.user.User;
-import backend.synGo.filesystem.domain.image.ImageUrl;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
@@ -23,26 +20,26 @@ public class Image {
     @JoinColumn(name = "image_url_id")
     private ImageUrl imageUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_slot_id")
+    private UserSlot userSlot;
 
     @Builder
-    public Image(String imageName, String imageType, ImageUrl imageUrl, User user) {
+    public Image(String imageName, String imageType, ImageUrl imageUrl, UserSlot userSlot) {
         this.imageName = imageName;
         this.imageType = imageType;
         addImageUrl(imageUrl);
-        addUser(user);
+        addUserSlot(userSlot);
+    }
+
+    private void addUserSlot(UserSlot userSlot) {
+        this.userSlot = userSlot;
+        userSlot.getImages().add(this);
     }
 
     private void addImageUrl(ImageUrl imageUrl) {
         this.imageUrl = imageUrl;
         imageUrl.setImage(this);
-    }
-
-    private void addUser(User user) {
-        this.user = user;
-        user.getImages().add(this);
     }
 
 }

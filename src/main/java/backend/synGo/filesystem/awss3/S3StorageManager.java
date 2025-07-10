@@ -6,14 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,21 +21,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
 public class S3StorageManager implements FileStorageManager {
 
     @Value("${aws.s3.bucket-name}")
     private String bucket;
 
-    @Value("${aws.s3.asset-root-directory}")
-    private String assetRootDirectory;
-
     @Value("${aws.cloud-front.domain}")
     private String cloudFrontBaseDomain;
 
     private final S3Client s3Client;
     private final CloudfrontCacheInvalidator cloudfrontCacheInvalidator;
+    private final S3UrlConverter s3UrlConverter;
 
     /**
      * MultipartFile 타입의 파일을 S3에 업로드하는 메서드
@@ -91,14 +88,11 @@ public class S3StorageManager implements FileStorageManager {
      */
     private String uploadFile(final String directoryPath, final RequestBody requestBody, final MediaType mediaType) {
         // 슬래시 처리 개선
-        String cleanAssetRoot = assetRootDirectory.endsWith("/") ?
-                assetRootDirectory.substring(0, assetRootDirectory.length() - 1) :
-                assetRootDirectory;
         String cleanDirectoryPath = directoryPath.startsWith("/") ?
                 directoryPath.substring(1) :
                 directoryPath;
 
-        final String uploadPath = cleanAssetRoot + "/" + cleanDirectoryPath;
+        final String uploadPath = cleanDirectoryPath;
 
         log.info("Uploading to S3 - Bucket: {}, Key: {}", bucket, uploadPath);
 
@@ -132,26 +126,57 @@ public class S3StorageManager implements FileStorageManager {
      * CloudFront 접근 URL을 받아 내부 S3 경로로 변환한 후 삭제
      * @param accessUrl 외부 공개 URL (CloudFront 기반)
      */
-    @Override
     public void delete(String accessUrl) throws FileControlException {
         try {
-            // CloudFront URL → S3 실제 키로 변환
-            final String assertActualPath = accessUrl.replaceFirst(cloudFrontBaseDomain, assetRootDirectory);
+            // 먼저 URL을 S3 key로 변환
+            String s3Key = s3UrlConverter.convertUrlToS3Key(accessUrl);
+
+            log.info("=== S3 삭제 시작 ===");
+            log.info("원본 URL: {}", accessUrl);
+            log.info("변환된 S3 Key: '{}'", s3Key);
+            log.info("버킷명: {}", bucket);
 
             final DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                     .bucket(bucket)
-                    .key(assertActualPath)
+                    .key(s3Key)
                     .build();
 
-            // S3 삭제 요청
-            s3Client.deleteObject(deleteRequest);
+            // 삭제 전 파일 존재 여부 확인
+            boolean existsBefore = checkObjectExists(s3Key);
+            log.info("삭제 전 파일 존재 여부: {}", existsBefore);
 
-        } catch (final SdkClientException exception) {
-            log.error("s3 삭제 에러 - sdk client side 예외 발생", exception);
-            throw new FileControlException("s3 삭제 에러 - sdk client side 예외 발생", exception);
-        } catch (AwsServiceException exception) {
-            log.error("s3 삭제 에러 - aws service side 예외 발생", exception);
-            throw new FileControlException("s3 삭제 에러 - aws service side 예외 발생", exception);
+            if (!existsBefore) {
+                log.warn("삭제하려는 파일이 존재하지 않습니다: {}", s3Key);
+                return;
+            }
+
+            // S3 삭제 요청 실행
+            DeleteObjectResponse response = s3Client.deleteObject(deleteRequest);
+            log.info("=== S3 삭제 완료 ===");
+
+        } catch (Exception e) {
+            log.error("S3 삭제 실패", e);
+            throw new FileControlException("삭제 실패", e);
+        }
+    }
+
+    /**
+     * S3 객체 존재 여부 확인
+     */
+    private boolean checkObjectExists(String s3Key) {
+        try {
+            HeadObjectRequest headRequest = HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(s3Key)
+                    .build();
+
+            s3Client.headObject(headRequest);
+            return true; // 존재함
+        } catch (NoSuchKeyException e) {
+            return false; // 존재하지 않음
+        } catch (Exception e) {
+            log.warn("파일 존재 여부 확인 중 오류: {}", e.getMessage());
+            return false;
         }
     }
 }

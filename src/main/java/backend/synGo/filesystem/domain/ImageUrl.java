@@ -1,5 +1,6 @@
-package backend.synGo.filesystem.domain.image;
+package backend.synGo.filesystem.domain;
 
+import backend.synGo.domain.user.User;
 import backend.synGo.filesystem.domain.Image;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,8 +18,22 @@ public class ImageUrl {
 
     private String imageUrl;
 
-    @OneToOne(mappedBy = "imageUrl", fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @OneToOne(mappedBy = "imageUrl", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Image image;
+
+    public ImageUrl(String imageUrl, User user) {
+        this.imageUrl = imageUrl;
+        addUser(user);
+    }
+
+    private void addUser(User user) {
+        this.user = user;
+        user.getImageUrls().add(this);
+    }
 
     public ImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;

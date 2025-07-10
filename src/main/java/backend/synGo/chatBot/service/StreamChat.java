@@ -14,5 +14,5 @@ public interface StreamChat {
      * @param images
      * @return
      */
-    public Flux<String> streamChatWithAuth(ChatRequest message, MultipartFile[] images);
+    public Flux<String> streamChat(ChatRequest message, MultipartFile[] images);
 }

@@ -23,7 +23,7 @@ import static backend.synGo.chatBot.controller.ChatBotController.*;
 public class OpenAiStreamChatService implements StreamChat {
 
     @Override
-    public Flux<String> streamChatWithAuth(ChatRequest message, MultipartFile[] images) {
+    public Flux<String> streamChat(ChatRequest message, MultipartFile[] images) {
         return null;
     }
 

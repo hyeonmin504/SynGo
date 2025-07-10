@@ -8,12 +8,14 @@ import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
+import backend.synGo.service.SlotImageService;
 import backend.synGo.service.SlotService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -23,9 +25,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -34,6 +39,7 @@ import java.time.LocalDateTime;
 public class MySlotController {
 
     private final SlotService slotService;
+    private final SlotImageService slotImageService;
 
     @Operation(summary = "slot 생성 api", description = "개인 slot을 생성하고 date에 맵핑하는 api")
     @ApiResponses(value = {
@@ -98,7 +104,45 @@ public class MySlotController {
         }
     }
 
-    @Operation(summary = "슬롯 진행 상태 저장 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 수정하는 api")
+    @Operation(summary = "My slot 이미지 등록", description = "개인 slot을 이미지 추가 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이미지 추가 성공"),
+            @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
+    })
+    @PostMapping("/{slotId}/image")
+    public ResponseEntity<ResponseForm<?>> updateMySLotImage(
+            @PathVariable Long slotId,
+            @ModelAttribute MultipartFile[] images,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        try {
+            SlotIdResponse form = slotImageService.uploadImage(slotId, images, userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success(form, "이미지 등록 성공"));
+        } catch (NotFoundUserException | NotFoundContentsException | DateTimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "My slot 이미지 삭제", description = "개인 slot을 이미지 삭제 api")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이미지 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "date에 userId 값이 미 할당(그룹 슬롯 요청 에러)")
+    })
+    @DeleteMapping("/{slotId}/image")
+    public ResponseEntity<ResponseForm<?>> deleteMySLotImage(
+            @PathVariable Long slotId,
+            @RequestBody ImageUrlFrom imageUrls,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        try {
+            slotImageService.deleteImage(slotId, imageUrls.getImageUrl(), userDetails.getUserId());
+            return ResponseEntity.ok().body(ResponseForm.success("이미지 삭제 성공"));
+        } catch (NotFoundUserException | NotFoundContentsException | DateTimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "슬롯 진행 status 수정 api", description = "그룹 슬롯의 에디터가 슬롯 상태를 수정하는 api")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "그룹 슬롯 상태 변경 성공"),
             @ApiResponse(responseCode = "406", description = "유저 권한 부족")
@@ -148,5 +192,12 @@ public class MySlotController {
         @Schema(description = "상태", example = "CONFIRMED")
         @NotBlank
         private String status;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @Data
+    public static class ImageUrlFrom {
+        private List<String> imageUrl = new ArrayList<>();
     }
 }

@@ -4,7 +4,7 @@ import backend.synGo.domain.user.User;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.filesystem.UploadService;
 import backend.synGo.filesystem.domain.Image;
-import backend.synGo.filesystem.domain.image.ImageUrl;
+import backend.synGo.filesystem.domain.ImageUrl;
 import backend.synGo.filesystem.util.FileUtil;
 import backend.synGo.repository.ImageRepository;
 import backend.synGo.repository.UserRepository;
@@ -63,7 +63,7 @@ public class AnthropicStreamChatService implements StreamChat {
      * @return Flux<String> AI 응답 스트림
      */
     @Override
-    public Flux<String> streamChatWithAuth(ChatRequest chatRequest, MultipartFile[] images) {
+    public Flux<String> streamChat(ChatRequest chatRequest, MultipartFile[] images) {
         log.info("Processing chat request for user: {}", chatRequest.getMessage());
         // 전체 응답을 저장할 StringBuilder
         StringBuilder fullResponse = new StringBuilder();
@@ -240,15 +240,12 @@ public class AnthropicStreamChatService implements StreamChat {
     }
 
     @Transactional
-    private void saveImage(String url, Long userId, MultipartFile image) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundUserException("사용자를 찾을 수 없습니다: " + userId));
+    private void saveImage(String url, MultipartFile image) {
         imageRepository.save(
                 Image.builder()
                         .imageUrl(new ImageUrl(url))
                         .imageType(FileUtil.getFileExtension(image).toLowerCase())
                         .imageName(image.getOriginalFilename())
-                        .user(user)
                         .build()
         );
     }
@@ -298,11 +295,6 @@ public class AnthropicStreamChatService implements StreamChat {
                 return "";
             }
 
-//            // 특수 문자 이스케이프 처리 (JSON 안전성을 위해)
-//            return content.replace("\"", "\\\"")
-//                    .replace("\n", "\\n")
-//                    .replace("\r", "\\r")
-//                    .replace("\t", "\\t");
             log.info("Extracted content: {}", content);
             return content;
         } catch (Exception e) {
