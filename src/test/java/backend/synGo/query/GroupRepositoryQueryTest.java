@@ -34,13 +34,8 @@ public class GroupRepositoryQueryTest {
     UserGroupRepository userGroupRepository;
     @Autowired
     GroupRepositoryQueryImpl groupRepositoryQueryImpl;
-
-    @BeforeEach
-    public void cleanup() {
-        userRepository.deleteAll();
-        groupRepository.deleteAll();
-        userGroupRepository.deleteAll();
-    }
+    @Autowired
+    EntityManager em;
 
     @Test
     @DisplayName("그룹 전체 조회 페이징 쿼리 테스트")
@@ -54,6 +49,9 @@ public class GroupRepositoryQueryTest {
 
         UserGroup userGroup = new UserGroup("병장", user, group, Role.LEADER);
         userGroupRepository.save(userGroup);
+
+        em.flush();
+        em.clear();
 
         // when
         PageRequest pageable = PageRequest.of(0, 10);
