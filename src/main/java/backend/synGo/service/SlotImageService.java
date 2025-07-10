@@ -5,10 +5,8 @@ import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.filesystem.ImageValidationService;
 import backend.synGo.filesystem.UploadService;
 import backend.synGo.filesystem.awss3.S3StorageManager;
-import backend.synGo.filesystem.domain.Image;
 import backend.synGo.filesystem.domain.ImageUrl;
 import backend.synGo.form.responseForm.SlotIdResponse;
-import backend.synGo.repository.ImageRepository;
 import backend.synGo.repository.ImageUrlRepository;
 import backend.synGo.repository.UserSlotRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static backend.synGo.controller.my.MySlotController.*;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +71,7 @@ public class SlotImageService {
      */
     @Transactional
     public void deleteImage(Long slotId, List<String> images, Long userId) {
-        List<ImageUrl> myImage = imageUrlRepository.findByMyImageUrl(userId, slotId, images);
+        List<ImageUrl> myImage = imageUrlRepository.findByMyImageUrls(userId, slotId, images);
         if (myImage.isEmpty()) {
             throw new NotFoundContentsException("해당 유저의 슬롯에서 삭제할 이미지가 없습니다.");
         }
@@ -80,5 +82,15 @@ public class SlotImageService {
             // 이미지 정보 삭제
             uploadService.deleteImage(imageUrl);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public UserSlotImageUrlForm findMySlotImages(Long slotId, Long userId) {
+        List<ImageUrl> images = imageUrlRepository.findByUserIdAndSlotId(userId, slotId);
+        if (images.isEmpty()) {
+            return new UserSlotImageUrlForm(Collections.singletonList("해당 유저의 슬롯에 이미지가 없습니다."));
+        }
+        return new UserSlotImageUrlForm(images.stream().map(ImageUrl::getImageUrl)
+                .collect(Collectors.toList()));
     }
 }
