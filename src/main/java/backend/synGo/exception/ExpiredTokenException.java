@@ -1,22 +1,14 @@
 package backend.synGo.exception;
 
-public class ExpiredTokenException extends RuntimeException{
-    public ExpiredTokenException() {
+import org.springframework.security.core.AuthenticationException;
+
+public class ExpiredTokenException extends AuthenticationException {
+
+    public ExpiredTokenException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 
-    public ExpiredTokenException(String message) {
-        super(message);
-    }
-
-    public ExpiredTokenException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ExpiredTokenException(Throwable cause) {
-        super(cause);
-    }
-
-    public ExpiredTokenException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    public ExpiredTokenException(String msg) {
+        super(msg);
     }
 }

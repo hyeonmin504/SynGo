@@ -59,14 +59,21 @@ class AuthManager {
 
     updateAuthUI() {
         const authStatus = document.getElementById('auth-status');
-        const authControls = document.getElementById('auth-controls');
+
+        const tokenInput = document.getElementById('jwt-token');
+        const setButton = document.querySelector('.auth-button');
+        const logoutButton = document.querySelector('.auth-button.secondary');
 
         if (this.isAuthenticated()) {
             authStatus.innerHTML = '<span class="auth-success">✅ 인증됨</span>';
-            authControls.style.display = 'none';
+            tokenInput.style.display = 'none';
+            setButton.style.display = 'none';
+            logoutButton.style.display = 'inline-block';
         } else {
             authStatus.innerHTML = '<span class="auth-required">⚠️ 로그인 필요</span>';
-            authControls.style.display = 'block';
+            tokenInput.style.display = 'inline-block';
+            setButton.style.display = 'inline-block';
+            logoutButton.style.display = 'none';
         }
     }
 }
@@ -85,6 +92,11 @@ const chatAuth = new AuthManager();
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
 });
+
+const chatClient = {
+    sendMessage: sendMessage,
+    cancelStream: cancelStream
+};
 
 function initializeEventListeners() {
     // Enter 키 처리
@@ -106,6 +118,11 @@ function initializeEventListeners() {
             abortController.abort();
         }
     });
+
+    document.getElementById('set-token-btn').addEventListener('click', () => chatAuth.setToken());
+    document.getElementById('logout-btn').addEventListener('click', () => chatAuth.clearToken());
+    document.getElementById('send-button').addEventListener('click', () => chatClient.sendMessage());
+    document.getElementById('cancel-button').addEventListener('click', () => chatClient.cancelStream());
 }
 
 function previewImages(files) {

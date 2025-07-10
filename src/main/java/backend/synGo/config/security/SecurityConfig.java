@@ -38,9 +38,9 @@ public class SecurityConfig {
         List<String> permitUrls = List.of(
                 "/api/my/chatbot/stream",
                 "/index.html",
+                "/main.css",
+                "/app.js",
                 "/chatbot/**",
-                "/styles.css",
-                "/script.js",
                 "/",
                 "/ws-stomp/**",
                 "/topic/**",
@@ -49,8 +49,7 @@ public class SecurityConfig {
                 "/api/auth/login",
                 "/api/auth/signup",
                 "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/error" // 에러 페이지도 permitAll에 추가
+                "/v3/api-docs/**"
         );
 
         http
@@ -58,9 +57,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/my/chatbot/stream",
                                 "/index.html",
+                                "/main.css",
+                                "/app.js",
                                 "/chatbot/**",
-                                "/styles.css",
-                                "/script.js",
                                 "/",
                                 "/ws-stomp/**",
                                 "/topic/**",
@@ -69,8 +68,7 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/error").permitAll()
+                                "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

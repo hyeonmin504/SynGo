@@ -106,9 +106,11 @@ public class AuthService {
         // 1. Refresh Token 유효성 검사, 유저 정보 추출
         CustomUserDetails userDetails = readTokenAndReturnUserId(request);
         Long userId = userDetails.getUserId();
+        String token = jwtProvider.resolveToken(request);
 
         //기본 accessToken을 블랙리스트에 올리기
         jwtProvider.deleteAccessToken(userId);
+        jwtProvider.blackListToken(token);
 
         //유저 조회
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundUserException("유저 정보가 없습니다"));

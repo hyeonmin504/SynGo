@@ -1,93 +1,131 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f9fafb;
+* {
+    box-sizing: border-box;
     margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
     padding: 20px;
-    color: #333;
 }
 
 .container {
     max-width: 800px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    padding: 25px 30px;
 }
 
-.title {
+.header {
     text-align: center;
-    color: #1f2937;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.header h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.header p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.section {
     margin-bottom: 30px;
 }
 
-label {
-    display: block;
-    margin-bottom: 10px;
+.section label {
     font-weight: 500;
+    display: block;
+    margin: 10px 0 5px;
 }
 
 input[type="text"] {
     width: 100%;
-    padding: 8px 10px;
-    margin-top: 4px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
     font-size: 14px;
-    box-sizing: border-box;
+    background-color: #f9f9f9;
+    transition: border 0.3s ease;
 }
 
-button.clicked {
-    background-color: #93c5fd; /* 밝은 파랑 */
-    transition: background-color 0.3s ease;
+input[type="text"]:focus {
+    border-color: #4a90e2;
+    outline: none;
+    background-color: white;
 }
 
-.buttons {
-    margin-top: 20px;
+.button-group {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
 }
 
 button {
-    padding: 10px 16px;
-    background-color: #2563eb;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
     color: white;
     border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    border-radius: 8px;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 button:hover:not(:disabled) {
-    background-color: #1e40af;
+    background: #2f6fc9;
+    transform: translateY(-2px);
 }
 
 button:disabled {
-    background-color: #9ca3af;
+    background: #9ca3af;
     cursor: not-allowed;
 }
 
 hr {
-    margin: 30px 0;
     border: none;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid #ddd;
+    margin: 30px 0;
 }
 
-.output-section h4 {
+h4 {
+    font-size: 16px;
     margin-bottom: 8px;
-    color: #374151;
+    color: #333;
 }
 
 pre {
     background-color: #f3f4f6;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.5;
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-word;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e0e0e0;
+}
+
+/* 스크롤바 */
+pre::-webkit-scrollbar {
+    height: 6px;
+}
+pre::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 3px;
+}
+pre::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
 }

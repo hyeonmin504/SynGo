@@ -17,8 +17,8 @@
             <div id="auth-status" class="auth-status"></div>
             <div class="auth-controls" id="auth-controls">
                 <input type="text" id="jwt-token" placeholder="JWT 토큰을 입력하세요..." />
-                <button onclick="chatAuth.setToken()" class="auth-button">토큰 설정</button>
-                <button onclick="chatAuth.clearToken()" class="auth-button secondary">로그아웃</button>
+                <button class="auth-button" id="set-token-btn">토큰 설정</button>
+                <button class="auth-button secondary" id="logout-btn">로그아웃</button>
             </div>
         </div>
     </div>
@@ -32,8 +32,8 @@
     <div class="controls">
         <div class="input-group">
             <textarea id="message" rows="2" placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"></textarea>
-            <button class="send-button" onclick="chatClient.sendMessage()" id="send-button">전송</button>
-            <button class="cancel-button" onclick="chatClient.cancelStream()" id="cancel-button" style="display: none;">취소</button>
+            <button class="send-button" id="send-button">전송</button>
+            <button class="cancel-button" id="cancel-button" style="display: none;">취소</button>
         </div>
 
         <div class="file-input-wrapper">

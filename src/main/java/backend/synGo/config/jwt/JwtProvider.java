@@ -112,7 +112,7 @@ public class JwtProvider{
             switch (tokenType) {
                 case BL -> { //black_list 로 저장된 token
                     String isBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
-                    if (isBlacklisted.equals("logout")) {
+                    if (isBlacklisted.equals("\"logout\"")) {
                         log.warn("블랙리스트에 등록된 토큰입니다.");
                         return false;
                     }
@@ -135,10 +135,17 @@ public class JwtProvider{
                     return true;
                 }
                 case TOKEN -> { //refresh,access 으로 저장된 토큰
+                    log.info("token={}", token);
                     String storedBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
+                    log.info("storedBlacklisted={}", storedBlacklisted);
                     String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
                     String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
-                    if ((hasText(storedAccessToken) || hasText(storedRefreshToken)) && !hasText(storedBlacklisted)){
+                    if ("logout".equals(storedBlacklisted)) {
+                        log.warn("블랙리스트에 등록된 토큰입니다.");
+                        return false;
+                    }
+                    if (hasText(storedAccessToken) || hasText(storedRefreshToken)){
+                        log.info("유효한 토큰입니다.");
                         return true;
                     }
                     log.warn("사용할 수 없는 토큰입니다.");

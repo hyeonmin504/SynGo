@@ -38,24 +38,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            //인증 url 토큰 검사 시작
             String token = jwtProvider.resolveToken(request);
             if (token != null && jwtProvider.validateToken(token, TokenType.TOKEN)) {
-                Authentication authentication = jwtProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info(">> Authentication success. User: {}", authentication.getName());
-            } else {
-                log.warn(">> JWT 인증 실패 또는 토큰 없음.");
+                Authentication auth = jwtProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
             filterChain.doFilter(request, response);
-        } catch (Exception e){
-            log.info("Token expired: {}", e.getMessage());
-            request.setAttribute("exception", "TOKEN_EXPIRED"); // 예외 정보를 request에 설정
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\":\"Authentication failed\"}");
-            }
+        } catch (ExpiredTokenException ex) {
+            // 응답은 여기서 하지 않고 예외 던짐
+            // ExceptionTranslationFilter가 처리해서 authenticationEntryPoint 호출
+            log.error("Expired token: {}", ex.getMessage());
+            throw ex;
+        } catch (Exception e) {
+            // 다른 예외 처리 (선택 사항)
+            log.error("JWT Authentication error: {}", e.getMessage());
             throw e;
         }
     }

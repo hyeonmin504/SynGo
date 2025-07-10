@@ -83,9 +83,9 @@ public class AnthropicStreamChatService implements StreamChat {
                             chatRequest,
                             completeResponse
                     );
-                    if (images != null && images.length > 0) {
-                        uploadS3AndCloudFront(images, chatRequest.getUserId());
-                    }
+//                    if (images != null && images.length > 0) {
+//                        uploadS3AndCloudFront(images, chatRequest.getUserId());
+//                    }
                 })
                 .onErrorResume(error -> {
                     log.error("에러 발생: {}", error.getMessage(), error);
@@ -237,17 +237,6 @@ public class AnthropicStreamChatService implements StreamChat {
             }
         }
         return mediaList;
-    }
-
-    @Transactional
-    private void saveImage(String url, MultipartFile image) {
-        imageRepository.save(
-                Image.builder()
-                        .imageUrl(new ImageUrl(url))
-                        .imageType(FileUtil.getFileExtension(image).toLowerCase())
-                        .imageName(image.getOriginalFilename())
-                        .build()
-        );
     }
 
     /**

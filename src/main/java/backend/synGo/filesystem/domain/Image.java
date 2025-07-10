@@ -29,7 +29,9 @@ public class Image {
         this.imageName = imageName;
         this.imageType = imageType;
         addImageUrl(imageUrl);
-        addUserSlot(userSlot);
+        if (userSlot != null){
+            addUserSlot(userSlot);
+        }
     }
 
     private void addUserSlot(UserSlot userSlot) {

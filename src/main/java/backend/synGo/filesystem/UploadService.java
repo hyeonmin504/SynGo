@@ -32,7 +32,7 @@ public class UploadService {
 
         imageRepository.save(
                 Image.builder()
-                        .imageUrl(new backend.synGo.filesystem.domain.ImageUrl(url))
+                        .imageUrl(new backend.synGo.filesystem.domain.ImageUrl(url, user))
                         .imageType(FileUtil.getFileExtension(image).toLowerCase())
                         .imageName(image.getOriginalFilename())
                         .build()

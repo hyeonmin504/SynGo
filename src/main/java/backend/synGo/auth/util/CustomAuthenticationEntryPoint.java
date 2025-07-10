@@ -2,7 +2,6 @@ package backend.synGo.auth.util;
 
 import backend.synGo.form.ResponseForm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +20,14 @@ import java.util.Map;
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
         @Override
         public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
+                log.info("Authentication failed: {}", authException.getMessage());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
 
                 String exception = (String) request.getAttribute("exception");
                 String message;
 
-                if ("TOKEN_EXPIRED".equals(exception)) {
+                if ("TOKEN_EXPIRED".equals(exception) || "토큰 만료".equals(exception)) {
                         message = "Access Token이 만료되었습니다.";
                 } else {
                         message = "인증이 필요합니다.";
