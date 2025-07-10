@@ -49,7 +49,7 @@ public class UserSlot{
     @JoinColumn(name = "date_id")
     private Date date;
 
-    @OneToMany(mappedBy = "userSlot")
+    @OneToMany(mappedBy = "userSlot", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
 
     private void setDate(Date date) {

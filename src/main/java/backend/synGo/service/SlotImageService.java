@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static backend.synGo.controller.my.MySlotController.*;
+import static backend.synGo.controller.my.MySlotImageController.*;
 
 @Service
 @RequiredArgsConstructor
@@ -86,9 +86,13 @@ public class SlotImageService {
 
     @Transactional(readOnly = true)
     public UserSlotImageUrlForm findMySlotImages(Long slotId, Long userId) {
+        if (!userSlotRepository.existUserUserId(userId)) {
+            throw new NotFoundContentsException("해당 유저의 슬롯이 아닙니다.");
+        }
+
         List<ImageUrl> images = imageUrlRepository.findByUserIdAndSlotId(userId, slotId);
         if (images.isEmpty()) {
-            return new UserSlotImageUrlForm(Collections.singletonList("해당 유저의 슬롯에 이미지가 없습니다."));
+            return new UserSlotImageUrlForm(null);
         }
         return new UserSlotImageUrlForm(images.stream().map(ImageUrl::getImageUrl)
                 .collect(Collectors.toList()));
