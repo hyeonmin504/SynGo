@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class SlotForm {
-    @NotBlank
-    private String status;
+
+    private String status = "PLAN";
     @DateTimeRange(message = "날짜가 허용된 범위를 벗어났습니다.")
     private LocalDateTime startDate;
     @Nullable

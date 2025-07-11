@@ -101,14 +101,13 @@ public class JwtProvider{
     // JWT Token 타입 별 유효성 검증
     public boolean validateToken(String token, TokenType tokenType) {
         try {
+            log.info("validateToken={}", token);
             // 기본 서명 검증
             Claims claims = Jwts.parser()
                     .verifyWith((SecretKey) key)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
-            // 타입에 따라 Redis 검증 로직 추가
             switch (tokenType) {
                 case BL -> { //black_list 로 저장된 token
                     String isBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
@@ -135,7 +134,6 @@ public class JwtProvider{
                     return true;
                 }
                 case TOKEN -> { //refresh,access 으로 저장된 토큰
-                    log.info("token={}", token);
                     String storedBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
                     log.info("storedBlacklisted={}", storedBlacklisted);
                     String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));

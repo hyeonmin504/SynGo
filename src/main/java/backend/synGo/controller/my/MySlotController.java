@@ -8,7 +8,6 @@ import backend.synGo.exception.NotValidException;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
-import backend.synGo.service.SlotImageService;
 import backend.synGo.service.SlotService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,8 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @Slf4j

@@ -1,17 +1,11 @@
 package backend.synGo.chatBot.service;
 
-import backend.synGo.domain.user.User;
-import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.filesystem.UploadService;
-import backend.synGo.filesystem.domain.Image;
-import backend.synGo.filesystem.domain.ImageUrl;
-import backend.synGo.filesystem.util.FileUtil;
 import backend.synGo.repository.ImageRepository;
 import backend.synGo.repository.UserRepository;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeTypeUtils;
 import backend.synGo.filesystem.ImageValidationService;
 import backend.synGo.filesystem.awss3.S3StorageManager;
@@ -49,8 +43,6 @@ public class AnthropicStreamChatService implements StreamChat {
     private final ImageValidationService imageValidationService;
     private final ChatHistoryService chatHistoryService;
     private final S3StorageManager s3StorageManager;
-    private final ImageRepository imageRepository;
-    private final UserRepository userRepository;
     private final UploadService uploadService;
 
     @Value("${aws.s3.image-directory}")
@@ -80,7 +72,8 @@ public class AnthropicStreamChatService implements StreamChat {
                     String completeResponse = fullResponse.toString();
                     // 히스토리 저장
                     chatHistoryService.saveHistory(
-                            chatRequest,
+                            chatRequest.getMessage(),
+                            chatRequest.getUserId(),
                             completeResponse
                     );
 //                    if (images != null && images.length > 0) {

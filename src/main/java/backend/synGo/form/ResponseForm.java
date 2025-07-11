@@ -45,6 +45,10 @@ public class ResponseForm<T> {
         return new ResponseForm<>(NOT_ACCEPTABLE.value(), data, message);
     }
 
+    public static<T> ResponseForm<T> badResponse(T data, String message) {
+        return new ResponseForm<>(HttpStatus.BAD_REQUEST.value(), data, message);
+    }
+
     public static <T> ResponseForm<T> requestTimeOutResponse(T data, String message) {
         return new ResponseForm<>(REQUEST_TIMEOUT.value(), data, message);
     }

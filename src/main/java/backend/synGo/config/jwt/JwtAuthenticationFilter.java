@@ -34,6 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         //jwt 인증 url 검증
         if (permitAll.stream().anyMatch(pattern ->
                 parser.parse(pattern).matches(PathContainer.parsePath(request.getRequestURI())))) {
+            log.info("Request URI '{}' is permitted, skipping JWT authentication.", uri);
             filterChain.doFilter(request, response);
             return;
         }

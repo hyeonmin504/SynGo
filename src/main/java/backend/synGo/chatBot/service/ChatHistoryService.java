@@ -24,12 +24,12 @@ public class ChatHistoryService {
 
     @Async
     @Transactional
-    public void saveHistory(ChatRequest chatRequest, String aiResponse) {
+    public void saveHistory(String message, Long userId, String aiResponse) {
         try {
-            User user = userRepository.findById(chatRequest.getUserId())
-                    .orElseThrow(() -> new NotFoundUserException("User not found with ID: " + chatRequest.getUserId()));
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new NotFoundUserException("User not found with ID: " + userId));
             ChatHistory history = ChatHistory.builder()
-                    .userMessage(chatRequest.getMessage())
+                    .userMessage(message)
                     .aiMessage(aiResponse)
                     .user(user)  // 프록시 사용
                     .build();
