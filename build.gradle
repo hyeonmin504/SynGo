@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.1'
+	id 'org.springframework.boot' version '3.3.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -49,7 +49,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
 
 	//스웨거 (최신 버전)
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
 	//Spring AI 의존성들
 	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
@@ -80,8 +80,6 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.20.56')
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:cloudfront'
-
-	implementation 'org.springframework.ai:spring-ai-anthropic-spring-boot-starter:1.0.0-M2'
 }
 
 dependencyManagement {
