@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.retry.TransientAiException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
@@ -51,34 +53,37 @@ public class ChatBotController {
             return ResponseEntity.ok().body(ResponseForm.success(chatResponse, "AI 응답 생성 성공"));
         } catch (NotFoundUserException e) {
             log.error("User not found: {}", e.getMessage());
-            return ResponseEntity.status(404).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notAcceptResponse(null, e.getMessage()));
         } catch (JsonParsingException e) {
             log.error("JSON parsing failed: {}", e.getMessage());
-            return ResponseEntity.status(400).body(ResponseForm.badResponse(null, "응답 파싱 실패: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseForm.badResponse(null, e.getMessage()));
+        } catch (TransientAiException e) {
+            log.error("Transient AI error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ResponseForm.requestTimeOutResponse(null, "AI 서비스 일시적 오류"));
         }
     }
 
     @Operation(summary = "챗봇 Stream Ai api", description = "채팅을 분석 후 springAi(Ai + MCP + Tools)를 사용한 내 스케줄 정보 응답")
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "SSE 연결 성공",
-                    content = @Content(
-                            mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
-                            examples = {
-                                    @ExampleObject(
-                                            name = "성공",
-                                            description = "스케줄 요약 정보 스트리밍",
-                                            value = "data: {\"content\":\"오늘 오후 3시 회의가 있습니다.\"}\ndata: {\"done\":true}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "실패",
-                                            description = "에러 메시지 스트리밍",
-                                            value = "data: {\"error\":\"사용자 정보를 찾을 수 없습니다.\"}\ndata: {\"done\":true}"
-                                    )
-                            }
+        @ApiResponse(
+            responseCode = "200",
+            description = "SSE 연결 성공",
+            content = @Content(
+                mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
+                examples = {
+                    @ExampleObject(
+                            name = "성공",
+                            description = "스케줄 요약 정보 스트리밍",
+                            value = "data: {\"content\":\"오늘 오후 3시 회의가 있습니다.\"}\ndata: {\"done\":true}"
+                    ),
+                    @ExampleObject(
+                            name = "실패",
+                            description = "에러 메시지 스트리밍",
+                            value = "data: {\"error\":\"사용자 정보를 찾을 수 없습니다.\"}\ndata: {\"done\":true}"
                     )
+                }
             )
+        )
     })
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<ChatStreamResponse>> streamChat(

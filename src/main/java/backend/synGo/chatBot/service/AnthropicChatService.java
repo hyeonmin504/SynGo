@@ -75,7 +75,7 @@ public class AnthropicChatService implements Chat {
             return objectMapper.readValue(jsonString, ChatResponse.class);
         } catch (JsonProcessingException e) {
             log.error("JSON 파싱 실패: {}", e.getMessage());
-            throw new JsonParsingException("JSON 파싱 실패: " + e.getMessage());
+            throw new JsonParsingException("JSON 파싱 실패:");
         }
     }
 
