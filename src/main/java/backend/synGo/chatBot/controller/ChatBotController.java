@@ -4,7 +4,9 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.chatBot.dto.ChatStreamResponse;
 import backend.synGo.chatBot.service.AnthropicChatService;
 import backend.synGo.chatBot.service.AnthropicStreamChatService;
+import backend.synGo.common.aop.annotation.ChatbotLogging;
 import backend.synGo.exception.JsonParsingException;
+import backend.synGo.exception.NotFoundContentsException;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.form.ResponseForm;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,6 +45,7 @@ public class ChatBotController {
             @ApiResponse(responseCode = "404", description = "유저 정보 없음"),
             @ApiResponse(responseCode = "400", description = "Ai 응답 파싱 실패")
     })
+    @ChatbotLogging(apiType = "normal", logRequest = true)
     @PostMapping
     public ResponseEntity<ResponseForm<?>> Chat(
             @RequestParam String message,
@@ -86,6 +89,7 @@ public class ChatBotController {
         )
     })
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @ChatbotLogging(apiType = "stream", logRequest = true)
     public Flux<ServerSentEvent<ChatStreamResponse>> streamChat(
             @RequestParam String message,
             @RequestParam(required = false) final MultipartFile[] images,

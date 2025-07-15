@@ -1,0 +1,282 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "SynGo 챗봇 모니터링",
+    "tags": ["chatbot", "syngo"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "챗봇 평균 응답시간 (1분 간격)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(chatbot_response_time_seconds_sum[1m]) / rate(chatbot_response_time_seconds_count[1m])",
+            "legendFormat": "평균 응답시간 (초)",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "decimals": 2,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 2},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "center",
+          "orientation": "horizontal"
+        }
+      },
+      {
+        "id": 2,
+        "title": "실시간 응답시간 트렌드",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(chatbot_response_time_seconds_sum[1m]) / rate(chatbot_response_time_seconds_count[1m])",
+            "legendFormat": "평균 응답시간",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "요청 수 및 성공률",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(chatbot_requests_total)",
+            "legendFormat": "총 요청 수",
+            "refId": "A"
+          },
+          {
+            "expr": "(sum(chatbot_requests_total{status=\"success\"}) / sum(chatbot_requests_total)) * 100",
+            "legendFormat": "성공률 (%)",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "fieldConfig": {
+          "defaults": {
+            "decimals": 1,
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 95},
+                {"color": "green", "value": 99}
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "성공률 (%)"},
+              "properties": [
+                {"id": "unit", "value": "percent"}
+              ]
+            }
+          ]
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "center"
+        }
+      },
+      {
+        "id": 4,
+        "title": "분당 요청 수 트렌드",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(chatbot_requests_total[1m]) * 60",
+            "legendFormat": "분당 요청 수",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "성능 등급 분류",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (level) (chatbot_performance_level_total)",
+            "legendFormat": "{{level}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "tooltip": false,
+                "vis": false,
+                "legend": false
+              }
+            },
+            "mappings": [
+              {"options": {"excellent": {"color": "green", "text": "우수"}}, "type": "value"},
+              {"options": {"good": {"color": "yellow", "text": "양호"}}, "type": "value"},
+              {"options": {"fair": {"color": "orange", "text": "보통"}}, "type": "value"},
+              {"options": {"poor": {"color": "red", "text": "불량"}}, "type": "value"}
+            ]
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "pieType": "pie",
+          "tooltip": {"mode": "single"},
+          "legend": {
+            "displayMode": "visible",
+            "placement": "right"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "성능 등급별 상세 통계",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum by (level) (chatbot_performance_level_total)",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "center",
+              "displayMode": "basic"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "level"},
+              "properties": [
+                {"id": "displayName", "value": "성능 등급"},
+                {"id": "custom.width", "value": 100}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Value"},
+              "properties": [
+                {"id": "displayName", "value": "요청 수"},
+                {"id": "custom.width", "value": 80}
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 7,
+        "title": "API 타입별 요청 분포",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "sum by (api_type) (chatbot_requests_total)",
+            "legendFormat": "{{api_type}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "orientation": "horizontal"
+            },
+            "mappings": [
+              {"options": {"normal": {"text": "일반 API"}}, "type": "value"},
+              {"options": {"stream": {"text": "스트리밍 API"}}, "type": "value"}
+            ]
+          }
+        },
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        }
+      }
+    ],
+    "schemaVersion": 30,
+    "version": 1,
+    "links": []
+  }
+}

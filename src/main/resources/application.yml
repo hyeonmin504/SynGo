@@ -75,9 +75,10 @@ logging:
   level:
     root: INFO
     org.springframework.security: DEBUG
-    #org.springframework.web: DEBUG
-    #org.spring-doc: DEBUG
-    #org.springframework.boot.autoconfigure: DEBUG
+    backend.synGo.common.monitoring: DEBUG
+    backend.synGo.common.aop: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 security:
   secret-key: ${SECRET_KEY}
@@ -91,3 +92,33 @@ security:
       expiration: ${ACCESS_TOKEN_EXPIRATION} # 30 min
     refresh-token:
       expiration: ${REFRESH_TOKEN_EXPIRATION} # 7day
+
+management:
+  server:
+    port: 8081  # 다른 포트로 분리
+    address: 127.0.0.1  # 로컬호스트에서만 접근
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+        histogram-flavor: prometheus
+    tags:
+      application: syngo-chatbot
+      version: 1.0.0
+      environment: local
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true

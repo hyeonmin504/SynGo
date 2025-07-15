@@ -37,6 +37,7 @@ public class SecurityConfig {
         //인증 없이 접근 가능한 url
         List<String> permitUrls = List.of(
                 "/api/my/chatbot/stream",
+                "/actuator/**",
                 "/index.html",
                 "/main.css",
                 "/app.js",
@@ -56,6 +57,7 @@ public class SecurityConfig {
                 //요청 url 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/my/chatbot/stream",
+                                "/actuator/**",
                                 "/index.html",
                                 "/main.css",
                                 "/app.js",

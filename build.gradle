@@ -80,6 +80,16 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.20.56')
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:cloudfront'
+
+	// AOP 지원
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// 모니터링 지원
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
+	// 로깅 지원 (이미 있을 수 있음)
+	implementation 'org.springframework.boot:spring-boot-starter-logging'
 }
 
 dependencyManagement {

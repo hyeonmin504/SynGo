@@ -1,10 +1,7 @@
 package backend.synGo.controller.my;
 
 import backend.synGo.auth.form.CustomUserDetails;
-import backend.synGo.exception.AccessDeniedException;
-import backend.synGo.exception.NotFoundContentsException;
-import backend.synGo.exception.NotFoundUserException;
-import backend.synGo.exception.NotValidException;
+import backend.synGo.exception.*;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.form.requestForm.SlotForm;
 import backend.synGo.form.responseForm.SlotIdResponse;
@@ -72,7 +69,7 @@ public class MySlotController {
         } catch (AccessDeniedException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(ResponseForm.notAcceptResponse(null,e.getMessage()));
-        } catch (NotFoundUserException e) {
+        } catch (NotFoundUserException | NotFoundDataException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notAcceptResponse(null,e.getMessage()));
         }

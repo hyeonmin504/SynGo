@@ -21,7 +21,7 @@ public class DateTimeTools {
     @Bean
     @Description("상대적 날짜와 시간 표현을 실제 날짜시간으로 변환합니다. 예: '내일 오후2시', '3일 후 아침 9시', '모레 저녁 7시'")
     public Function<DateTimeRequest, DateTimeResponse> calculateDateTime() {
-        log.info("DateTimeTools 사용중");
+        log.info("DateTimeTool -날자 변환 사용중");
         return request -> {
             LocalDate today = LocalDate.now();
             LocalDate targetDate = parseRelativeDate(today, request.expression());
@@ -37,7 +37,7 @@ public class DateTimeTools {
     @Bean
     @Description("현재 날짜와 시간을 YYYY-MM-DD HH:mm 형식으로 반환합니다")
     public Supplier<DateTimeResponse> getCurrentDateTime() {
-        log.info("DateTimeTools 사용중");
+        log.info("DateTimeTools -날자 형식 변환 사용중");
         return () -> new DateTimeResponse(
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
         );
