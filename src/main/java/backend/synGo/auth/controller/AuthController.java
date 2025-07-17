@@ -86,5 +86,4 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseForm.unauthorizedResponse(null, e.getMessage()));
         }
     }
-    
 }

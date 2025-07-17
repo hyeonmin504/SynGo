@@ -2,17 +2,42 @@ let stompClient = null;
 let isConnected = false;
 let blockReconnect = false;
 
+// 페이지 로드 시 토큰 확인 및 상태 업데이트
+document.addEventListener('DOMContentLoaded', function() {
+    updateTokenStatus();
+    initializeEventListeners();
+});
+
+function getCurrentToken() {
+    return localStorage.getItem('accessToken');
+}
+
+function updateTokenStatus() {
+    const token = getCurrentToken();
+    const statusElement = document.getElementById('connection-status');
+
+    if (token) {
+        statusElement.style.color = '#28a745';
+        statusElement.textContent = '● 토큰 인증됨 - 연결 가능';
+    } else {
+        statusElement.style.color = '#dc3545';
+        statusElement.textContent = '● 토큰 없음 - 로그인 필요';
+        // 토큰이 없으면 로그인 페이지로 리다이렉트
+        window.location.href = '/login/login.html';
+    }
+}
+
 function connect() {
     if (blockReconnect) {
         logMessage("🚫 이전 인증 실패로 인해 재연결이 차단되었습니다.", "error");
         return;
     }
 
-    const tokenRaw = $("#jwtToken").val();
-    const token = tokenRaw ? tokenRaw.trim() : "";
+    const token = getCurrentToken();
 
     if (!token) {
-        logMessage("❌ JWT 토큰이 입력되지 않았습니다. 연결을 중단합니다.", "error");
+        logMessage("❌ JWT 토큰이 없습니다. 로그인 페이지로 이동합니다.", "error");
+        window.location.href = '/login/login.html';
         return;
     }
 
@@ -26,13 +51,14 @@ function connect() {
         connectHeaders: {
             Authorization: `Bearer ${token}`
         },
-        reconnectDelay: 60000, // 일단 활성화
+        reconnectDelay: 60000,
         debug: (str) => console.log('[DEBUG]', str),
         onConnect: () => {
             console.log("✅ Connected");
             $("#connect").prop("disabled", true);
             $("#disconnect").prop("disabled", false);
             isConnected = true;
+            updateConnectionStatus('connected');
             logMessage("✅ WebSocket 연결됨", "info");
         },
         onDisconnect: () => {
@@ -40,25 +66,33 @@ function connect() {
             $("#connect").prop("disabled", false);
             $("#disconnect").prop("disabled", true);
             isConnected = false;
+            updateConnectionStatus('disconnected');
         },
         onStompError: (frame) => {
             const msg = frame.headers['message'] || '';
             console.error("🚨 STOMP error", msg);
 
             if (msg.toLowerCase().includes("unauthorized") || msg.includes("401")) {
-                logMessage("🚫 인증 실패. 자동 재연결 차단", "error");
+                logMessage("🚫 인증 실패. 토큰이 만료되었습니다.", "error");
 
                 blockReconnect = true;
                 isConnected = false;
 
-                // 🚨 stompClient 즉시 제거
+                // 토큰 정리하고 로그인 페이지로 이동
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('provider');
+
+                // stompClient 즉시 제거
                 stompClient.deactivate().then(() => {
-                    stompClient = null; // 완전 제거
+                    stompClient = null;
                     console.log("🧹 stompClient 제거 완료");
+                    window.location.href = '/login/login.html';
                 });
 
                 $("#connect").prop("disabled", false);
                 $("#disconnect").prop("disabled", true);
+                updateConnectionStatus('error');
             }
         },
         onWebSocketError: (event) => {
@@ -76,13 +110,34 @@ function disconnect() {
             isConnected = false;
             $("#connect").prop("disabled", false);
             $("#disconnect").prop("disabled", true);
+            updateConnectionStatus('disconnected');
         });
     }
 }
 
+function updateConnectionStatus(status) {
+    const statusElement = document.getElementById('connection-status');
+
+    switch(status) {
+        case 'connected':
+            statusElement.style.color = '#28a745';
+            statusElement.textContent = '● WebSocket 연결됨';
+            break;
+        case 'disconnected':
+            statusElement.style.color = '#ffc107';
+            statusElement.textContent = '● WebSocket 연결 끊김';
+            break;
+        case 'error':
+            statusElement.style.color = '#dc3545';
+            statusElement.textContent = '● 연결 오류';
+            break;
+        default:
+            updateTokenStatus();
+    }
+}
+
 function getTokenHeader() {
-    const tokenRaw = $("#jwtToken").val();
-    const token = tokenRaw ? tokenRaw.trim() : "";
+    const token = getCurrentToken();
     return {
         Authorization: token ? `Bearer ${token}` : ""
     };
@@ -103,7 +158,7 @@ const responseDataMap = {
 
 function flashButton(btn) {
     btn.addClass("clicked");
-    setTimeout(() => btn.removeClass("clicked"), 200); // 0.2초 후 원래대로
+    setTimeout(() => btn.removeClass("clicked"), 200);
 }
 
 function clearDataDetail() {
@@ -158,12 +213,18 @@ function fetchMonthData(groupId, year, month) {
     fetch(`/api/groups/${groupId}/date/month?year=${year}&month=${month}`, {
         headers: getTokenHeader()
     })
-    .then(res => res.json())
+    .then(res => {
+        if (res.status === 401) {
+            handleTokenExpired();
+            return;
+        }
+        return res.json();
+    })
     .then(data => {
-        if (data.code === 200 && data.data) {
+        if (data && data.code === 200 && data.data) {
             responseDataMap.month = JSON.stringify(data.data, null, 2);
         } else {
-            responseDataMap.month = `[슬롯 상세] API 오류: ${data.message}`;
+            responseDataMap.month = `[한달 데이터] API 오류: ${data?.message || 'Unknown error'}`;
         }
         renderDataDetail();
     })
@@ -178,12 +239,18 @@ function fetchDayData(groupId, year, month, day) {
     fetch(`/api/groups/${groupId}/date/day?year=${year}&month=${month}&day=${day}`, {
         headers: getTokenHeader()
     })
-    .then(res => res.json())
+    .then(res => {
+        if (res.status === 401) {
+            handleTokenExpired();
+            return;
+        }
+        return res.json();
+    })
     .then(data => {
-        if (data.code === 200 && data.data) {
+        if (data && data.code === 200 && data.data) {
             responseDataMap.day = JSON.stringify(data.data, null, 2);
         } else {
-            responseDataMap.day = `[슬롯 상세] API 오류: ${data.message}`;
+            responseDataMap.day = `[하루 데이터] API 오류: ${data?.message || 'Unknown error'}`;
         }
         renderDataDetail();
     })
@@ -198,12 +265,18 @@ function fetchSlotData(groupId, slotId) {
     fetch(`/api/groups/${groupId}/slots/${slotId}`, {
         headers: getTokenHeader()
     })
-    .then(res => res.json())
+    .then(res => {
+        if (res.status === 401) {
+            handleTokenExpired();
+            return;
+        }
+        return res.json();
+    })
     .then(data => {
-        if (data.code === 200 && data.data) {
+        if (data && data.code === 200 && data.data) {
             responseDataMap.slot = JSON.stringify(data.data, null, 2);
         } else {
-            responseDataMap.slot = `[슬롯 상세] API 오류: ${data.message}`;
+            responseDataMap.slot = `[슬롯 상세] API 오류: ${data?.message || 'Unknown error'}`;
         }
         renderDataDetail();
     })
@@ -213,6 +286,13 @@ function fetchSlotData(groupId, slotId) {
     });
 }
 
+function handleTokenExpired() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('provider');
+    window.location.href = '/login/login.html';
+}
+
 function subscribeTo(type, channel, onMessage) {
     if (!stompClient || !stompClient.connected) {
         const msg = `WebSocket 연결되지 않음 - 채널(${channel}) 구독 실패`;
@@ -220,7 +300,7 @@ function subscribeTo(type, channel, onMessage) {
         return;
     }
 
-    // ❗ 이미 구독 중이면 => 구독 해제
+    // 이미 구독 중이면 => 구독 해제
     if (subscriptions[type]) {
         subscriptions[type].unsubscribe();
         subscriptions[type] = null;
@@ -228,7 +308,7 @@ function subscribeTo(type, channel, onMessage) {
         return;
     }
 
-    // 👇 새로 구독 시작
+    // 새로 구독 시작
     const sub = stompClient.subscribe(channel, (message) => {
         try {
             const body = JSON.parse(message.body);
@@ -256,8 +336,8 @@ function logMessage(message, type = "info") {
     $("#messages").append(prefix + message + "\n");
 }
 
-$(document).ready(() => {
-    $("form").on('submit', e => e.preventDefault()); // 폼 제출 막기
+function initializeEventListeners() {
+    $("form").on('submit', e => e.preventDefault());
 
     $("#connect").click(connect);
     $("#disconnect").click(disconnect);
@@ -300,4 +380,4 @@ $(document).ready(() => {
             fetchSlotData(groupId, slotId);
         });
     });
-});
+}

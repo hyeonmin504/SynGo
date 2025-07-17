@@ -2,42 +2,20 @@
 const CONFIG = {
     API_BASE_URL: 'http://localhost:8080/api/my/chatbot',
     STREAM_TIMEOUT: 30000,
-    JWT_STORAGE_KEY: 'chatbot_jwt_token'
+    JWT_STORAGE_KEY: 'accessToken'
 };
 
-// JWT 인증 관리
+// JWT 인증 관리 (nav.js와 통합)
 class AuthManager {
     constructor() {
         this.token = localStorage.getItem(CONFIG.JWT_STORAGE_KEY);
-        this.updateAuthUI();
-    }
 
-    setToken() {
-        const tokenInput = document.getElementById('jwt-token');
-        const token = tokenInput.value.trim();
-
-        if (!token) {
-            showStatus('토큰을 입력해주세요.', 'error');
+        // 토큰이 없으면 로그인 페이지로 리다이렉트 (즉시 실행)
+        if (!this.token) {
+            console.log('토큰이 없습니다. 로그인 페이지로 이동합니다.');
+            window.location.href = '/login/login.html';
             return;
         }
-
-        if (!this.isValidJWTFormat(token)) {
-            showStatus('올바르지 않은 JWT 토큰 형식입니다.', 'error');
-            return;
-        }
-
-        this.token = token;
-        localStorage.setItem(CONFIG.JWT_STORAGE_KEY, token);
-        tokenInput.value = '';
-        this.updateAuthUI();
-        showStatus('토큰이 설정되었습니다.', 'success');
-    }
-
-    clearToken() {
-        this.token = null;
-        localStorage.removeItem(CONFIG.JWT_STORAGE_KEY);
-        this.updateAuthUI();
-        showStatus('로그아웃되었습니다.', 'info');
     }
 
     getAuthHeaders() {
@@ -52,31 +30,43 @@ class AuthManager {
         return !!this.token;
     }
 
-    isValidJWTFormat(token) {
-        const parts = token.split('.');
-        return parts.length === 3;
+    handleTokenExpired() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('provider');
+        window.location.href = '/login/login.html';
     }
 
     updateAuthUI() {
-        const authStatus = document.getElementById('auth-status');
+        // DOM 요소가 존재하는지 확인
+        const connectionIndicator = document.getElementById('connection-indicator');
+        const connectionText = document.getElementById('connection-text');
 
-        const tokenInput = document.getElementById('jwt-token');
-        const setButton = document.querySelector('.auth-button');
-        const logoutButton = document.querySelector('.auth-button.secondary');
-
-        if (this.isAuthenticated()) {
-            authStatus.innerHTML = '<span class="auth-success">✅ 인증됨</span>';
-            tokenInput.style.display = 'none';
-            setButton.style.display = 'none';
-            logoutButton.style.display = 'inline-block';
-        } else {
-            authStatus.innerHTML = '<span class="auth-required">⚠️ 로그인 필요</span>';
-            tokenInput.style.display = 'inline-block';
-            setButton.style.display = 'inline-block';
-            logoutButton.style.display = 'none';
+        if (connectionIndicator && connectionText) {
+            if (this.isAuthenticated()) {
+                connectionIndicator.style.color = '#28a745';
+                connectionText.textContent = '인증됨 - 채팅 가능';
+            } else {
+                connectionIndicator.style.color = '#dc3545';
+                connectionText.textContent = '인증 실패 - 로그인 필요';
+            }
         }
     }
 }
+
+// DOM 로드 완료 후 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    // AuthManager 초기화
+    window.chatAuth = new AuthManager();
+    // UI 업데이트
+    if (window.chatAuth.token) {
+        window.chatAuth.updateAuthUI();
+    }
+    // 이벤트 리스너 초기화
+    initializeEventListeners();
+});
+
+// 나머지 코드는 그대로...
 
 // 전역 상태 관리 (기존 구조 유지)
 let isStreaming = false;
@@ -119,8 +109,6 @@ function initializeEventListeners() {
         }
     });
 
-    document.getElementById('set-token-btn').addEventListener('click', () => chatAuth.setToken());
-    document.getElementById('logout-btn').addEventListener('click', () => chatAuth.clearToken());
     document.getElementById('send-button').addEventListener('click', () => chatClient.sendMessage());
     document.getElementById('cancel-button').addEventListener('click', () => chatClient.cancelStream());
 }
@@ -182,7 +170,8 @@ async function sendMessage() {
 
     // 인증 확인
     if (!chatAuth.isAuthenticated()) {
-        showStatus('로그인이 필요합니다. JWT 토큰을 설정해주세요.', 'error');
+        showStatus('로그인이 필요합니다.', 'error');
+        chatAuth.handleTokenExpired();
         return;
     }
 
@@ -245,7 +234,7 @@ async function sendMessage() {
         if (!response.ok) {
             if (response.status === 401) {
                 // 인증 실패 시 토큰 삭제하고 재로그인 요청
-                chatAuth.clearToken();
+                chatAuth.handleTokenExpired();
                 throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
             }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -266,6 +255,7 @@ async function sendMessage() {
     }
 }
 
+// 나머지 함수들은 동일하게 유지...
 async function processStream(response) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -461,6 +451,7 @@ function appendStreamChunk(sender, chunkText) {
         const content = document.createElement('div');
         content.className = 'message-content';
         content.id = 'streaming-content';
+        content.style.whiteSpace = 'pre-wrap';  // 줄바꿈 유지
 
         currentAssistantDiv.appendChild(avatar);
         currentAssistantDiv.appendChild(content);

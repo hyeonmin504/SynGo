@@ -81,10 +81,10 @@ class UserDataDateSearchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("개인의 그룹 데이터 조회 성공"))
                 .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].slotCount").value(3))
-                .andExpect(jsonPath("$.data[0].slotInfo", hasSize(2)))
-                .andExpect(jsonPath("$.data[1].slotCount").value(1))
-                .andExpect(jsonPath("$.data[1].slotInfo", hasSize(1)));
+                .andExpect(jsonPath("$.data[0].slotCount").value(1))
+                .andExpect(jsonPath("$.data[0].slotInfo", hasSize(1)))
+                .andExpect(jsonPath("$.data[1].slotCount").value(3))
+                .andExpect(jsonPath("$.data[1].slotInfo", hasSize(2)));
     }
 
     @Test

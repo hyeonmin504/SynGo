@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude AI 챗봇</title>
+    <title>Claude AI 챗봇 - SynGo</title>
+    <link rel="icon" type="image/x-icon" href="/favicon_io/favicon.ico">
+    <link rel="stylesheet" href="/nav/nav.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<!-- 네비게이션은 nav.js에서 자동 생성 -->
+
 <div class="container">
     <div class="header">
         <h2>🧠 Claude AI 챗봇</h2>
         <p>Spring AI · 실시간 스트리밍</p>
 
-        <!-- JWT 인증 상태 -->
+        <!-- 연결 상태 표시 (JWT 인증 상태 대신) -->
         <div class="auth-section">
-            <div id="auth-status" class="auth-status"></div>
-            <div class="auth-controls" id="auth-controls">
-                <input type="text" id="jwt-token" placeholder="JWT 토큰을 입력하세요..." />
-                <button class="auth-button" id="set-token-btn">토큰 설정</button>
-                <button class="auth-button secondary" id="logout-btn">로그아웃</button>
+            <div id="auth-status" class="auth-status">
+                <span id="connection-indicator" style="color: #28a745;">●</span>
+                <span id="connection-text">인증됨 - 채팅 가능</span>
             </div>
         </div>
     </div>
@@ -47,6 +49,7 @@
     </div>
 </div>
 
+<script src="/nav/nav.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

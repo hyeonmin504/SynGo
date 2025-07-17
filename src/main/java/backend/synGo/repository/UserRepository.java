@@ -1,6 +1,7 @@
 package backend.synGo.repository;
 
 
+import backend.synGo.domain.user.Provider;
 import backend.synGo.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     Boolean existsUserByEmail(String email);
-
-    @Query("select u from User u join fetch u.date d where u.id=:userId AND d.startDate=:startDate")
-    Optional<User> findUserDateData(Long userId, LocalDate startDate);
+    // OAuth2를 위한 새 메소드들
+    Optional<User> findByProviderAndProviderId(Provider provider, String providerId);
+    Optional<User> findByEmailAndProvider(String email, Provider provider);
 }

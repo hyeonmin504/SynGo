@@ -2,23 +2,33 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>🧩 그룹 슬롯 WebSocket 테스트</title>
+    <title>🧩 그룹 슬롯 WebSocket 테스트 - SynGo</title>
+    <link rel="icon" type="image/x-icon" href="/favicon_io/favicon.ico">
+    <link rel="stylesheet" href="/nav/nav.css">
     <link rel="stylesheet" href="main.css">
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-    <script src="/app.js"></script>
 </head>
 <body>
+<!-- 네비게이션은 nav.js에서 자동 생성 -->
+
 <div class="container">
     <div class="header">
         <h2>🧩 그룹 슬롯 WebSocket 테스트</h2>
         <p>JWT 인증 · 실시간 구독 테스트</p>
+
+        <!-- 연결 상태 표시 -->
+        <div class="section">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <span>연결 상태:</span>
+                <span id="connection-status" style="color: #dc3545;">● 연결 대기 중</span>
+            </div>
+        </div>
     </div>
 
     <div class="section">
-        <label>JWT Token:</label>
-        <input type="text" id="jwtToken" placeholder="토큰을 입력하세요..." />
+        <!-- JWT 토큰 입력 필드 제거 - 자동으로 localStorage에서 가져옴 -->
         <div class="button-group">
             <button id="connect">Connect</button>
             <button id="disconnect" disabled>Disconnect</button>
@@ -58,5 +68,8 @@
         <pre id="dataDetail"></pre>
     </div>
 </div>
+
+<script src="/nav/nav.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>

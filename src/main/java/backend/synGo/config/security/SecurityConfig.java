@@ -1,5 +1,8 @@
 package backend.synGo.config.security;
 
+import backend.synGo.auth.oauth2.OAuth2AuthorizationFailureHandler;
+import backend.synGo.auth.oauth2.OAuth2AuthorizationSuccessHandler;
+import backend.synGo.auth.service.CustomOAuth2UserService;
 import backend.synGo.auth.util.CustomAuthenticationEntryPoint;
 import backend.synGo.config.jwt.JwtAuthenticationFilter;
 import backend.synGo.config.jwt.JwtProvider;
@@ -28,6 +31,10 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    // OAuth2 관련 빈들 추가
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler;
+    private final OAuth2AuthorizationFailureHandler oAuth2AuthorizationFailureHandler;
     //private final SseAuthenticationFilter sseAuthenticationFilter;
 
     @Bean
@@ -37,6 +44,10 @@ public class SecurityConfig {
         //인증 없이 접근 가능한 url
         List<String> permitUrls = List.of(
                 "/api/my/chatbot/stream",
+                "/favicon_io/favicon.ico",
+                "/login/**",
+                "/nav/**",
+                "/oauth2/**",
                 "/actuator/**",
                 "/index.html",
                 "/main.css",
@@ -58,6 +69,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/my/chatbot/stream",
                                 "/actuator/**",
+                                "/login/**",
+                                "/nav/**",
+                                "/oauth2/**",
+                                "/favicon_io/favicon.ico",
                                 "/index.html",
                                 "/main.css",
                                 "/app.js",
@@ -75,10 +90,16 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint))
-                // JWT 필터만 사용 (SseAuthenticationFilter 제거)
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtProvider, permitUrls),
                         UsernamePasswordAuthenticationFilter.class
+                )
+                // OAuth2 로그인 설정 추가
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthorizationSuccessHandler)
+                        .failureHandler(oAuth2AuthorizationFailureHandler)
                 )
                 .csrf(AbstractHttpConfigurer::disable) // csrf 보호 비활성화 (JWT 사용 시 비활성화)
                 .formLogin(AbstractHttpConfigurer::disable) // 스프링 시큐리티 기본 로그인 폼 비활성화

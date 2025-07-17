@@ -28,7 +28,7 @@ import static org.springframework.util.StringUtils.*;
 
 @Slf4j
 @Component
-public class JwtProvider{
+public class JwtProvider {
     //서명 키
     private final Key key;
     @Qualifier("jwtRedisTemplate")
