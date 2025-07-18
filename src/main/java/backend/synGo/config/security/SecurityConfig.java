@@ -35,7 +35,6 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler;
     private final OAuth2AuthorizationFailureHandler oAuth2AuthorizationFailureHandler;
-    //private final SseAuthenticationFilter sseAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,48 +43,18 @@ public class SecurityConfig {
         //인증 없이 접근 가능한 url
         List<String> permitUrls = List.of(
                 "/api/my/chatbot/stream",
-                "/favicon_io/favicon.ico",
-                "/login/**",
-                "/nav/**",
-                "/oauth2/**",
-                "/actuator/**",
-                "/index.html",
-                "/main.css",
-                "/app.js",
-                "/chatbot/**",
-                "/",
-                "/ws-stomp/**",
-                "/topic/**",
-                "/sub/**", // ← 메시지 브로커 구독 경로
-                "/pub/**", // ← 메시지 발행 경로
-                "/api/auth/login",
-                "/api/auth/signup",
-                "/swagger-ui/**",
-                "/v3/api-docs/**"
+                "/favicon_io/favicon.ico", "/login/**", "/nav/**", "/oauth2/**", "/actuator/**", "/index.html",
+                "/main.css", "/app.js", "/chatbot/**", "/", "/ws-stomp/**", "/topic/**", "/sub/**", "/pub/**",
+                "/api/auth/login", "/api/auth/signup", "/swagger-ui/**", "/v3/api-docs/**"
         );
 
         http
                 //요청 url 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/my/chatbot/stream",
-                                "/actuator/**",
-                                "/login/**",
-                                "/nav/**",
-                                "/oauth2/**",
-                                "/favicon_io/favicon.ico",
-                                "/index.html",
-                                "/main.css",
-                                "/app.js",
-                                "/chatbot/**",
-                                "/",
-                                "/ws-stomp/**",
-                                "/topic/**",
-                                "/sub/**", // ← 메시지 브로커 구독 경로
-                                "/pub/**", // ← 메시지 발행 경로
-                                "/api/auth/login",
-                                "/api/auth/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**").permitAll()
+                                "/favicon_io/favicon.ico", "/login/**", "/nav/**", "/oauth2/**", "/actuator/**", "/index.html",
+                                "/main.css", "/app.js", "/chatbot/**", "/", "/ws-stomp/**", "/topic/**", "/sub/**", "/pub/**",
+                                "/api/auth/login", "/api/auth/signup", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -115,6 +84,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

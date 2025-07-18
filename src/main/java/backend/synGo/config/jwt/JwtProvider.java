@@ -54,16 +54,9 @@ public class JwtProvider {
     public String createAccessToken(CustomUserDetails user) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + accessTokenMinutes * 60 * 1000);
-        String accessToken = createToken(now, expiredAt, user)
+        return createToken(now, expiredAt, user)
                 .claim("token_type", "access")
-                .compact();;
-
-        redisTemplate.opsForValue().set(
-                "AT:" + user.getUserId(), //key=AT:userId
-                accessToken,    // value=token
-                Duration.ofMinutes(accessTokenMinutes)
-        );
-        return accessToken;
+                .compact();
     }
 
     // RefreshToken 생성 메서드
@@ -84,7 +77,7 @@ public class JwtProvider {
         return refreshToken;
     }
 
-    // JWT 생성 공통 로직 (Access, Refresh)
+    // JWT 생성 공통 로직 (Refresh)
     private JwtBuilder createToken(Date now, Date expiredAt, CustomUserDetails  user) {
         return Jwts.builder()
                 .issuer("SynGo")
@@ -98,69 +91,42 @@ public class JwtProvider {
                 .signWith(key);
     }
 
-    // JWT Token 타입 별 유효성 검증
-    public boolean validateToken(String token, TokenType tokenType) {
+    // AccessToken 검증 (JWT 자체 검증만)
+    public boolean validateToken(String token) {
         try {
-            log.info("validateToken={}", token);
-            // 기본 서명 검증
-            Claims claims = Jwts.parser()
-                    .verifyWith((SecretKey) key)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-            switch (tokenType) {
-                case BL -> { //black_list 로 저장된 token
-                    String isBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
-                    if (isBlacklisted.equals("\"logout\"")) {
-                        log.warn("블랙리스트에 등록된 토큰입니다.");
-                        return false;
-                    }
-                    return true;
-                }
-                case RT -> { //refresh_token 으로 저장된 토큰
-                    String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
-                    if (!hasText(storedRefreshToken)) {
-                        log.warn("Redis에 존재하지 않는 Refresh Token입니다.");
-                        return false;
-                    }
-                    return true;
-                }
-                case AT -> { //access_token 으로 저장된 토큰
-                    String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
-                    if (!hasText(storedAccessToken)) {
-                        log.warn("Redis에 존재하지 않는 Access Token입니다.");
-                        return false;
-                    }
-                    return true;
-                }
-                case TOKEN -> { //refresh,access 으로 저장된 토큰
-                    String storedBlacklisted = redisTemplate.opsForValue().get("BL:" + token);
-                    log.info("storedBlacklisted={}", storedBlacklisted);
-                    String storedAccessToken = getAccessToken(parseLong(claims.getSubject()));
-                    String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
-                    if ("logout".equals(storedBlacklisted)) {
-                        log.warn("블랙리스트에 등록된 토큰입니다.");
-                        return false;
-                    }
-                    if (hasText(storedAccessToken) || hasText(storedRefreshToken)){
-                        log.info("유효한 토큰입니다.");
-                        return true;
-                    }
-                    log.warn("사용할 수 없는 토큰입니다.");
-                    return false;
-                }
-                default -> {
-                    log.warn("지원되지 않는 TokenType입니다: {}", tokenType);
-                    return false;
-                }
+            Claims claims = getClaims(token);
+
+            // 블랙리스트 확인
+            String blacklisted = redisTemplate.opsForValue().get("BL:" + token);
+            if ("logout".equals(blacklisted)) {
+                return false;
             }
-        } catch (ExpiredJwtException e) {
-            throw new ExpiredTokenException("토큰 만료");
+
+            return true; // JWT 만료는 getClaims()에서 자동 체크
+
         } catch (JwtException e) {
-            log.warn("JWT 검증 실패: {}", e.getMessage());
+            return false;
         }
-        log.info("validateToken=false");
-        return false;
+    }
+
+    // RefreshToken 검증 (Redis 비교 포함)
+    public boolean validateRefreshToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+
+            // 블랙리스트 확인
+            String blacklisted = redisTemplate.opsForValue().get("BL:" + token);
+            if ("logout".equals(blacklisted)) {
+                return false;
+            }
+
+            // Redis 저장된 RefreshToken과 비교
+            String storedRefreshToken = getRefreshToken(parseLong(claims.getSubject()));
+            return token.equals(storedRefreshToken);
+
+        } catch (JwtException e) {
+            return false;
+        }
     }
 
     // JWT에서 Claims 데이터 가져오기
@@ -204,28 +170,14 @@ public class JwtProvider {
         return redisTemplate.opsForValue().get("RT:" + userId);
     }
 
-    // Redis에서 Access 조회
-    public String getAccessToken(Long userId) {
-        return redisTemplate.opsForValue().get("AT:" + userId);
-    }
-
     // Redis에서 RefreshToken 삭제
     public void deleteRefreshToken(Long userId) {
         redisTemplate.delete("RT:" + userId);
     }
 
-    // Redis에서 AccessToken 삭제
-    public void deleteAccessToken(Long userId) {
-        redisTemplate.delete("AT:" + userId);
-    }
-
     // 블랙리스트 추가
     public void blackListToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith((SecretKey) key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = getClaims(token);
 
         long expiration = claims.getExpiration().getTime() - System.currentTimeMillis();
         log.info("남은 expiration={}", expiration);

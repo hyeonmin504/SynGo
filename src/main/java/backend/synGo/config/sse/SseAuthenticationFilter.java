@@ -42,7 +42,7 @@ public class SseAuthenticationFilter extends OncePerRequestFilter {
             token = request.getParameter("access_token");
         }
 
-        if (token != null && jwtProvider.validateToken(token, TokenType.TOKEN)) {
+        if (token != null && jwtProvider.validateToken(token)) {
             Authentication authentication = jwtProvider.getAuthentication(token);
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);

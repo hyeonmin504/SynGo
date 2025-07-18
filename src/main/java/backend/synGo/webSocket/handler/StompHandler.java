@@ -36,7 +36,7 @@ public class StompHandler implements ChannelInterceptor {
 
             log.info("token={}", token);
 
-            if (token == null || !jwtProvider.validateToken(token, TokenType.TOKEN)) {
+            if (token == null || !jwtProvider.validateToken(token)) {
                 throw new IllegalArgumentException("Invalid or missing JWT token");
             }
         }

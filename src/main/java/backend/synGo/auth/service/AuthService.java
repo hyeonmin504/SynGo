@@ -4,8 +4,7 @@ package backend.synGo.auth.service;
 import backend.synGo.auth.controller.form.LoginForm;
 import backend.synGo.auth.controller.form.SignUpForm;
 import backend.synGo.auth.form.CustomUserDetails;
-import backend.synGo.auth.form.LoginResponseForm;
-import backend.synGo.auth.form.TokenType;
+import backend.synGo.auth.form.TokenResponseForm;
 import backend.synGo.config.jwt.JwtProvider;
 import backend.synGo.domain.schedule.Theme;
 import backend.synGo.domain.schedule.UserScheduler;
@@ -16,6 +15,7 @@ import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.exception.NotValidException;
 import backend.synGo.repository.UserRepository;
 import backend.synGo.service.ThemeService;
+import backend.synGo.service.UserService;
 import backend.synGo.util.ClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class AuthService {
     private final ThemeService themeService;
 
     @Transactional(readOnly = true)
-    public LoginResponseForm login(LoginForm form, HttpServletRequest request) {
+    public TokenResponseForm login(LoginForm form, HttpServletRequest request) {
 
         User user = userRepository.findByEmail(form.getEmail()).orElseThrow(
                 () -> new NotFoundUserException("이메일이 잘못되었습니다.")
@@ -58,7 +58,7 @@ public class AuthService {
             String accessToken = jwtProvider.createAccessToken(userDetails);
             String refreshToken = jwtProvider.createRefreshToken(userDetails);
 
-            return new LoginResponseForm(accessToken, refreshToken);
+            return new TokenResponseForm(accessToken, refreshToken);
         }
 
         throw new NotValidException("패스워드가 잘못되었습니다");
@@ -84,7 +84,7 @@ public class AuthService {
     public void logout(HttpServletRequest request) {
         String token = jwtProvider.resolveToken(request);
 
-        if (token != null && jwtProvider.validateToken(token, TokenType.AT)) {
+        if (token != null && jwtProvider.validateToken(token)) {
             // (Optional) AccessToken을 블랙리스트에 등록 (만료 시간까지)
             jwtProvider.blackListToken(token);
 
@@ -95,46 +95,36 @@ public class AuthService {
 
             // Redis에서 RefreshToken 삭제
             jwtProvider.deleteRefreshToken(userId);
-            // Redis에서 AccessToken 삭제
-            jwtProvider.deleteAccessToken(userId);
             return ;
         }
         throw new AuthenticationFailedException("유효하지 않은 토큰입니다.");
     }
 
-    public String reissue(HttpServletRequest request) {
+    public TokenResponseForm reissue(HttpServletRequest request) {
         // 1. Refresh Token 유효성 검사, 유저 정보 추출
         CustomUserDetails userDetails = readTokenAndReturnUserId(request);
         Long userId = userDetails.getUserId();
-        String token = jwtProvider.resolveToken(request);
-
-        //기본 accessToken을 블랙리스트에 올리기
-        jwtProvider.deleteAccessToken(userId);
-        jwtProvider.blackListToken(token);
-
         //유저 조회
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundUserException("유저 정보가 없습니다"));
 
-        //ip 체크
-        if (!userDetails.getUserLastAccessIp().equals(user.getLastAccessIp())){
-            //todo: ip 접속 환경이 다를 경우 어떻게 처리 할 것인지.
+        String token = jwtProvider.resolveToken(request);
+
+        if (jwtProvider.validateRefreshToken(token)){
+            jwtProvider.blackListToken(token);
+            jwtProvider.deleteRefreshToken(userId);
+            // 새로운 Access Token 생성
+            String newAccessToken = jwtProvider.createAccessToken(userDetails);
+            String newRefreshToken = jwtProvider.createRefreshToken(userDetails);
+            return new TokenResponseForm(newAccessToken, newRefreshToken);
         }
-
-        // 4. 새로운 Access Token 생성
-        String newAccessToken = jwtProvider.createAccessToken(userDetails);
-
-        // (선택) 새 Refresh Token도 함께 발급
-        // String newRefreshToken = jwtProvider.createRefreshToken(userId, ...);
-        // redisTemplate.opsForValue().set("RT:" + userId, newRefreshToken, ...);
-
-        return newAccessToken;
+        throw new NotValidException("인증 실패");
     }
 
     public CustomUserDetails readTokenAndReturnUserId(HttpServletRequest request) {
-        String refreshToken = jwtProvider.resolveToken(request);
+        String accessToken = jwtProvider.resolveToken(request);
 
         // 2. Claims 추출 (유저 정보)
-        Authentication authentication = jwtProvider.getAuthentication(refreshToken);
+        Authentication authentication = jwtProvider.getAuthentication(accessToken);
         return (CustomUserDetails)authentication.getPrincipal();
     }
 }

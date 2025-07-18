@@ -1,6 +1,7 @@
 package backend.synGo.auth.controller;
 
 import backend.synGo.auth.controller.form.LoginForm;
+import backend.synGo.auth.form.TokenResponseForm;
 import backend.synGo.form.ResponseForm;
 import backend.synGo.auth.controller.form.SignUpForm;
 import backend.synGo.auth.service.AuthService;
@@ -80,8 +81,8 @@ public class AuthController {
     @GetMapping("reissue")
     public ResponseEntity<ResponseForm<?>> reissue(HttpServletRequest request) {
         try {
-            String newAccessToken = authService.reissue(request);
-            return ResponseEntity.ok(ResponseForm.success(newAccessToken, "새로운 access token 발급 완료"));
+            TokenResponseForm token = authService.reissue(request);
+            return ResponseEntity.ok(ResponseForm.success(token, "새로운 access token 발급 완료"));
         } catch (ExpiredTokenException | AuthenticationFailedException | JwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseForm.unauthorizedResponse(null, e.getMessage()));
         }
