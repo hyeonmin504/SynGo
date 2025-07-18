@@ -1,6 +1,5 @@
 package backend.synGo.webSocket.handler;
 
-import backend.synGo.auth.form.TokenType;
 import backend.synGo.config.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +9,6 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
-
-import java.security.Principal;
 
 @RequiredArgsConstructor
 @Component

@@ -1,5 +1,6 @@
 package backend.synGo.domain.user;
 
+import backend.synGo.auth.oauth2.domain.UserOAuthConnection;
 import backend.synGo.chatBot.domain.ChatHistory;
 import backend.synGo.domain.date.Date;
 import backend.synGo.domain.schedule.UserScheduler;
@@ -33,12 +34,9 @@ public class User {
     private LocalDateTime joinDate;
     private String lastAccessIp;
 
-    // OAuth2 지원을 위한 새 필드들
-    @Enumerated(EnumType.STRING)
-    private Provider provider = Provider.LOCAL; // 기본값은 LOCAL
-
-    private String providerId; // OAuth 제공자의 사용자 ID
-    private String profileImageUrl; // 프로필 이미지 URL
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_oauth_id")
+    private UserOAuthConnection userOAuthConnection;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_scheduler_id")
@@ -61,6 +59,7 @@ public class User {
     private List<ImageUrl> imageUrls = new ArrayList<>();
 
     // redis 추출 유저 데이터
+    @Builder
     public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler) {
         this.name = name;
         this.email = email;
@@ -70,30 +69,13 @@ public class User {
         setUserScheduler(scheduler);
     }
 
-    // OAuth2 사용자 생성을 위한 생성자
-    @Builder
-    public User(String name, String email, String password, String lastAccessIp,
-                Provider provider, String providerId, String profileImageUrl) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.joinDate = LocalDateTime.now();
-        this.lastAccessIp = lastAccessIp;
-        this.provider = provider != null ? provider : Provider.LOCAL;
-        this.providerId = providerId;
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    // OAuth2 정보 업데이트 메소드
-    public User updateOAuth2Info(String name, String profileImageUrl) {
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
-        return this;
-    }
-
     private void setUserScheduler(UserScheduler scheduler) {
         this.userScheduler = scheduler;
         scheduler.setUser(this);
+    }
+
+    public void setUserOAuthConnection(UserOAuthConnection userOAuthConnection) {
+        this.userOAuthConnection = userOAuthConnection;
     }
 
     public void setNewUserIp(String newUserIp) {
@@ -111,7 +93,11 @@ public class User {
         this.name = name;
     }
 
-    public void updateLastAccessIp(String clientIp) {
-        this.lastAccessIp = clientIp;
+    // OAuth2 정보 업데이트
+    public void updateOAuth2Info(String name, String lastAccessIp) {
+        if (name != null && !name.trim().isEmpty()) {
+            this.name = name;
+        }
+        this.lastAccessIp = lastAccessIp;
     }
 }

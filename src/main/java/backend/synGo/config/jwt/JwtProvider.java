@@ -1,8 +1,6 @@
 package backend.synGo.config.jwt;
 
 import backend.synGo.auth.form.CustomUserDetails;
-import backend.synGo.auth.form.TokenType;
-import backend.synGo.exception.ExpiredTokenException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -87,6 +85,8 @@ public class JwtProvider {
                 .subject(String.valueOf(user.getUserId()))
                 .claim("username", user.getName())
                 .claim("user_ip", user.getLastAccessIp())
+                .claim("email", user.getEmail())
+                .claim("profile", user.getProfileImageUrl())
                 .id(UUID.randomUUID().toString()) // 추가: 고유 ID
                 .signWith(key);
     }
@@ -147,7 +147,9 @@ public class JwtProvider {
         CustomUserDetails userDetails = new CustomUserDetails(
                 parseLong(claims.getSubject()),
                 claims.get("username", String.class),
-                claims.get("user_ip", String.class)
+                claims.get("user_ip", String.class),
+                claims.get("email", String.class),
+                claims.get("profile", String.class)
         );
         // 3. UserDetails를 바탕으로 인증 토큰 생성
         //    - principal: userDetails (인증된 사용자 정보)

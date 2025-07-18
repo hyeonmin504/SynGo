@@ -38,7 +38,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final ThemeService themeService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public TokenResponseForm login(LoginForm form, HttpServletRequest request) {
 
         User user = userRepository.findByEmail(form.getEmail()).orElseThrow(
@@ -50,11 +50,10 @@ public class AuthService {
 
             //ip 저장
             user.setNewUserIp(ClientIp.getClientIp(request));
-            userRepository.save(user);
         }
 
         if (passwordEncoder.matches(form.getPassword(), user.getPassword())) {
-            CustomUserDetails userDetails = new CustomUserDetails(user.getId(), user.getName(), user.getLastAccessIp());
+            CustomUserDetails userDetails = new CustomUserDetails(user);
             String accessToken = jwtProvider.createAccessToken(userDetails);
             String refreshToken = jwtProvider.createRefreshToken(userDetails);
 
@@ -73,7 +72,13 @@ public class AuthService {
                 }
                 log.info("saveUser");
                 UserScheduler userScheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
-                userRepository.save(new User(form.getName(),form.getEmail(),passwordEncoder.encode(form.getPassword()),ClientIp.getClientIp(request),userScheduler));
+                userRepository.save(User.builder()
+                        .name(form.getName())
+                        .email(form.getEmail())
+                        .password(passwordEncoder.encode(form.getPassword()))
+                        .lastAccessIp(ClientIp.getClientIp(request))
+                        .scheduler(userScheduler)
+                        .build());
                 return ;
             }
             throw new NotValidException("패스워드가 유효하지 않습니다.");

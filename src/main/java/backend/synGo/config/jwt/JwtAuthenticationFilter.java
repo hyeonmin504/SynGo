@@ -1,6 +1,5 @@
 package backend.synGo.config.jwt;
 
-import backend.synGo.auth.form.TokenType;
 import backend.synGo.exception.ExpiredTokenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -93,14 +93,21 @@ public class GlobalExceptionHandler {
             HttpRequestMethodNotSupportedException.class
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ResponseForm<Map<String, Object>>> handleNotFound(Exception ex, WebRequest request) {
+    public ResponseEntity<ResponseForm<Map<String, Object>>> handleNotFound(NoResourceFoundException ex, Exception e, WebRequest request) {
+        String resourcePath = ex.getResourcePath();
+        // ✅ Chrome DevTools 관련 요청은 로깅하지 않음
+        if (resourcePath.contains(".well-known") || resourcePath.contains("com.chrome.devtools") || resourcePath.contains("favicon") || resourcePath.contains("robots.txt") || resourcePath.contains("sitemap.xml") || resourcePath.contains("apple-touch-icon")) {
+            // 조용히 404 반환 (로그 없음)
+            return ResponseEntity.notFound().build();
+        }
+
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.NOT_FOUND.value());
         body.put("error", "Not Found");
         body.put("path", request.getDescription(false).replace("uri=", ""));
 
-        log.error("error",ex);
+        log.error("error",e);
         ResponseForm<Map<String, Object>> responseForm = new ResponseForm<>(HttpStatus.NOT_FOUND.value(), body, "올바른 경로가 아닙니다");
         return new ResponseEntity<>(responseForm, HttpStatus.NOT_FOUND);
     }

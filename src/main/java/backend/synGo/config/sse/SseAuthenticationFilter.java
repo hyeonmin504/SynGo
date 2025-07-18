@@ -1,6 +1,5 @@
 package backend.synGo.config.sse;
 
-import backend.synGo.auth.form.TokenType;
 import backend.synGo.config.jwt.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

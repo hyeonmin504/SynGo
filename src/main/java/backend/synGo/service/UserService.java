@@ -1,8 +1,6 @@
 package backend.synGo.service;
 
-import backend.synGo.auth.form.TokenType;
 import backend.synGo.auth.service.AuthService;
-import backend.synGo.domain.slot.Status;
 import backend.synGo.domain.user.User;
 import backend.synGo.exception.NotFoundUserException;
 import backend.synGo.repository.UserRepository;
