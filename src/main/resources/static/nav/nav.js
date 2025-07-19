@@ -1,6 +1,7 @@
 class Navigation {
     constructor() {
         this.currentUser = null;
+        this.socialInfo = null;
         this.init();
     }
 
@@ -26,6 +27,13 @@ class Navigation {
                 </div>
                 <div class="user-info">
                     <div id="user-display" class="nav-loading">로딩 중...</div>
+                    <!-- 소셜 연동 버튼 추가 -->
+                    <div id="social-link-section" class="social-link-section" style="display: none;">
+                        <button class="social-link-btn" id="google-link-btn">
+                            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 16px; height: 16px;">
+                            구글 연동
+                        </button>
+                    </div>
                     <button class="logout-btn" id="nav-logout-btn">로그아웃</button>
                 </div>
             </div>
@@ -36,8 +44,18 @@ class Navigation {
     }
 
     async loadUserInfo() {
-        // OAuth 결과 확인 (URL 파라미터에서)
+        // ✅ OAuth 콜백 처리 먼저 확인
         const urlParams = new URLSearchParams(window.location.search);
+        const oauthCode = urlParams.get('code');
+        const oauthState = urlParams.get('state');
+
+        // OAuth 콜백인 경우 연동 처리
+        if (oauthCode && oauthState && oauthState.startsWith('link_')) {
+            await this.handleOAuthCallback(oauthCode, oauthState);
+            return;
+        }
+
+        // 기존 OAuth 결과 확인 (소셜 회원가입/로그인용)
         const accessToken = urlParams.get('accessToken');
         const refreshToken = urlParams.get('refreshToken');
         const provider = urlParams.get('provider');
@@ -67,6 +85,160 @@ class Navigation {
 
         // 기본 정보 표시
         this.displayBasicUserInfo(storedProvider);
+
+        // ✅ 소셜 연동 정보 로드
+        await this.loadSocialInfo();
+    }
+
+    async handleOAuthCallback(code, state) {
+        try {
+            console.log('OAuth 콜백 처리 중...', { code: code.substring(0, 10) + '...', state });
+
+            // 저장된 토큰 확인
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                alert('로그인 상태가 아닙니다. 다시 로그인해주세요.');
+                this.redirectToLogin();
+                return;
+            }
+
+            // 현재 페이지 URL을 returnUrl로 전달
+            const currentUrl = window.location.origin + window.location.pathname;
+
+            // 연동 API 호출
+            const response = await fetch(`http://localhost:8080/api/auth/link-google?returnUrl=${encodeURIComponent(currentUrl)}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code,
+                    state: state
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('구글 계정 연동 성공:', result);
+
+                // 성공 메시지 표시
+                alert(`구글 계정 연동 완료!\n연동된 이메일: ${result.linkedEmail}`);
+
+                // URL 파라미터 제거하고 현재 페이지 유지
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+
+                // 소셜 정보 다시 로드
+                await this.loadSocialInfo();
+
+            } else {
+                const errorData = await response.json().catch(() => ({ message: '연동 실패' }));
+                throw new Error(errorData.message || '구글 계정 연동에 실패했습니다.');
+            }
+
+        } catch (error) {
+            console.error('OAuth 콜백 처리 중 오류:', error);
+            alert('구글 계정 연동 중 오류가 발생했습니다: ' + error.message);
+
+            // 원래 페이지 유지 (파라미터만 제거)
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }
+
+    async loadSocialInfo() {
+        try {
+            const response = await Navigation.authenticatedFetch('http://localhost:8080/api/auth/social-info');
+
+            if (response && response.ok) {
+                this.socialInfo = await response.json();
+                console.log('소셜 정보 로드됨:', this.socialInfo);
+                this.updateSocialLinkDisplay();
+            } else {
+                console.warn('소셜 정보 로드 실패');
+                this.socialInfo = null;
+                this.showSocialLinkButton();
+            }
+        } catch (error) {
+            console.error('소셜 정보 로드 중 오류:', error);
+            this.socialInfo = null;
+            this.showSocialLinkButton();
+        }
+    }
+
+    updateSocialLinkDisplay() {
+        const socialSection = document.getElementById('social-link-section');
+
+        if (this.socialInfo && this.socialInfo.isLinked) {
+            // 이미 연동된 경우 - 소셜 정보를 사용자 표시에 포함
+            this.displayLinkedSocialInfo();
+            socialSection.style.display = 'none';
+        } else {
+            // 연동되지 않은 경우 - 연동 버튼 표시
+            this.showSocialLinkButton();
+        }
+    }
+
+    displayLinkedSocialInfo() {
+        const userDisplay = document.getElementById('user-display');
+        const social = this.socialInfo;
+
+        userDisplay.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                ${social.profileImageUrl ?
+                    `<img src="${social.profileImageUrl}" alt="Profile" class="user-avatar">` :
+                    '<div class="user-avatar" style="background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center;">👤</div>'
+                }
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <span class="user-name">사용자</span>
+                    <div style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; opacity: 0.8;">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 12px; height: 12px;">
+                        <span>연동됨</span>
+                        ${social.isExpired ? '<span style="color: #ffcccb;">만료</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    showSocialLinkButton() {
+        const socialSection = document.getElementById('social-link-section');
+        const storedProvider = localStorage.getItem('provider');
+
+        // LOCAL 사용자이고 아직 연동되지 않은 경우에만 소셜 연동 버튼 표시
+        if ((storedProvider === 'LOCAL' || !storedProvider) &&
+            (!this.socialInfo || !this.socialInfo.isLinked)) {
+            socialSection.style.display = 'flex';
+        } else {
+            socialSection.style.display = 'none';
+        }
+    }
+
+    async linkGoogleAccount() {
+        try {
+            console.log('구글 계정 연동 시작...');
+
+            // 1. 현재 페이지 URL을 포함해서 구글 OAuth URL 생성 요청
+            const currentUrl = encodeURIComponent(window.location.href);
+            const response = await Navigation.authenticatedFetch(
+                `http://localhost:8080/api/auth/google-oauth-url?returnUrl=${currentUrl}`
+            );
+
+            if (response && response.ok) {
+                const oauthUrl = await response.text();
+                console.log('구글 OAuth URL:', oauthUrl);
+
+                // 2. 현재 창에서 구글 OAuth 페이지로 이동
+                window.location.href = oauthUrl;
+
+            } else {
+                throw new Error('OAuth URL 생성 실패');
+            }
+        } catch (error) {
+            console.error('구글 계정 연동 중 오류:', error);
+            alert('구글 계정 연동 중 오류가 발생했습니다: ' + error.message);
+        }
     }
 
     displayUserInfo() {
@@ -110,6 +282,12 @@ class Navigation {
     bindEvents() {
         const logoutBtn = document.getElementById('nav-logout-btn');
         logoutBtn.addEventListener('click', () => this.logout());
+
+        // ✅ 구글 연동 버튼 이벤트
+        const googleLinkBtn = document.getElementById('google-link-btn');
+        if (googleLinkBtn) {
+            googleLinkBtn.addEventListener('click', () => this.linkGoogleAccount());
+        }
     }
 
     async logout() {

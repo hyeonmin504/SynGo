@@ -27,12 +27,13 @@ public class GoogleLinkController {
     @PostMapping("/link-google")
     public ResponseEntity<GoogleLinkResponse> linkGoogleAccount(
             @Valid @RequestBody GoogleLinkRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String returnUrl) {
 
-        log.info("구글 계정 연동 요청: userId={}, code={}",
-                userDetails.getUserId(), request.getCode() != null ? "존재" : "없음");
+        log.info("구글 계정 연동 요청: userId={}, code={}, returnUrl={}",
+                userDetails.getUserId(), request.getCode() != null ? "존재" : "없음", returnUrl);
 
-        GoogleLinkResponse response = googleLinkService.linkGoogleAccount(userDetails, request);
+        GoogleLinkResponse response = googleLinkService.linkGoogleAccount(userDetails, request, returnUrl);
 
         return ResponseEntity.ok(response);
     }
@@ -52,11 +53,12 @@ public class GoogleLinkController {
     @Operation(summary = "구글 OAuth URL 생성", description = "구글 계정 연동을 위한 OAuth URL을 생성합니다")
     @GetMapping("/google-oauth-url")
     public ResponseEntity<String> getGoogleOAuthUrl(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String returnUrl) {
 
-        log.info("구글 OAuth URL 생성 요청: userId={}", userDetails.getUserId());
+        log.info("구글 OAuth URL 생성 요청: userId={}, returnUrl={}", userDetails.getUserId(), returnUrl);
 
-        String oauthUrl = googleLinkService.generateGoogleOAuthUrl(userDetails.getUserId());
+        String oauthUrl = googleLinkService.generateGoogleOAuthUrl(userDetails.getUserId(), returnUrl);
 
         return ResponseEntity.ok(oauthUrl);
     }

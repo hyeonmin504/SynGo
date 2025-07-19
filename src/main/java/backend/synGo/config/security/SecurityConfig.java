@@ -42,7 +42,7 @@ public class SecurityConfig {
         log.info("start filter");
         //인증 없이 접근 가능한 url
         List<String> permitUrls = List.of(
-                "/api/my/chatbot/stream",
+                "/api/my/chatbot/stream","/oauth/**",
                 "/favicon_io/favicon.ico", "/login/**", "/nav/**", "/oauth2/**", "/actuator/**", "/index.html",
                 "/main.css", "/app.js", "/chatbot/**", "/", "/ws-stomp/**", "/topic/**", "/sub/**", "/pub/**",
                 "/api/auth/login", "/api/auth/signup", "/swagger-ui/**", "/v3/api-docs/**"
@@ -51,7 +51,7 @@ public class SecurityConfig {
         http
                 //요청 url 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/my/chatbot/stream",
+                        .requestMatchers("/api/my/chatbot/stream","/oauth/**",
                                 "/favicon_io/favicon.ico", "/login/**", "/nav/**", "/oauth2/**", "/actuator/**", "/index.html",
                                 "/main.css", "/app.js", "/chatbot/**", "/", "/ws-stomp/**", "/topic/**", "/sub/**", "/pub/**",
                                 "/api/auth/login", "/api/auth/signup", "/swagger-ui/**", "/v3/api-docs/**").permitAll()

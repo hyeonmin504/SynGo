@@ -68,10 +68,21 @@ function checkOAuth2Result() {
     const error = urlParams.get('error');
     const message = urlParams.get('message');
 
+    console.log('URL 파라미터 확인:', {
+        accessToken: accessToken ? '존재' : '없음',
+        refreshToken: refreshToken ? '존재' : '없음',
+        provider,
+        error,
+        message,
+        fullSearch: window.location.search
+    });
+
     if (error) {
         showMessage('OAuth2 로그인 실패: ' + (message || error), 'error');
-        // URL에서 파라미터 제거
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // ✅ 에러 메시지 표시 후 약간의 딜레이를 두고 URL 정리
+        setTimeout(() => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 5000); // 5초 후에 URL 정리
     } else if (accessToken && refreshToken) {
         // 토큰 저장
         saveTokens(accessToken, refreshToken, provider || 'GOOGLE');

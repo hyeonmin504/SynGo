@@ -1,6 +1,5 @@
 app:
   oauth2:
-    # 실제 접속 경로로 수정
     authorized-redirect-uri: http://localhost:8080/login/login.html
 
 server:

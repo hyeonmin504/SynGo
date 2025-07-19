@@ -89,6 +89,61 @@
     border-color: rgba(255, 255, 255, 0.5);
 }
 
+/* ✅ 소셜 연동 관련 스타일 추가 */
+.social-link-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.social-link-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.social-link-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.social-link-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 연동된 소셜 정보 표시 스타일 */
+.social-linked-badge {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.social-expired-badge {
+    background: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .top-nav {
@@ -107,10 +162,28 @@
 
     .user-info {
         font-size: 0.9rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .nav-brand {
         font-size: 1.3rem;
+    }
+
+    .social-link-btn {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .social-link-section {
+        order: -1; /* 소셜 연동 버튼을 위쪽으로 */
     }
 }
 
@@ -118,4 +191,47 @@
 .nav-loading {
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.9rem;
+}
+
+/* 애니메이션 효과 */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.social-link-section {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* 호버 시 툴팁 효과 */
+.social-link-btn {
+    position: relative;
+}
+
+.social-link-btn::after {
+    content: '구글 계정을 연동하여 더 편리하게 이용하세요';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 1001;
+}
+
+.social-link-btn:hover::after {
+    opacity: 1;
 }

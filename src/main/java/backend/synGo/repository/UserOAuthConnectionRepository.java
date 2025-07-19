@@ -11,4 +11,6 @@ public interface UserOAuthConnectionRepository extends JpaRepository<UserOAuthCo
     Optional<UserOAuthConnection> findByProvider(Provider provider);
     Optional<UserOAuthConnection> findByUserIdAndProvider(Long userId, Provider provider);
     List<UserOAuthConnection> findByUserId(Long userId);
+
+    Optional<UserOAuthConnection> findByProviderAndEmail(Provider provider, String email);
 }
