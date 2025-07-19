@@ -21,19 +21,6 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     private final String lastAccessIp;
     private final Provider provider;
     private final String profileImageUrl;
-    private final Map<String, Object> attributes;
-
-    // ✅ OAuth2 로그인용 생성자 (UserOAuthConnection 없이)
-    public CustomUserDetails(User user, Provider provider,
-                             String profileImageUrl, Map<String, Object> attributes) {
-        this.userId = user.getId();
-        this.name = user.getName();
-        this.email = user.getEmail();
-        this.lastAccessIp = user.getLastAccessIp();
-        this.provider = provider;
-        this.profileImageUrl = profileImageUrl;
-        this.attributes = attributes;
-    }
 
     // ✅ 일반 로그인용 생성자 (기존)
     public CustomUserDetails(User user) {
@@ -43,7 +30,6 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
         this.lastAccessIp = user.getLastAccessIp();
         this.provider = Provider.LOCAL; // 로컬 로그인
         this.profileImageUrl = null;
-        this.attributes = Map.of();
     }
 
     // ✅ JWT 인증용 생성자 (기존)
@@ -54,7 +40,16 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
         this.lastAccessIp = lastAccessIp;
         this.provider = Provider.LOCAL;
         this.profileImageUrl = profileImageUrl;
-        this.attributes = Map.of();
+    }
+
+    @Override
+    public <A> A getAttribute(String name) {
+        return OAuth2User.super.getAttribute(name);
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return null;
     }
 
     @Override

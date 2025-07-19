@@ -220,7 +220,7 @@ public class GoogleLinkService {
                     tokenResponse.getScope(),
                     googleUserInfo.getPicture()
             );
-            connection.setUser(currentUser);
+            currentUser.setUserOAuthConnection(connection);
 
             oauthConnectionRepository.save(connection);
 
@@ -238,7 +238,7 @@ public class GoogleLinkService {
                     .profileImageUrl(googleUserInfo.getPicture())
                     .build();
 
-            newConnection.setUser(currentUser);
+            currentUser.setUserOAuthConnection(newConnection);
             oauthConnectionRepository.save(newConnection);
         }
 

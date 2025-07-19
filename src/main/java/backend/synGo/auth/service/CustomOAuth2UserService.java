@@ -1,12 +1,7 @@
 package backend.synGo.auth.service;
 
 import backend.synGo.auth.form.CustomUserDetails;
-import backend.synGo.domain.schedule.Theme;
-import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.user.Provider;
-import backend.synGo.domain.user.User;
-import backend.synGo.repository.UserRepository;
-import backend.synGo.service.ThemeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +11,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -25,24 +19,20 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private final UserRepository userRepository;
-    private final ThemeService themeService;
-
     @Override
-    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("OAuth2 로그인 프로세스 시작");
 
+        // 1. DefaultOAuth2UserService로 구글 사용자 정보 획득
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oauth2User = delegate.loadUser(userRequest);
 
-        // ✅ 전체 응답 디버깅
+        // 2. 구글 응답 데이터 추출 및 디버깅
         log.info("OAuth2 전체 응답: {}", oauth2User.getAttributes());
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         Provider provider = getProviderByRegistrationId(registrationId);
 
-        // ✅ 각 필드별 디버깅
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
         String profileImageUrl = oauth2User.getAttribute("picture");
@@ -60,37 +50,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String clientIp = getClientIp();
 
-        // ✅ User만 처리
-        User user = processUser(email, name, clientIp);
+        log.info("OAuth2 사용자 정보 추출 완료: {} ({})", email, provider);
 
-        log.info("OAuth2 사용자 처리 완료: {} ({})", user.getEmail(), provider);
-
-        // ✅ CustomUserDetails 바로 반환
-        return new CustomUserDetails(user, provider, profileImageUrl, oauth2User.getAttributes());
-    }
-
-    /**
-     * User만 생성/조회
-     */
-    private User processUser(String email, String name, String clientIp) {
-        return userRepository.findByEmail(email)
-                .map(existingUser -> {
-                    log.info("기존 사용자 발견: {}", email);
-                    existingUser.updateOAuth2Info(name, clientIp);
-                    return existingUser;
-                })
-                .orElseGet(() -> {
-                    log.info("새 사용자 생성: {}", email);
-                    UserScheduler userScheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
-                    User newUser = User.builder()
-                            .name(name)
-                            .email(email)
-                            .password(null)
-                            .lastAccessIp(clientIp)
-                            .scheduler(userScheduler)
-                            .build();
-                    return userRepository.save(newUser);
-                });
+        // ✅ DB 조회 없이 CustomUserDetails 생성 (userId = null, 임시 객체)
+        return new CustomUserDetails(
+                null,  // userId는 SuccessHandler에서 설정
+                name,
+                email,
+                clientIp,
+                provider,
+                profileImageUrl
+        );
     }
 
     private Provider getProviderByRegistrationId(String registrationId) {

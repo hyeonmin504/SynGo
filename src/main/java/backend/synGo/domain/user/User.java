@@ -60,13 +60,17 @@ public class User {
 
     // redis 추출 유저 데이터
     @Builder
-    public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler) {
+    public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler, UserOAuthConnection userOAuthConnection) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.joinDate = LocalDateTime.now();
         this.lastAccessIp = lastAccessIp;
         setUserScheduler(scheduler);
+        if (userOAuthConnection == null){
+            this.userOAuthConnection = null;
+        }
+        else setUserOAuthConnection(userOAuthConnection);
     }
 
     private void setUserScheduler(UserScheduler scheduler) {
@@ -76,6 +80,7 @@ public class User {
 
     public void setUserOAuthConnection(UserOAuthConnection userOAuthConnection) {
         this.userOAuthConnection = userOAuthConnection;
+        userOAuthConnection.getUser().add(this);
     }
 
     public void setNewUserIp(String newUserIp) {

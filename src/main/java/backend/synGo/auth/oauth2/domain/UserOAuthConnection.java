@@ -55,9 +55,4 @@ public class UserOAuthConnection {
     public boolean isExpired() {
         return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
     }
-
-    public void setUser(User user) {
-        this.user.add(user);
-        user.setUserOAuthConnection(this);
-    }
 }

@@ -3,10 +3,13 @@ package backend.synGo.auth.oauth2;
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.oauth2.domain.UserOAuthConnection;
 import backend.synGo.config.jwt.JwtProvider;
+import backend.synGo.domain.schedule.Theme;
+import backend.synGo.domain.schedule.UserScheduler;
 import backend.synGo.domain.user.Provider;
 import backend.synGo.domain.user.User;
 import backend.synGo.repository.UserOAuthConnectionRepository;
 import backend.synGo.repository.UserRepository;
+import backend.synGo.service.ThemeService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserOAuthConnectionRepository oauthConnectionRepository;
     private final UserRepository userRepository;
+    private final ThemeService themeService;
     private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 
     @Value("${app.oauth2.authorized-redirect-uri}")
@@ -56,27 +60,27 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         }
 
         try {
-            // 1. OAuth2User에서 User 정보 추출
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            // 1. OAuth2User에서 임시 CustomUserDetails 추출
+            CustomUserDetails tempUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            log.info("OAuth2 성공 처리: userId={}, provider={}, email={}",
-                    userDetails.getUserId(), userDetails.getProvider(), userDetails.getEmail());
+            log.info("OAuth2 성공 처리: provider={}, email={}",
+                    tempUserDetails.getProvider(), tempUserDetails.getEmail());
 
-            // 2. ✅ UserOAuthConnection 생성/업데이트 (핵심 추가!)
-            createOrUpdateOAuthConnection(userDetails, authentication);
+            // 2. ✅ User와 UserOAuthConnection을 한 번에 처리
+            CustomUserDetails completeUserDetails = processUserAndOAuthConnection(tempUserDetails, authentication);
 
-            // 3. 기존 JwtProvider로 JWT 토큰 생성
-            String accessToken = jwtProvider.createAccessToken(userDetails);
-            String refreshToken = jwtProvider.createRefreshToken(userDetails);
+            // 3. JWT 토큰 생성 (완전한 UserDetails로)
+            String accessToken = jwtProvider.createAccessToken(completeUserDetails);
+            String refreshToken = jwtProvider.createRefreshToken(completeUserDetails);
 
-            log.info("OAuth2 사용자 JWT 토큰 생성 완료: {} ({})",
-                    userDetails.getEmail(), userDetails.getProvider());
+            log.info("OAuth2 사용자 처리 완료: userId={}, email={}",
+                    completeUserDetails.getUserId(), completeUserDetails.getEmail());
 
             // 4. 프론트엔드로 토큰과 함께 리다이렉트
             String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                     .queryParam("accessToken", accessToken)
                     .queryParam("refreshToken", refreshToken)
-                    .queryParam("provider", userDetails.getProvider().name())
+                    .queryParam("provider", completeUserDetails.getProvider().name())
                     .build().toUriString();
 
             log.info("OAuth2 로그인 성공 리다이렉트: {}", targetUrl);
@@ -84,24 +88,19 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
 
         } catch (Exception e) {
             log.error("OAuth2 인증 성공 처리 중 오류 발생", e);
-
-            // 에러 발생 시 에러 페이지로 리다이렉트
-            String errorUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .queryParam("error", "authentication_processing_error")
-                    .queryParam("message", e.getMessage())
-                    .build().toUriString();
-
-            redirectStrategy.sendRedirect(request, response, errorUrl);
+            handleError(request, response, e);
         }
     }
 
     /**
-     * ✅ UserOAuthConnection 생성/업데이트 (핵심 로직 추가)
+     * ✅ UserOAuthConnection 먼저 처리 후 User 생성/업데이트하는 개선된 메서드
      */
-    private void createOrUpdateOAuthConnection(CustomUserDetails userDetails, Authentication authentication) {
+    private CustomUserDetails processUserAndOAuthConnection(CustomUserDetails tempUserDetails, Authentication authentication) {
 
-        Provider provider = userDetails.getProvider();
-        Long userId = userDetails.getUserId();
+        String email = tempUserDetails.getEmail();
+        String name = tempUserDetails.getName();
+        String clientIp = tempUserDetails.getLastAccessIp();
+        Provider provider = tempUserDetails.getProvider();
 
         // OAuth 토큰 정보 가져오기
         String refreshToken = getRefreshToken(authentication);
@@ -114,66 +113,78 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
                 refreshToken != null ? "존재" : "없음",
                 scope);
 
-        // 기존 연동 확인
-        Optional<UserOAuthConnection> existingConnection = oauthConnectionRepository
-                .findByProvider(provider);
+        // 1. ✅ UserOAuthConnection 먼저 처리 (생성 또는 업데이트)
+        UserOAuthConnection oauthConnection = oauthConnectionRepository
+                .findByProvider(provider)
+                .map(existingConnection -> {
+                    log.info("기존 OAuth 연동 업데이트 시작: connectionId={}", existingConnection.getId());
+                    existingConnection.updateOAuthInfo(accessToken, refreshToken, expiresAt, scope, tempUserDetails.getProfileImageUrl());
+                    return oauthConnectionRepository.save(existingConnection);
+                })
+                .orElseGet(() -> {
+                    log.info("새 OAuth 연동 생성 시작: provider={}, email={}", provider, email);
+                    UserOAuthConnection newConnection = UserOAuthConnection.builder()
+                            .provider(provider)
+                            .email(email)
+                            .accessToken(accessToken)
+                            .refreshToken(refreshToken)
+                            .expiresAt(expiresAt)
+                            .scope(scope)
+                            .profileImageUrl(tempUserDetails.getProfileImageUrl())
+                            .build();
+                    return oauthConnectionRepository.save(newConnection);
+                });
 
-        if (existingConnection.isPresent()) {
-            // 기존 연동 업데이트
-            updateExistingConnection(existingConnection.get(), userDetails, accessToken, refreshToken, expiresAt, scope);
-        } else {
-            // 새 연동 생성
-            createNewConnection(userDetails, accessToken, refreshToken, expiresAt, scope);
-        }
-    }
+        // 2. ✅ User 처리 (생성 또는 업데이트) - OAuth 연동 포함
+        User user = userRepository.findByEmail(email)
+                .map(existingUser -> {
+                    log.info("기존 사용자 발견: {}", email);
+                    existingUser.updateOAuth2Info(name, clientIp);
+                    // 기존 사용자의 OAuth 연동 업데이트 (필요시)
+                    if (existingUser.getUserOAuthConnection() == null ||
+                            !existingUser.getUserOAuthConnection().equals(oauthConnection)) {
+                        existingUser.setUserOAuthConnection(oauthConnection);
+                    }
+                    return userRepository.save(existingUser);
+                })
+                .orElseGet(() -> {
+                    log.info("새 사용자 생성: {}", email);
+                    UserScheduler userScheduler = new UserScheduler(themeService.getTheme(Theme.BLACK));
+                    User newUser = User.builder()
+                            .name(name)
+                            .email(email)
+                            .password(null)  // OAuth 사용자는 비밀번호 null
+                            .lastAccessIp(clientIp)
+                            .scheduler(userScheduler)
+                            .userOAuthConnection(oauthConnection)  // ✅ 연관관계 한 번에 설정
+                            .build();
+                    return userRepository.save(newUser);
+                });
 
-    /**
-     * 기존 OAuth 연동 업데이트
-     */
-    private void updateExistingConnection(UserOAuthConnection connection, CustomUserDetails userDetails,
-                                          String accessToken, String refreshToken,
-                                          LocalDateTime expiresAt, String scope) {
+        log.info("OAuth2 사용자 및 연동 처리 완료: userId={}, connectionId={}",
+                user.getId(), oauthConnection.getId());
 
-        log.info("기존 OAuth 연동 업데이트 시작: connectionId={}", connection.getId());
-
-        connection.updateOAuthInfo(
-                accessToken,
-                refreshToken,
-                expiresAt,
-                scope,
-                userDetails.getProfileImageUrl()
+        // 3. 완전한 CustomUserDetails 반환 (userId 포함)
+        return new CustomUserDetails(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getLastAccessIp(),
+                provider,
+                tempUserDetails.getProfileImageUrl()
         );
-
-        oauthConnectionRepository.save(connection);
-        log.info("기존 OAuth 연동 업데이트 완료");
     }
 
     /**
-     * 새 OAuth 연동 생성
+     * 에러 처리
      */
-    private void createNewConnection(CustomUserDetails userDetails, String accessToken,
-                                     String refreshToken, LocalDateTime expiresAt, String scope) {
+    private void handleError(HttpServletRequest request, HttpServletResponse response, Exception e) throws IOException {
+        String errorUrl = UriComponentsBuilder.fromUriString(redirectUri)
+                .queryParam("error", "authentication_processing_error")
+                .queryParam("message", e.getMessage())
+                .build().toUriString();
 
-        log.info("새 OAuth 연동 생성 시작: userId={}, provider={}",
-                userDetails.getUserId(), userDetails.getProvider());
-
-        // User 엔티티 조회
-        User user = userRepository.findById(userDetails.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userDetails.getUserId()));
-
-        UserOAuthConnection newConnection = UserOAuthConnection.builder()
-                .provider(userDetails.getProvider())
-                .email(userDetails.getEmail())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresAt(expiresAt)
-                .scope(scope)
-                .profileImageUrl(userDetails.getProfileImageUrl())
-                .build();
-        newConnection.setUser(user);
-        oauthConnectionRepository.save(newConnection);
-
-        log.info("새 OAuth 연동 생성 완료. RefreshToken 존재: {}", refreshToken != null);
+        redirectStrategy.sendRedirect(request, response, errorUrl);
     }
 
     /**
