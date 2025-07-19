@@ -73,6 +73,15 @@ public class User {
         else setUserOAuthConnection(userOAuthConnection);
     }
 
+    public User(String name, String email, String password, String lastAccessIp, UserScheduler scheduler) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.joinDate = LocalDateTime.now();
+        this.lastAccessIp = lastAccessIp;
+        setUserScheduler(scheduler);
+    }
+
     private void setUserScheduler(UserScheduler scheduler) {
         this.userScheduler = scheduler;
         scheduler.setUser(this);
