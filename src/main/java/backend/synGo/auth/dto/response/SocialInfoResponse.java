@@ -25,12 +25,6 @@ public class SocialInfoResponse {
     @Schema(description = "프로필 이미지 URL", example = "https://lh3.googleusercontent.com/...")
     private String profileImageUrl;
 
-    @Schema(description = "토큰 만료 시간")
-    private LocalDateTime expiresAt;
-
-    @Schema(description = "토큰 만료 여부", example = "false")
-    private boolean isExpired;
-
     public static SocialInfoResponse notLinked() {
         return SocialInfoResponse.builder()
                 .isLinked(false)
@@ -38,14 +32,12 @@ public class SocialInfoResponse {
     }
 
     public static SocialInfoResponse linked(Provider provider, String email,
-                                            String profileImageUrl, LocalDateTime expiresAt, boolean isExpired) {
+                                            String profileImageUrl) {
         return SocialInfoResponse.builder()
                 .isLinked(true)
                 .provider(provider)
                 .email(email)
                 .profileImageUrl(profileImageUrl)
-                .expiresAt(expiresAt)
-                .isExpired(isExpired)
                 .build();
     }
 }

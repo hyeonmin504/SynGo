@@ -5,6 +5,7 @@ import backend.synGo.auth.dto.response.GoogleLinkResponse;
 import backend.synGo.auth.dto.response.SocialInfoResponse;
 import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.service.GoogleLinkService;
+import backend.synGo.form.ResponseForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -40,14 +41,14 @@ public class GoogleLinkController {
 
     @Operation(summary = "연동된 소셜 정보 조회", description = "사용자의 연동된 소셜 계정 정보를 조회합니다")
     @GetMapping("/social-info")
-    public ResponseEntity<SocialInfoResponse> getSocialInfo(
+    public ResponseEntity<ResponseForm<?>> getSocialInfo(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        log.info("소셜 정보 조회 요청: userId={}", userDetails.getUserId());
+        log.info("소셜 정보 조회 요청: provider={}", userDetails.getProvider());
 
         SocialInfoResponse response = googleLinkService.getSocialInfo(userDetails);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().body(ResponseForm.success(response));
     }
 
     @Operation(summary = "구글 OAuth URL 생성", description = "구글 계정 연동을 위한 OAuth URL을 생성합니다")

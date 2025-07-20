@@ -3,6 +3,7 @@ package backend.synGo.auth.form;
 import backend.synGo.domain.user.Provider;
 import backend.synGo.domain.user.User;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
+@Slf4j
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails, OAuth2User {
 
@@ -28,18 +30,22 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
         this.name = user.getName();
         this.email = user.getEmail();
         this.lastAccessIp = user.getLastAccessIp();
-        this.provider = Provider.LOCAL; // 로컬 로그인
+        if(user.getUserOAuthConnection() != null){
+            log.info("provider={}",user.getUserOAuthConnection().getProvider());
+            this.provider = user.getUserOAuthConnection().getProvider();
+        }
+        else this.provider = Provider.LOCAL; // 로컬 로그인
         this.profileImageUrl = null;
     }
 
     // ✅ JWT 인증용 생성자 (기존)
-    public CustomUserDetails(Long userId, String name, String lastAccessIp, String email, String profileImageUrl) {
+    public CustomUserDetails(Long userId, String name, String lastAccessIp, String email, String profileImageUrl,String provider) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.lastAccessIp = lastAccessIp;
-        this.provider = Provider.LOCAL;
         this.profileImageUrl = profileImageUrl;
+        this.provider = Provider.valueOf(provider);
     }
 
     @Override

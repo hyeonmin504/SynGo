@@ -36,6 +36,12 @@ public class UserOAuthConnection {
     private String scope;
     private String profileImageUrl; // 프로필 이미지 URL
 
+    public UserOAuthConnection(Provider provider, String email, String profileImageUrl) {
+        this.provider = provider;
+        this.email = email;
+        this.profileImageUrl = profileImageUrl;
+    }
+
     // OAuth 정보 업데이트 (RefreshToken 있을 때만 업데이트)
     public void updateOAuthInfo(String accessToken, String refreshToken,
                                 LocalDateTime expiresAt, String scope, String profileImageUrl) {
@@ -50,6 +56,8 @@ public class UserOAuthConnection {
         this.scope = scope;
         this.profileImageUrl = profileImageUrl;
     }
+
+
 
     // 토큰 만료 체크
     public boolean isExpired() {

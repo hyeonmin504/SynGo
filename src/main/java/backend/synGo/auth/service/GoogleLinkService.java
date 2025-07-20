@@ -7,6 +7,8 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.oauth2.domain.UserOAuthConnection;
 import backend.synGo.domain.user.Provider;
 import backend.synGo.domain.user.User;
+import backend.synGo.exception.NotFoundUserException;
+import backend.synGo.exception.NotLinkedSocialConnectionException;
 import backend.synGo.repository.UserOAuthConnectionRepository;
 import backend.synGo.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +33,7 @@ import java.util.Optional;
 public class GoogleLinkService {
 
     private final UserRepository userRepository;
+    private final UserOAuthConnectionRepository userOAuthConnectionRepository;
     private final UserOAuthConnectionRepository oauthConnectionRepository;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -71,23 +74,30 @@ public class GoogleLinkService {
 
     @Transactional(readOnly = true)
     public SocialInfoResponse getSocialInfo(CustomUserDetails userDetails) {
-        log.info("소셜 정보 조회: userId={}", userDetails.getUserId());
-
-        User user = userRepository.findById(userDetails.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
-
-        if (user.getUserOAuthConnection() == null) {
-            return SocialInfoResponse.notLinked();
+        if(userDetails.getProvider() == Provider.LOCAL) {
+            return SocialInfoResponse.builder()
+                    .isLinked(false)
+                    .provider(Provider.LOCAL)
+                    .email(userDetails.getEmail())
+                    .profileImageUrl(userDetails.getProfileImageUrl())
+                    .build();
         }
+        log.info("소셜 정보 조회: userId={}", userDetails.getUserId());
+        Optional<UserOAuthConnection> connection = userOAuthConnectionRepository.findByConnectionUserId(userDetails.getUserId());
+        if (connection.isPresent()){
+            return SocialInfoResponse.linked(
+                    connection.get().getProvider(),
+                    connection.get().getEmail(),
+                    connection.get().getProfileImageUrl()
+            );
+        }
+        return SocialInfoResponse.builder()
+                .isLinked(false)
+                .provider(Provider.LOCAL)
+                .email(userDetails.getEmail())
+                .profileImageUrl(userDetails.getProfileImageUrl())
+                .build();
 
-        UserOAuthConnection connection = user.getUserOAuthConnection();
-        return SocialInfoResponse.linked(
-                connection.getProvider(),
-                connection.getEmail(),
-                connection.getProfileImageUrl(),
-                connection.getExpiresAt(),
-                connection.isExpired()
-        );
     }
 
     public String generateGoogleOAuthUrl(Long userId, String returnUrl) {
