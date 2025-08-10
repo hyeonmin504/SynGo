@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "소셜 로그인 연동", description = "기존 사용자의 소셜 계정 연동 관련 API")
-public class GoogleLinkController {
+public class AccountController {
 
     private final GoogleLinkService googleLinkService;
 

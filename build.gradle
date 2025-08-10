@@ -44,6 +44,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.security:spring-security-crypto'
 
+	//google
+	implementation 'com.google.apis:google-api-services-calendar:v3-rev20220715-2.0.0'
+
 	//jwt (최신 버전으로 업데이트)
 	implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'

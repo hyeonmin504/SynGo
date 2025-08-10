@@ -24,7 +24,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     private final Provider provider;
     private final String profileImageUrl;
 
-    // ✅ 일반 로그인용 생성자 (기존)
+    // 일반 로그인용 생성자 (기존)
     public CustomUserDetails(User user) {
         this.userId = user.getId();
         this.name = user.getName();
@@ -38,7 +38,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
         this.profileImageUrl = null;
     }
 
-    // ✅ JWT 인증용 생성자 (기존)
+    // JWT 인증용 생성자 (기존)
     public CustomUserDetails(Long userId, String name, String lastAccessIp, String email, String profileImageUrl,String provider) {
         this.userId = userId;
         this.name = name;
