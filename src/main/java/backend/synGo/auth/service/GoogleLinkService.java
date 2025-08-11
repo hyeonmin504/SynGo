@@ -7,8 +7,8 @@ import backend.synGo.auth.form.CustomUserDetails;
 import backend.synGo.auth.oauth2.domain.UserOAuthConnection;
 import backend.synGo.domain.user.Provider;
 import backend.synGo.domain.user.User;
-import backend.synGo.exception.NotFoundUserException;
-import backend.synGo.exception.NotLinkedSocialConnectionException;
+import backend.synGo.exception.AccountTokenException;
+import backend.synGo.exception.ExpiredTokenException;
 import backend.synGo.repository.UserOAuthConnectionRepository;
 import backend.synGo.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
@@ -100,6 +101,12 @@ public class GoogleLinkService {
 
     }
 
+    /**
+     *
+     * @param userId
+     * @param returnUrl
+     * @return
+     */
     public String generateGoogleOAuthUrl(Long userId, String returnUrl) {
         log.info("구글 OAuth URL 생성: userId={}, returnUrl={}", userId, returnUrl);
 
@@ -124,6 +131,12 @@ public class GoogleLinkService {
         return url;
     }
 
+    /**
+     * 처음 토큰 발급 시
+     * @param authorizationCode
+     * @param returnUrl
+     * @return
+     */
     private GoogleTokenResponse getGoogleAccessToken(String authorizationCode, String returnUrl) {
         log.info("구글 Access Token 요청 시작");
 
@@ -163,6 +176,53 @@ public class GoogleLinkService {
             throw new RuntimeException("구글 토큰 요청에 실패했습니다", e);
         }
     }
+
+    /**
+     * refresh -> 토큰 재발급
+     * 이미 라이브러리 내에 재발급 기능이 구현되어 있음
+     */
+//    @Transactional
+//    public void refreshAccessTokenIfNeeded(UserOAuthConnection oAuthConnection) {
+//        if (oAuthConnection.isExpired()) {
+//            log.info("토큰이 만료되어 새로 발급받습니다. User: {}", oAuthConnection.getEmail());
+//
+//            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+//            params.add("client_id", googleClientId);
+//            params.add("client_secret", googleClientSecret);
+//            params.add("refresh_token", oAuthConnection.getRefreshToken());
+//            params.add("grant_type", "refresh_token");
+//
+//            try {
+//                String response = webClient.post()
+//                        .uri("https://oauth2.googleapis.com/token")
+//                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+//                        .bodyValue(params)
+//                        .retrieve()
+//                        .bodyToMono(String.class)
+//                        .block();
+//
+//                JsonNode jsonNode = objectMapper.readTree(response);
+//
+//                String newAccessToken = jsonNode.get("access_token").asText();
+//                long expiresIn = jsonNode.get("expires_in").asLong();
+//                LocalDateTime newExpiresAt = LocalDateTime.now().plusSeconds(expiresIn);
+//
+//                // DB 업데이트
+//                oAuthConnection.updateOAuthInfo(
+//                        newAccessToken,
+//                        null, // refresh token은 그대로 유지
+//                        newExpiresAt,
+//                        oAuthConnection.getScope(),
+//                        oAuthConnection.getProfileImageUrl()
+//                );
+//
+//                log.info("토큰 갱신 완료");
+//            } catch (Exception e) {
+//                log.error("토큰 갱신 실패", e);
+//                throw new AccountTokenException("토큰 갱신에 실패했습니다", e);
+//            }
+//        }
+//    }
 
     private GoogleUserInfo getGoogleUserInfo(String accessToken) {
         log.info("구글 사용자 정보 요청 시작");

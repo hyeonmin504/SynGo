@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(name = "/api/syn/calender")
+@RequestMapping("/api/syn/calender")
 public class CalenderController {
 
     private final UserSyncCalenderService userSyncCalenderService;
@@ -34,7 +34,7 @@ public class CalenderController {
             //슬롯 조회
             UserSlotResponseForm mySlot = slotService.findMySlot(request.getSlotId(), userDetails.getUserId());
             //캘린더 연동
-            userSyncCalenderService.syncToGoogleCalender(mySlot);
+            userSyncCalenderService.syncToGoogleCalender(mySlot, userDetails.getUserId());
             return ResponseEntity.ok().body(ResponseForm.success(null, "연동 성공"));
         } catch (AccessDeniedException | NotFoundDataException e ) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseForm.notFoundResponse(null, "슬롯을 찾을 수 없습니다"));

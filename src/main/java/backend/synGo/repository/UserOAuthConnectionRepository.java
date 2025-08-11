@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface UserOAuthConnectionRepository extends JpaRepository<UserOAuthConnection, Long> {
     Optional<UserOAuthConnection> findByProvider(Provider provider);
+
+    @Query("select uc from UserOAuthConnection uc join uc.user u where u.id =:userId and uc.provider =:provider")
     Optional<UserOAuthConnection> findByUserIdAndProvider(Long userId, Provider provider);
 
     @Query("select uc from UserOAuthConnection uc join uc.user u where u.id =:userId")
