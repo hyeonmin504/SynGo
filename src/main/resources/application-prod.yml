@@ -1,0 +1,153 @@
+app:
+  oauth2:
+    authorized-redirect-uri: http://${EC2_PUBLIC_IP}/login/login.html
+
+server:
+  tomcat:
+    connection-timeout: 60s
+  port: 8080
+
+spring:
+  profiles:
+    active: prod
+
+  datasource:
+    driver-class-name: ${DRIVER_NAME}
+    url: ${DB_URL}
+    username: ${USER_NAME}
+    password: ${PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl_auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 10
+        use_sql_comments: true
+        query:
+          in_clause_parameter_padding: true
+    open-in-view: false
+    defer-datasource-initialization: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+              - https://www.googleapis.com/auth/calendar
+              - https://www.googleapis.com/auth/calendar.events
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth?access_type=offline&prompt=consent
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v2/userinfo
+            user-name-attribute: email
+
+  sql:
+    init:
+      mode: always
+
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+
+  ai:
+    model:
+      chat: anthropic
+    openai:
+      api-key: ${OPEN_AI_API_KEY}
+      base-url: ${OPEN_AI_BASE_URL}
+      gpt-url: ${OPEN_AI_COMPLETIONS_PATH}
+    anthropic:
+      base-url: ${ANTHROPIC_BASE_URL}
+      completions-path: ${ANTHROPIC_COMPLETIONS_PATH}
+      api-key: ${ANTHROPIC_API_KEY}
+      version: ${ANTHROPIC_VERSION}
+      chat:
+        options:
+          model: ${ANTHROPIC_CHAT_MODEL}
+          max-tokens: ${ANTHROPIC_MAX_TOKENS}
+          temperature: ${ANTHROPIC_TEMPERATURE}
+          functions: calculateDateTime,getCurrentDateTime
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+aws:
+  credentials:
+    access-key-id: ${AWS_ACCESS_KEY}
+    secret-access-key: ${AWS_SECRET_KEY}
+  cloud-front:
+    region: ${AWS_CLOUD_FRONT_REGION}
+    asset-distribution-id: ${CLOUD_FRONT_ASSET_ID}
+    domain: ${CLOUD_FRONT_DOMAIN}
+  s3:
+    region: ${AWS_S3_REGION}
+    asset-root-directory: ${S3_ASSET_DIRECTORY}
+    bucket-name: ${S3_BUCKET_NAME}
+    image-directory: ${S3_IMAGE_DIRECTORY}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    backend.synGo.common.monitoring: INFO
+    backend.synGo.common.aop: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+security:
+  secret-key: ${SECRET_KEY}
+  scheduler:
+    user:
+      expiration: ${USER_TOKEN_EXPIRATION}
+    group:
+      expiration: ${GROUP_TOKEN_EXPIRATION}
+  jwt:
+    access-token:
+      expiration: ${ACCESS_TOKEN_EXPIRATION}
+    refresh-token:
+      expiration: ${REFRESH_TOKEN_EXPIRATION}
+
+management:
+  server:
+    port: 8081
+    address: 0.0.0.0
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+        histogram-flavor: prometheus
+    tags:
+      application: syngo-chatbot
+      version: 1.0.0
+      environment: prod
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true

@@ -1,7 +1,10 @@
-# Prometheus 설정 파일
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+
+rule_files:
+# - "first_rules.yml"
+# - "second_rules.yml"
 
 scrape_configs:
   - job_name: 'prometheus'
@@ -10,7 +13,15 @@ scrape_configs:
 
   - job_name: 'syngo-chatbot'
     static_configs:
-      - targets: ['host.docker.internal:8081']
+      - targets: ['app:8081']
     metrics_path: '/actuator/prometheus'
     scrape_interval: 10s
     scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'syngo-backend'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'go_.*'
+        action: drop

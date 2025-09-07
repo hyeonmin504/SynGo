@@ -11,6 +11,8 @@ build/
 .env
 Dockerfile
 docker-compose.yml
+docker-compose.monitoring.yml
+docker-compose.prod.yml
 nginx/
 db/
 src/main/java/backend/synGo/config/security/**
